@@ -938,7 +938,7 @@ export const PortalRoomStudioPage: React.FC = () => {
     }
   };
 
-  // 8. Preload room layout so the space is inviting and styled upon entry
+  // 8. Preload single item if directed from catalogue/product viewer (?model=...)
   useEffect(() => {
     if (catalogModels.length === 0) return;
 
@@ -949,17 +949,7 @@ export const PortalRoomStudioPage: React.FC = () => {
         return;
       }
     }
-
-    // Default warm Japandi living room layout with high-performance, lightweight models
-    if (placedItems.length === 0) {
-      const couch = catalogModels.find((m) => m.filename.includes('Couch Large by Quaternius') || m.filename.includes('Couch Large'));
-      const table = catalogModels.find((m) => m.filename.includes('Table Round Small by Quaternius') || m.filename.includes('Table Round'));
-      const chair = catalogModels.find((m) => m.filename.includes('Chair by Quaternius') || m.filename.includes('Chair'));
-
-      if (couch) handleAddFurniture(couch, [0, 0, -1.8]);
-      if (table) handleAddFurniture(table, [0, 0, -0.6]);
-      if (chair) handleAddFurniture(chair, [1.3, 0, -0.7]);
-    }
+    // Starts blank by default as requested by user!
   }, [catalogModels, preloadedModelUrl]);
 
   // 9. Item Manipulation (Rotate, Move, Remove)
@@ -1197,13 +1187,14 @@ export const PortalRoomStudioPage: React.FC = () => {
             pointerEvents: 'auto',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 12,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(12px)',
-            padding: '7px 16px',
-            borderRadius: 999,
+            gap: 10,
+            backgroundColor: 'rgba(253, 250, 246, 0.94)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            padding: '6px 14px',
+            borderRadius: 8,
             border: '1px solid rgba(208, 174, 146, 0.45)',
-            boxShadow: 'var(--shadow-sm)',
+            boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
           }}
         >
           <button
@@ -1215,20 +1206,20 @@ export const PortalRoomStudioPage: React.FC = () => {
               color: 'var(--brown-700)',
               display: 'flex',
               alignItems: 'center',
-              gap: 4,
+              gap: 5,
               fontSize: 12,
               fontWeight: 600,
               fontFamily: 'var(--font-display)',
-              padding: 0,
+              padding: '2px 4px',
             }}
           >
             <ArrowLeft size={14} />
             Catalogue
           </button>
-          <span style={{ color: 'var(--brown-300)' }}>|</span>
+          <span style={{ color: 'rgba(208, 174, 146, 0.6)' }}>|</span>
           <span
             style={{
-              fontSize: 13,
+              fontSize: 12.5,
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
               color: 'var(--brown-900)',
@@ -1238,12 +1229,12 @@ export const PortalRoomStudioPage: React.FC = () => {
           </span>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 10.5,
               fontFamily: 'var(--font-mono)',
               color: 'var(--posted)',
               backgroundColor: 'var(--posted-bg)',
-              padding: '2px 8px',
-              borderRadius: 999,
+              padding: '2px 7px',
+              borderRadius: 4,
               fontWeight: 600,
             }}
           >
@@ -1252,30 +1243,20 @@ export const PortalRoomStudioPage: React.FC = () => {
 
           {placedItems.length > 0 && (
             <>
-              <span style={{ color: 'var(--brown-300)' }}>|</span>
+              <span style={{ color: 'rgba(208, 174, 146, 0.6)' }}>|</span>
               <button
                 onClick={handleClearAll}
                 title="Clear all furniture pieces from room"
                 style={{
                   background: 'none',
                   border: '1px solid rgba(192, 57, 43, 0.3)',
-                  borderRadius: 999,
-                  padding: '2px 10px',
+                  borderRadius: 6,
+                  padding: '2px 8px',
                   color: 'var(--danger)',
                   fontSize: 11,
                   fontWeight: 600,
                   fontFamily: 'var(--font-display)',
                   cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  transition: 'all 120ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--danger-bg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 <Trash2 size={12} />
@@ -1292,19 +1273,20 @@ export const PortalRoomStudioPage: React.FC = () => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 4,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(12px)',
+            backgroundColor: 'rgba(253, 250, 246, 0.94)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             padding: 4,
-            borderRadius: 999,
+            borderRadius: 8,
             border: '1px solid rgba(208, 174, 146, 0.45)',
-            boxShadow: 'var(--shadow-sm)',
+            boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
           }}
         >
           <button
             onClick={() => handleSetCameraView('walkin')}
             style={{
               padding: '5px 12px',
-              borderRadius: 999,
+              borderRadius: 6,
               border: 'none',
               fontSize: 12,
               fontWeight: cameraView === 'walkin' ? 700 : 500,
@@ -1326,7 +1308,7 @@ export const PortalRoomStudioPage: React.FC = () => {
             onClick={() => handleSetCameraView('overview')}
             style={{
               padding: '5px 12px',
-              borderRadius: 999,
+              borderRadius: 6,
               border: 'none',
               fontSize: 12,
               fontWeight: cameraView === 'overview' ? 700 : 500,
@@ -1348,7 +1330,7 @@ export const PortalRoomStudioPage: React.FC = () => {
             onClick={() => handleSetCameraView('topdown')}
             style={{
               padding: '5px 12px',
-              borderRadius: 999,
+              borderRadius: 6,
               border: 'none',
               fontSize: 12,
               fontWeight: cameraView === 'topdown' ? 700 : 500,
@@ -1377,12 +1359,13 @@ export const PortalRoomStudioPage: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(12px)',
-                padding: '7px 14px',
-                borderRadius: 999,
+                backgroundColor: 'rgba(253, 250, 246, 0.94)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                padding: '6px 12px',
+                borderRadius: 8,
                 border: '1px solid rgba(208, 174, 146, 0.45)',
-                boxShadow: 'var(--shadow-sm)',
+                boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
                 fontSize: 12,
                 fontWeight: 600,
                 fontFamily: 'var(--font-display)',
@@ -1403,9 +1386,9 @@ export const PortalRoomStudioPage: React.FC = () => {
                   right: 0,
                   width: 210,
                   backgroundColor: 'var(--surface)',
-                  borderRadius: 'var(--radius-md)',
+                  borderRadius: 8,
                   border: '1px solid var(--brown-300)',
-                  boxShadow: 'var(--shadow-md)',
+                  boxShadow: '0 8px 24px rgba(44, 34, 30, 0.12)',
                   padding: 6,
                   zIndex: 50,
                   display: 'flex',
@@ -1441,12 +1424,13 @@ export const PortalRoomStudioPage: React.FC = () => {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(12px)',
-                padding: '7px 14px',
-                borderRadius: 999,
+                backgroundColor: 'rgba(253, 250, 246, 0.94)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                padding: '6px 12px',
+                borderRadius: 8,
                 border: '1px solid rgba(208, 174, 146, 0.45)',
-                boxShadow: 'var(--shadow-sm)',
+                boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
                 fontSize: 12,
                 fontWeight: 600,
                 fontFamily: 'var(--font-display)',
@@ -1467,9 +1451,9 @@ export const PortalRoomStudioPage: React.FC = () => {
                   right: 0,
                   width: 230,
                   backgroundColor: 'var(--surface)',
-                  borderRadius: 'var(--radius-md)',
+                  borderRadius: 8,
                   border: '1px solid var(--brown-300)',
-                  boxShadow: 'var(--shadow-md)',
+                  boxShadow: '0 8px 24px rgba(44, 34, 30, 0.12)',
                   padding: 12,
                   zIndex: 50,
                   display: 'flex',
@@ -1478,15 +1462,16 @@ export const PortalRoomStudioPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--brown-700)', textTransform: 'uppercase', marginBottom: 6 }}>
-                    Natural Sunlight
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--brown-600)', marginBottom: 6 }}>
+                    Time of Day
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 4 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
                     <button
                       onClick={() => setAmbience('morning')}
                       style={{
                         ...styles.presetPill,
-                        backgroundColor: ambience === 'morning' ? 'var(--brown-900)' : 'var(--brown-100)',
+                        borderRadius: 6,
+                        backgroundColor: ambience === 'morning' ? 'var(--brown-900)' : 'var(--brown-50)',
                         color: ambience === 'morning' ? 'var(--cream)' : 'var(--brown-900)',
                       }}
                     >
@@ -1496,7 +1481,8 @@ export const PortalRoomStudioPage: React.FC = () => {
                       onClick={() => setAmbience('studio')}
                       style={{
                         ...styles.presetPill,
-                        backgroundColor: ambience === 'studio' ? 'var(--brown-900)' : 'var(--brown-100)',
+                        borderRadius: 6,
+                        backgroundColor: ambience === 'studio' ? 'var(--brown-900)' : 'var(--brown-50)',
                         color: ambience === 'studio' ? 'var(--cream)' : 'var(--brown-900)',
                       }}
                     >
@@ -1506,7 +1492,8 @@ export const PortalRoomStudioPage: React.FC = () => {
                       onClick={() => setAmbience('dusk')}
                       style={{
                         ...styles.presetPill,
-                        backgroundColor: ambience === 'dusk' ? 'var(--brown-900)' : 'var(--brown-100)',
+                        borderRadius: 6,
+                        backgroundColor: ambience === 'dusk' ? 'var(--brown-900)' : 'var(--brown-50)',
                         color: ambience === 'dusk' ? 'var(--cream)' : 'var(--brown-900)',
                       }}
                     >
@@ -1515,48 +1502,73 @@ export const PortalRoomStudioPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ height: 1, backgroundColor: 'var(--brown-100)' }} />
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--brown-900)', cursor: 'pointer' }}>
-                    <span>Ceiling Pendant Lights</span>
-                    <input
-                      type="checkbox"
-                      checked={ceilingLightOn}
-                      onChange={(e) => setCeilingLightOn(e.target.checked)}
-                      style={{ accentColor: 'var(--brown-900)', cursor: 'pointer' }}
-                    />
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--brown-900)', cursor: 'pointer' }}>
-                    <span>Floor Lamp</span>
-                    <input
-                      type="checkbox"
-                      checked={standingLampOn}
-                      onChange={(e) => setStandingLampOn(e.target.checked)}
-                      style={{ accentColor: 'var(--brown-900)', cursor: 'pointer' }}
-                    />
-                  </label>
+                <div>
+                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--brown-600)', marginBottom: 6 }}>
+                    Direct Fixtures
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => setCeilingLightOn((v) => !v)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        border: '1px solid rgba(208, 174, 146, 0.5)',
+                        backgroundColor: ceilingLightOn ? 'var(--brown-900)' : 'transparent',
+                        color: ceilingLightOn ? 'var(--cream)' : 'var(--brown-800)',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <Sun size={12} />
+                      Ceiling
+                    </button>
+                    <button
+                      onClick={() => setStandingLampOn((v) => !v)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 8px',
+                        borderRadius: 6,
+                        border: '1px solid rgba(208, 174, 146, 0.5)',
+                        backgroundColor: standingLampOn ? 'var(--brown-900)' : 'transparent',
+                        color: standingLampOn ? 'var(--cream)' : 'var(--brown-800)',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 4,
+                      }}
+                    >
+                      <Lightbulb size={12} />
+                      Floor Lamp
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* 1-Click Formal Quote CTA */}
+          {/* 1-Click Formal Quotation Generator */}
           <button
             onClick={handleRequestRoomQuote}
             disabled={placedItems.length === 0 || quoteSubmitting}
-            title={placedItems.length === 0 ? 'Place furniture pieces to request an official quote' : 'Generate official quotation & draft sales order'}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
               backgroundColor: placedItems.length > 0 ? 'var(--brown-900)' : 'rgba(255, 255, 255, 0.7)',
-              color: placedItems.length > 0 ? 'var(--cream)' : 'var(--brown-500)',
-              backdropFilter: 'blur(12px)',
-              padding: '7px 16px',
-              borderRadius: 999,
-              border: '1px solid rgba(208, 174, 146, 0.45)',
-              boxShadow: 'var(--shadow-sm)',
+              color: placedItems.length > 0 ? 'var(--cream)' : 'var(--brown-400)',
+              border: 'none',
+              padding: '7px 14px',
+              borderRadius: 8,
+              boxShadow: placedItems.length > 0 ? '0 4px 14px rgba(74, 58, 52, 0.2)' : 'none',
               fontSize: 12,
               fontWeight: 700,
               fontFamily: 'var(--font-display)',
@@ -1575,11 +1587,11 @@ export const PortalRoomStudioPage: React.FC = () => {
             style={{
               width: 32,
               height: 32,
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              backdropFilter: 'blur(12px)',
+              borderRadius: 8,
+              backgroundColor: 'rgba(253, 250, 246, 0.94)',
+              backdropFilter: 'blur(16px)',
               border: '1px solid rgba(208, 174, 146, 0.45)',
-              boxShadow: 'var(--shadow-sm)',
+              boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -1593,7 +1605,7 @@ export const PortalRoomStudioPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Selected Item Inspector HUD (Clean floating pill) ── */}
+      {/* ── Selected Item Inspector HUD (Architectural Control Strip) ── */}
       {selectedItem && (
         <div
           style={{
@@ -1601,39 +1613,64 @@ export const PortalRoomStudioPage: React.FC = () => {
             bottom: 24,
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(255, 255, 255, 0.96)',
-            backdropFilter: 'blur(16px)',
-            borderRadius: 999,
-            border: '1px solid rgba(208, 174, 146, 0.6)',
-            boxShadow: '0 8px 24px rgba(74, 58, 52, 0.15)',
-            padding: '6px 14px',
+            backgroundColor: 'rgba(253, 250, 246, 0.96)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: 12,
+            border: '1px solid rgba(208, 174, 146, 0.55)',
+            boxShadow: '0 12px 36px -4px rgba(44, 34, 30, 0.18)',
+            padding: '8px 16px',
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 12,
             zIndex: 30,
-            transition: 'all 200ms ease-out',
+            maxWidth: '92vw',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown-900)', fontFamily: 'var(--font-display)' }}>
+          {/* Piece Name & Status */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: 110, flexShrink: 0 }}>
+            <div
+              style={{
+                fontSize: 12.5,
+                fontWeight: 800,
+                color: 'var(--brown-900)',
+                fontFamily: 'var(--font-display)',
+                whiteSpace: 'nowrap',
+                maxWidth: 160,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={selectedItem.name}
+            >
               {selectedItem.name}
-            </span>
-            <span style={{ fontSize: 10, color: 'var(--brown-600)' }}>• Drag floor</span>
+            </div>
+            <div
+              style={{
+                fontSize: 9.5,
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--brown-600)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Drag floor to move
+            </div>
           </div>
 
-          <div style={{ height: 20, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
+          <div style={{ height: 24, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.45)', flexShrink: 0 }} />
 
-          {/* Size / Scaling Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: 'var(--brown-600)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Size:
+          {/* Size Scaling Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-600)', letterSpacing: '0.06em' }}>
+              SCALE
             </span>
             <button
               onClick={() => handleScaleSelected(0.9)}
-              title="Reduce size -10% (Minus key)"
+              title="Scale down 10% (-)"
               style={styles.hudActionBtn}
             >
-              <Minus size={12} />
+              <Minus size={11} />
             </button>
             <span
               style={{
@@ -1649,19 +1686,19 @@ export const PortalRoomStudioPage: React.FC = () => {
             </span>
             <button
               onClick={() => handleScaleSelected(1.1)}
-              title="Enlarge size +10% (Plus key)"
+              title="Scale up 10% (+)"
               style={styles.hudActionBtn}
             >
-              <Plus size={12} />
+              <Plus size={11} />
             </button>
           </div>
 
-          <div style={{ height: 20, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
+          <div style={{ height: 24, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.45)', flexShrink: 0 }} />
 
-          {/* Nudge Controls (Push flush to walls & into corners) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <span style={{ fontSize: 10, color: 'var(--brown-600)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: 2 }}>
-              Wall Align:
+          {/* Wall Alignment / Nudge D-Pad */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-600)', letterSpacing: '0.06em', marginRight: 2 }}>
+              ALIGN
             </span>
             <button
               onClick={() => handleNudgeSelected(-0.15, 0)}
@@ -1693,84 +1730,102 @@ export const PortalRoomStudioPage: React.FC = () => {
             </button>
           </div>
 
-          <div style={{ height: 20, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
+          <div style={{ height: 24, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.45)', flexShrink: 0 }} />
 
           {/* Rotation Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
             <button
               onClick={() => handleRotateSelected(-Math.PI / 4)}
               title="Rotate Left 45° (R)"
               style={styles.hudActionBtn}
             >
-              <RotateCcw size={13} />
+              <RotateCcw size={12} />
             </button>
             <button
               onClick={() => handleRotateSelected(Math.PI / 4)}
               title="Rotate Right 45° (R)"
               style={styles.hudActionBtn}
             >
-              <RotateCw size={13} />
+              <RotateCw size={12} />
             </button>
           </div>
 
-          <div style={{ height: 20, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
+          <div style={{ height: 24, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.45)', flexShrink: 0 }} />
 
-          {/* Wood Finish Swatches */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: 'var(--brown-600)', textTransform: 'uppercase', letterSpacing: '0.04em', marginRight: 2 }}>
-              Finish:
+          {/* Hardwood Finish Swatches */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-600)', letterSpacing: '0.06em', marginRight: 2 }}>
+              FINISH
             </span>
-            {(['oak', 'teak', 'walnut', 'charcoal'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => handleUpdateFinishSelected(f)}
-                title={`Select ${f.toUpperCase()} finish`}
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  backgroundColor: f === 'oak' ? '#D8C5A8' : f === 'teak' ? '#C28247' : f === 'walnut' ? '#4A3326' : '#2C2D2F',
-                  border: (selectedItem.finish || 'oak') === f ? '2px solid var(--brown-900)' : '1px solid rgba(0,0,0,0.15)',
-                  cursor: 'pointer',
-                  padding: 0,
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
-                }}
-              />
-            ))}
+            {(['oak', 'teak', 'walnut', 'charcoal'] as const).map((f) => {
+              const isSelected = (selectedItem.finish || 'oak') === f;
+              return (
+                <button
+                  key={f}
+                  onClick={() => handleUpdateFinishSelected(f)}
+                  title={`Select ${f.toUpperCase()} finish`}
+                  style={{
+                    width: 17,
+                    height: 17,
+                    borderRadius: '50%',
+                    backgroundColor: f === 'oak' ? '#D8C5A8' : f === 'teak' ? '#C28247' : f === 'walnut' ? '#4A3326' : '#2C2D2F',
+                    border: '1px solid rgba(0,0,0,0.18)',
+                    outline: isSelected ? '2px solid var(--brown-900)' : 'none',
+                    outlineOffset: 1.5,
+                    cursor: 'pointer',
+                    padding: 0,
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                    transition: 'all 120ms ease',
+                  }}
+                />
+              );
+            })}
           </div>
 
-          <div style={{ height: 20, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
+          <div style={{ height: 24, width: 1, backgroundColor: 'rgba(208, 174, 146, 0.45)', flexShrink: 0 }} />
 
-          {/* Duplicate piece */}
-          <button
-            onClick={handleDuplicateSelected}
-            title="Duplicate furniture piece"
-            style={styles.hudActionBtn}
-          >
-            <Copy size={13} />
-          </button>
+          {/* Action Tools: Duplicate, Delete, Deselect */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+            {/* Duplicate */}
+            <button
+              onClick={handleDuplicateSelected}
+              title="Duplicate piece"
+              style={styles.hudActionBtn}
+            >
+              <Copy size={12} />
+            </button>
 
-          {/* Delete piece from room */}
-          <button
-            onClick={handleRemoveSelected}
-            title="Remove from room (Backspace)"
-            style={{
-              ...styles.hudActionBtn,
-              color: 'var(--danger)',
-              backgroundColor: 'var(--danger-bg)',
-            }}
-          >
-            <Trash2 size={13} />
-          </button>
+            {/* Remove */}
+            <button
+              onClick={handleRemoveSelected}
+              title="Remove from room (Backspace)"
+              style={{
+                ...styles.hudActionBtn,
+                color: 'var(--danger)',
+                backgroundColor: 'var(--danger-bg)',
+                borderColor: 'rgba(158, 74, 56, 0.35)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--danger)';
+                e.currentTarget.style.color = '#FFFFFF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--danger-bg)';
+                e.currentTarget.style.color = 'var(--danger)';
+              }}
+            >
+              <Trash2 size={12} />
+            </button>
 
-          {/* Deselect */}
-          <button
-            onClick={() => setSelectedInstanceId(null)}
-            title="Deselect"
-            style={{ ...styles.hudActionBtn, color: 'var(--brown-600)' }}
-          >
-            <X size={13} />
-          </button>
+            {/* Close / Deselect */}
+            <button
+              onClick={() => setSelectedInstanceId(null)}
+              title="Close inspector"
+              style={{ ...styles.hudActionBtn, color: 'var(--brown-600)' }}
+            >
+              <X size={12} />
+            </button>
+          </div>
         </div>
       )}
 
