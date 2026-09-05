@@ -380,7 +380,7 @@ export class InvoiceService {
       q += ` AND ci.customer_id = $${params.length}`;
     }
 
-    q += ` ORDER BY ci.id DESC`;
+    q += ` ORDER BY ci.invoice_date DESC, ci.id DESC`;
 
     const res = await pool.query(q, params);
     return res.rows.map(inv => ({

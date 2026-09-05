@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CustomerInvoiceDTO } from '@shared/schemas/invoice';
-import { Mic } from 'lucide-react';
+import { Mic, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 export interface CustomerInvoiceListPageProps {
   onSelectInvoice?: (id: number) => void;
   onNewInvoice?: () => void;
 }
 
+type SortField = 'number' | 'customer' | 'invoiceDate' | 'paymentStatus' | 'amountDue' | 'total';
+
 export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = ({ onSelectInvoice, onNewInvoice }) => {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<CustomerInvoiceDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sortField, setSortField] = useState<SortField>('invoiceDate');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     fetch('/api/invoices')
@@ -25,10 +29,76 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = invoices.filter(inv => {
-    if (filterStatus === 'all') return true;
-    return inv.status === filterStatus || inv.paymentStatus === filterStatus;
-  });
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
+  };
+
+  const filtered = useMemo(() => {
+    return invoices.filter(inv => {
+      if (filterStatus === 'all') return true;
+      return inv.status === filterStatus || inv.paymentStatus === filterStatus;
+    });
+  }, [invoices, filterStatus]);
+
+  const sorted = useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'invoiceDate') {
+        const timeA = a.invoiceDate ? new Date(a.invoiceDate).getTime() : 0;
+        const timeB = b.invoiceDate ? new Date(b.invoiceDate).getTime() : 0;
+        cmp = timeA - timeB;
+      } else if (sortField === 'number') {
+        cmp = (a.number || '').localeCompare(b.number || '');
+      } else if (sortField === 'customer') {
+        const nameA = a.customerName || `Customer #${a.customerId}`;
+        const nameB = b.customerName || `Customer #${b.customerId}`;
+        cmp = nameA.localeCompare(nameB);
+      } else if (sortField === 'paymentStatus') {
+        const statusA = a.paymentStatus || a.status || '';
+        const statusB = b.paymentStatus || b.status || '';
+        cmp = statusA.localeCompare(statusB);
+      } else if (sortField === 'amountDue') {
+        cmp = parseFloat(a.amountDue || '0') - parseFloat(b.amountDue || '0');
+      } else if (sortField === 'total') {
+        cmp = parseFloat(a.total || '0') - parseFloat(b.total || '0');
+      }
+
+      if (cmp === 0) {
+        return b.id - a.id;
+      }
+      return sortDirection === 'desc' ? -cmp : cmp;
+    });
+  }, [filtered, sortField, sortDirection]);
+
+  const renderSortHeader = (label: string, field: SortField, alignRight = false) => {
+    const isCurrent = sortField === field;
+    return (
+      <th
+        onClick={() => handleSort(field)}
+        className={`p-3.5 cursor-pointer hover:bg-brown-200/70 transition-colors select-none group ${
+          alignRight ? 'text-right' : 'text-left'
+        }`}
+      >
+        <div className={`inline-flex items-center gap-1.5 ${alignRight ? 'justify-end' : 'justify-start'}`}>
+          <span>{label}</span>
+          {isCurrent ? (
+            sortDirection === 'desc' ? (
+              <ArrowDown className="w-3.5 h-3.5 text-brown-900 shrink-0" />
+            ) : (
+              <ArrowUp className="w-3.5 h-3.5 text-brown-900 shrink-0" />
+            )
+          ) : (
+            <ArrowUpDown className="w-3.5 h-3.5 text-brown-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+          )}
+        </div>
+      </th>
+    );
+  };
 
   return (
     <div className="w-full">
@@ -72,12 +142,12 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="bg-brown-100 text-brown-900 font-semibold border-b border-brown-300">
-                <th className="p-3.5">Invoice Number</th>
-                <th className="p-3.5">Customer</th>
-                <th className="p-3.5">Invoice Date</th>
-                <th className="p-3.5">Payment Status</th>
-                <th className="p-3.5 text-right font-mono-num">Amount Due</th>
-                <th className="p-3.5 text-right font-mono-num">Total Amount</th>
+                {renderSortHeader('Invoice Number', 'number')}
+                {renderSortHeader('Customer', 'customer')}
+                {renderSortHeader('Invoice Date', 'invoiceDate')}
+                {renderSortHeader('Payment Status', 'paymentStatus')}
+                {renderSortHeader('Amount Due', 'amountDue', true)}
+                {renderSortHeader('Total Amount', 'total', true)}
               </tr>
             </thead>
             <tbody className="divide-y divide-brown-100/70">
@@ -87,14 +157,14 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                     Loading customer invoices...
                   </td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : sorted.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-brown-500">
                     No invoices found. Click <strong>+ New Invoice</strong> or convert from a Sales Order.
                   </td>
                 </tr>
               ) : (
-                filtered.map(inv => (
+                sorted.map(inv => (
                   <tr
                     key={inv.id}
                     onClick={() => onSelectInvoice ? onSelectInvoice(inv.id) : navigate(`/sales/invoices/${inv.id}`)}
@@ -107,7 +177,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                       )}
                     </td>
                     <td className="p-3.5 text-brown-700">{inv.customerName || `Customer #${inv.customerId}`}</td>
-                    <td className="p-3.5 text-brown-500">{inv.invoiceDate}</td>
+                    <td className="p-3.5 text-brown-600 font-mono text-xs">{inv.invoiceDate}</td>
                     <td className="p-3.5">
                       <StatusBadge status={((inv.paymentStatus || inv.status) as any) || 'draft'} />
                     </td>

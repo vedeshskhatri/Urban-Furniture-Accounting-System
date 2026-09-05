@@ -76,7 +76,7 @@ export class VendorBillService {
       FROM vendor_bills vb
       JOIN contacts c ON vb.vendor_id = c.id
       LEFT JOIN v_bill_status vbs ON vb.id = vbs.bill_id
-      ORDER BY vb.id DESC
+      ORDER BY vb.bill_date DESC, vb.id DESC
     `);
 
     const bills = res.rows;
