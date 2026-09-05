@@ -1,83 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Link, Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import {
-  LucideIcon,
   ChevronDown,
   LayoutDashboard,
   LogOut,
   User,
-  Users,
-  Package,
-  Landmark,
-  BookOpen,
-  BookText,
-  PieChart,
-  FileBarChart,
-  ShoppingCart,
-  Receipt,
-  DollarSign,
-  CreditCard,
-  ShoppingBag,
-  FileText,
-  FileCheck,
-  Scale,
-  TrendingUp,
-  ShieldCheck,
-  ScrollText,
-  BarChart2,
-  FileSpreadsheet,
-  FolderCheck,
-  Activity,
 } from 'lucide-react';
 import { MegaMenu } from './MegaMenu';
 import RecordTimelineDrawer from '../audit/RecordTimelineDrawer';
 import api from '../../lib/axios';
 import { BrandLogo } from '../ui/BrandLogo';
 import { GlobalCommandPalette } from '../common/GlobalCommandPalette';
-
-interface SubNavItem {
-  label: string;
-  to: string;
-  icon: LucideIcon;
-  adminOnly?: boolean;
-}
-
-const MODULE_SUBNAV_MAP: Record<string, SubNavItem[]> = {
-  account: [
-    { label: 'Contacts', to: '/account/contacts', icon: Users },
-    { label: 'Products & Services', to: '/account/products', icon: Package },
-    { label: 'Chart of Accounts', to: '/account/coa', icon: Landmark },
-    { label: 'Journals', to: '/account/journals', icon: BookOpen },
-    { label: 'Journal Entries', to: '/account/journal-entries', icon: BookText },
-    { label: 'Analyticals', to: '/account/analytics', icon: PieChart },
-    { label: 'Analytical Budget', to: '/account/budgets', icon: FileBarChart },
-  ],
-  sales: [
-    { label: 'Sales Orders', to: '/sales/orders', icon: ShoppingCart },
-    { label: 'Customer Invoices', to: '/sales/invoices', icon: Receipt },
-    { label: 'Receivables', to: '/sales/receivables', icon: DollarSign },
-    { label: 'Register Payment', to: '/sales/payments', icon: CreditCard },
-  ],
-  purchase: [
-    { label: 'Purchase Orders', to: '/purchase/orders', icon: ShoppingBag },
-    { label: 'Vendor Bills', to: '/purchase/bills', icon: FileText },
-    { label: 'Vendor Statements', to: '/purchase/statements', icon: FileCheck },
-  ],
-  report: [
-    { label: 'Balance Sheet', to: '/report/balance-sheet', icon: Scale },
-    { label: 'Profit & Loss', to: '/report/profit-loss', icon: TrendingUp },
-    { label: 'Budget Performance', to: '/report/budget', icon: FileBarChart },
-    { label: 'Analytics Engine', to: '/analytics', icon: BarChart2 },
-    { label: 'System Integrity', to: '/integrity', icon: ShieldCheck },
-    { label: 'Live Monitor', to: '/monitor', icon: Activity },
-    { label: 'Audit Log & Chatter', to: '/audit', icon: ScrollText },
-  ],
-  tools: [
-    { label: 'Template Library', to: '/tools/templates', icon: FileSpreadsheet },
-    { label: 'My Saved Templates', to: '/tools/templates?tab=saved', icon: FolderCheck },
-    { label: 'Template Management', to: '/tools/templates/manage', icon: ShieldCheck, adminOnly: true },
-  ],
-};
 
 export default function AppShell() {
   const location = useLocation();
@@ -133,18 +66,10 @@ export default function AppShell() {
     ? ['Sales', 'Purchase', 'Report', 'Tools']
     : ['Sales', 'Purchase', 'Account', 'Report', 'Tools'];
 
-  // Determine active module and whether sub-nav should be displayed
+  // Determine active module
   const activeModule = ['sales', 'purchase', 'account', 'report', 'tools'].find((m) =>
     location.pathname.startsWith(`/${m}`)
   );
-
-  const isFormView =
-    location.pathname.endsWith('/new') ||
-    /\/\d+$/.test(location.pathname);
-
-  const currentSubNav = activeModule
-    ? (MODULE_SUBNAV_MAP[activeModule] ?? []).filter((it) => !it.adminOnly || currentUser?.role === 'admin')
-    : null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--cream)' }}>
@@ -354,66 +279,6 @@ export default function AppShell() {
           </div>
         </div>
       </header>
-
-      {/* ── Sub-Navigation Secondary Toolbar (Flush underneath Header) ── */}
-      {currentSubNav && !isFormView && (
-        <nav
-          aria-label="Module Navigation"
-          style={{
-            background: 'var(--surface)',
-            borderBottom: '1px solid rgba(208, 174, 146, 0.35)',
-            boxShadow: '0 1px 2px rgba(74, 58, 52, 0.02)',
-            position: 'sticky',
-            top: 56,
-            zIndex: 90,
-          }}
-        >
-          <div
-            style={{
-              maxWidth: 1400,
-              margin: '0 auto',
-              padding: '0 24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              overflowX: 'auto',
-              height: 44,
-            }}
-          >
-            {currentSubNav.map(({ label, to, icon: Icon }) => {
-              const isActive =
-                location.pathname === to ||
-                (to !== `/${activeModule}` && location.pathname.startsWith(`${to}/`));
-
-              return (
-                <NavLink
-                  key={to}
-                  to={to}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '5px 12px',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    fontFamily: 'var(--font-body)',
-                    fontWeight: isActive ? 600 : 500,
-                    color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
-                    background: isActive ? 'rgba(235, 215, 190, 0.45)' : 'transparent',
-                    border: isActive ? '1px solid rgba(208, 174, 146, 0.5)' : '1px solid transparent',
-                    textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 120ms ease',
-                  }}
-                >
-                  <Icon size={14} style={{ opacity: isActive ? 1 : 0.7 }} />
-                  <span>{label}</span>
-                </NavLink>
-              );
-            })}
-          </div>
-        </nav>
-      )}
 
       {/* ── Page Content ── */}
       <main
