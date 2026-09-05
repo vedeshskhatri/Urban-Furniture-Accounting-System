@@ -195,11 +195,11 @@ export default function AppShell() {
             </NavLink>
           </div>
 
-          {/* Center: Module Navigation Headings directly in the center above the MegaMenu */}
+          {/* Center: Module Navigation Headings shifted slightly leftwards for optical balance */}
           <nav
             style={{
               position: 'absolute',
-              left: '50%',
+              left: '44%',
               transform: 'translateX(-50%)',
               display: 'flex',
               alignItems: 'center',
