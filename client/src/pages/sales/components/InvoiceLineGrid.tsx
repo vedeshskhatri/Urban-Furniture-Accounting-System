@@ -96,32 +96,34 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
   const grandTotal = lines.reduce((acc, l) => acc.plus(l.total || '0'), new Decimal(0)).toFixed(2);
 
   return (
-    <div className="bg-surface border border-brown-300 rounded-[10px] p-6 shadow-sm">
+    <div className="bg-surface border border-brown-300 rounded-[12px] p-6 shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-sm">
           <thead>
-            <tr className="border-b border-brown-300 bg-brown-100/50 text-brown-900 font-semibold">
-              <th className="p-3 w-12 text-center">Sr.</th>
-              <th className="p-3 min-w-[200px]">Product *</th>
-              <th className="p-3 min-w-[180px]">Chart of Account *</th>
-              <th className="p-3 min-w-[160px]">Budget Analytics</th>
-              <th className="p-3 w-24 text-right">Qty *</th>
-              <th className="p-3 w-32 text-right">Unit Price *</th>
-              <th className="p-3 w-24 text-right">Tax (%)</th>
-              <th className="p-3 w-32 text-right font-mono-num">Line Total</th>
-              {!disabled && <th className="p-3 w-12 text-center"></th>}
+            <tr className="border-b border-brown-300 bg-brown-100/60 text-brown-900 font-semibold text-xs uppercase tracking-wider">
+              <th className="py-3 px-3 w-12 text-center">#</th>
+              <th className="py-3 px-3 min-w-[280px]">Product *</th>
+              <th className="py-3 px-3 min-w-[230px]">Chart of Account *</th>
+              <th className="py-3 px-3 min-w-[200px]">Budget Analytics</th>
+              <th className="py-3 px-3 w-28 min-w-[90px] text-center">Qty *</th>
+              <th className="py-3 px-3 w-48 min-w-[170px] text-right">Unit Price *</th>
+              <th className="py-3 px-3 w-28 min-w-[100px] text-center">Tax (%)</th>
+              <th className="py-3 px-3 w-36 min-w-[130px] text-right font-mono-num">Line Total</th>
+              {!disabled && <th className="py-3 px-2 w-10 text-center"></th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-brown-100">
             {lines.map((line, idx) => (
-              <tr key={idx} className="hover:bg-brown-100/30 transition-colors">
-                <td className="p-3 text-center text-brown-500 font-mono text-xs">{idx + 1}</td>
-                <td className="p-3">
+              <tr key={idx} className="hover:bg-brown-50/50 transition-colors">
+                <td className="py-3.5 px-3 text-center text-brown-500 font-mono text-xs select-none">
+                  {idx + 1}
+                </td>
+                <td className="py-3.5 px-3">
                   <select
                     disabled={disabled}
                     value={line.productId}
                     onChange={e => handleLineChange(idx, 'productId', Number(e.target.value))}
-                    className="w-full bg-surface border border-brown-300 rounded-[6px] px-2.5 py-1.5 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                    className="w-full bg-surface border border-brown-300 rounded-[8px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 focus:border-brown-700 outline-none text-sm transition-shadow disabled:bg-brown-50/50"
                   >
                     <option value={0} disabled>Select product...</option>
                     {products.map(p => (
@@ -131,12 +133,12 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     ))}
                   </select>
                 </td>
-                <td className="p-3">
+                <td className="py-3.5 px-3">
                   <select
                     disabled={disabled}
                     value={line.accountId}
                     onChange={e => handleLineChange(idx, 'accountId', Number(e.target.value))}
-                    className="w-full bg-surface border border-brown-300 rounded-[6px] px-2.5 py-1.5 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                    className="w-full bg-surface border border-brown-300 rounded-[8px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 focus:border-brown-700 outline-none text-sm transition-shadow disabled:bg-brown-50/50"
                   >
                     {accounts.map(a => (
                       <option key={a.id} value={a.id}>
@@ -145,12 +147,12 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     ))}
                   </select>
                 </td>
-                <td className="p-3">
+                <td className="py-3.5 px-3">
                   <select
                     disabled={disabled}
                     value={line.analyticAccountId || ''}
                     onChange={e => handleLineChange(idx, 'analyticAccountId', e.target.value ? Number(e.target.value) : null)}
-                    className="w-full bg-surface border border-brown-300 rounded-[6px] px-2.5 py-1.5 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                    className="w-full bg-surface border border-brown-300 rounded-[8px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 focus:border-brown-700 outline-none text-sm transition-shadow disabled:bg-brown-50/50"
                   >
                     <option value="">No Analytic Distribution</option>
                     {analytics.map(a => (
@@ -160,7 +162,7 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     ))}
                   </select>
                 </td>
-                <td className="p-3">
+                <td className="py-3.5 px-3">
                   <input
                     type="number"
                     min="1"
@@ -168,18 +170,20 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     disabled={disabled}
                     value={line.qty}
                     onChange={e => handleLineChange(idx, 'qty', e.target.value)}
-                    className="w-full text-right bg-surface border border-brown-300 rounded-[6px] px-2.5 py-1.5 text-brown-900 font-mono focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                    className="w-full text-center bg-surface border border-brown-300 rounded-[8px] px-2.5 py-2 text-brown-900 font-mono focus:ring-2 focus:ring-brown-700 focus:border-brown-700 outline-none text-sm transition-shadow disabled:bg-brown-50/50"
                   />
                 </td>
-                <td className="p-3">
+                <td className="py-3.5 px-3">
                   <div className="relative">
-                    <span className="absolute left-2.5 top-1.5 text-brown-500 text-xs">₹</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-brown-500 text-xs font-mono select-none pointer-events-none">
+                      ₹
+                    </span>
                     <input
                       type="text"
                       disabled={disabled}
                       value={line.unitPrice}
                       onChange={e => handleLineChange(idx, 'unitPrice', e.target.value)}
-                      className="w-full text-right pl-6 bg-surface border border-brown-300 rounded-[6px] px-2.5 py-1.5 text-brown-900 font-mono focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                      className="w-full text-right pl-7 pr-3 bg-surface border border-brown-300 rounded-[8px] py-2 text-brown-900 font-mono focus:ring-2 focus:ring-brown-700 focus:border-brown-700 outline-none text-sm transition-shadow disabled:bg-brown-50/50"
                     />
                   </div>
                   {(() => {
@@ -192,14 +196,18 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     const lineProfit = pCost && pCost.greaterThan(0) ? uPrice.minus(pCost).times(new Decimal(line.qty || '1')) : null;
 
                     return (
-                      <div className="space-y-0.5 mt-1 text-right">
+                      <div className="space-y-1 mt-1.5 flex flex-col items-end">
                         {isOverMrp && (
-                          <span className="text-[10px] font-semibold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300 inline-block whitespace-nowrap">
+                          <span className="text-[10px] font-semibold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-300 inline-block whitespace-nowrap shadow-2xs">
                             ⚠️ Exceeds MRP (₹{p.mrp})
                           </span>
                         )}
                         {lineProfit && (
-                          <span className={`text-[10px] block font-mono ${lineProfit.greaterThanOrEqualTo(0) ? 'text-emerald-700' : 'text-rose-700 font-bold'}`}>
+                          <span className={`text-[11px] font-mono font-medium px-2 py-0.5 rounded-full border inline-block whitespace-nowrap shadow-2xs ${
+                            lineProfit.greaterThanOrEqualTo(0)
+                              ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                              : 'text-rose-700 bg-rose-50 border-rose-200 font-semibold'
+                          }`}>
                             {lineProfit.greaterThanOrEqualTo(0) ? 'Profit: +₹' : 'Loss: -₹'}{lineProfit.abs().toFixed(2)}
                           </span>
                         )}
@@ -207,12 +215,12 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     );
                   })()}
                 </td>
-                <td className="p-3">
+                <td className="py-3.5 px-3">
                   <select
                     disabled={disabled}
                     value={line.taxRate}
                     onChange={e => handleLineChange(idx, 'taxRate', e.target.value)}
-                    className="w-full text-right bg-surface border border-brown-300 rounded-[6px] px-2 py-1.5 text-brown-900 font-mono text-sm focus:ring-2 focus:ring-brown-700 outline-none"
+                    className="w-full text-center bg-surface border border-brown-300 rounded-[8px] px-2 py-2 text-brown-900 font-mono text-sm focus:ring-2 focus:ring-brown-700 focus:border-brown-700 outline-none transition-shadow disabled:bg-brown-50/50"
                   >
                     <option value="0.00">0%</option>
                     <option value="5.00">5%</option>
@@ -221,16 +229,17 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
                     <option value="28.00">28%</option>
                   </select>
                 </td>
-                <td className="p-3 text-right font-mono font-bold text-brown-900">
+                <td className="py-3.5 px-3 text-right font-mono font-bold text-brown-900 text-sm whitespace-nowrap">
                   ₹{line.total || '0.00'}
                 </td>
                 {!disabled && (
-                  <td className="p-3 text-center">
+                  <td className="py-3.5 px-2 text-center">
                     <button
                       type="button"
                       onClick={() => removeRow(idx)}
                       disabled={lines.length <= 1}
-                      className="text-danger hover:text-red-700 disabled:opacity-30 disabled:cursor-not-allowed text-base font-bold"
+                      title="Remove line"
+                      className="p-1 rounded-md text-brown-400 hover:text-danger hover:bg-rose-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-brown-400 disabled:cursor-not-allowed transition-colors text-sm font-bold"
                     >
                       ✕
                     </button>
@@ -247,9 +256,10 @@ export const InvoiceLineGrid: React.FC<InvoiceLineGridProps> = ({
           <button
             type="button"
             onClick={addRow}
-            className="px-3 py-1.5 text-xs font-semibold text-brown-900 bg-brown-100 hover:bg-brown-300/60 rounded-[6px] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-brown-900 bg-brown-100/80 hover:bg-brown-200 border border-brown-300/80 rounded-[8px] transition-colors shadow-2xs"
           >
-            + Add Line Item
+            <span>+</span>
+            <span>Add Line Item</span>
           </button>
         </div>
       )}
