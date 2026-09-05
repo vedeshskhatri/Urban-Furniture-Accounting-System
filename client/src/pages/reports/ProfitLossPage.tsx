@@ -1,7 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Decimal from 'decimal.js';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+} from 'recharts';
 import { ReportsApi, ProfitLossReport } from '../../api/reports.api';
 import Money from '../../components/ui/Money';
 import LedgerDrilldownModal from './LedgerDrilldownModal';
@@ -9,7 +20,33 @@ import {
   Printer,
   Calendar,
   RefreshCw,
+  BarChart3,
+  PieChart as PieIcon,
+  TrendingUp,
+  TrendingDown,
+  Layers,
 } from 'lucide-react';
+
+const EXPENSE_PALETTE = [
+  '#77574A',
+  '#9E4A38',
+  '#C08A3E',
+  '#A8836C',
+  '#5F7052',
+  '#4A3A34',
+  '#D0AE92',
+  '#8C6D58',
+];
+
+function formatDisplayINR(num: number): string {
+  if (Math.abs(num) >= 10000000) {
+    return `₹${(num / 10000000).toFixed(2)} Cr`;
+  }
+  if (Math.abs(num) >= 100000) {
+    return `₹${(num / 100000).toFixed(2)} L`;
+  }
+  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+}
 
 export default function ProfitLossPage() {
   const navigate = useNavigate();
@@ -21,6 +58,7 @@ export default function ProfitLossPage() {
     id: number;
     name: string;
   } | null>(null);
+  const [activeViewMode, setActiveViewMode] = useState<'both' | 'charts' | 'statement'>('both');
 
   const {
     data: report,
@@ -35,35 +73,57 @@ export default function ProfitLossPage() {
     window.print();
   };
 
-  const setPreset = (preset: 'month' | 'quarter' | 'year' | 'fy26') => {
-    const today = new Date();
-    const y = today.getFullYear();
-    if (preset === 'month') {
-      const firstDay = new Date(y, today.getMonth(), 1).toISOString().split('T')[0];
-      const lastDay = new Date(y, today.getMonth() + 1, 0).toISOString().split('T')[0];
-      setFromDate(firstDay);
-      setToDate(lastDay);
-    } else if (preset === 'quarter') {
-      const q = Math.floor(today.getMonth() / 3);
-      const firstDay = new Date(y, q * 3, 1).toISOString().split('T')[0];
-      const lastDay = new Date(y, (q + 1) * 3, 0).toISOString().split('T')[0];
-      setFromDate(firstDay);
-      setToDate(lastDay);
-    } else if (preset === 'year') {
-      setFromDate(`${y}-01-01`);
-      setToDate(`${y}-12-31`);
-    } else if (preset === 'fy26') {
-      setFromDate('2026-04-01');
-      setToDate('2027-03-31');
-    }
-  };
-
   const isNetProfitPositive = report
     ? new Decimal(report.netProfit || '0').greaterThanOrEqualTo(0)
     : true;
 
+  // Chart aggregates computed deterministically with Decimal.js
+  const totalIncomeDec = useMemo(() => new Decimal(report?.totalIncome || '0'), [report]);
+  const totalExpenseDec = useMemo(() => new Decimal(report?.totalExpenses || '0'), [report]);
+  const netProfitDec = useMemo(() => new Decimal(report?.netProfit || '0'), [report]);
+
+  const netMarginPct = useMemo(() => {
+    if (totalIncomeDec.isZero()) return '0.0';
+    return netProfitDec.div(totalIncomeDec).times(100).toFixed(1);
+  }, [totalIncomeDec, netProfitDec]);
+
+  // Waterfall / Bridge Bar Data
+  const bridgeChartData = useMemo(() => {
+    return [
+      {
+        name: 'Gross Revenue',
+        amount: totalIncomeDec.toNumber(),
+        fill: '#5F7052', // Olive
+      },
+      {
+        name: 'Total Expense',
+        amount: totalExpenseDec.toNumber(),
+        fill: '#9E4A38', // Terracotta
+      },
+      {
+        name: netProfitDec.gte(0) ? 'Net Profit' : 'Net Loss',
+        amount: Math.abs(netProfitDec.toNumber()),
+        fill: netProfitDec.gte(0) ? '#5F7052' : '#9E4A38',
+      },
+    ];
+  }, [totalIncomeDec, totalExpenseDec, netProfitDec]);
+
+  // Expense distribution donut data
+  const expenseDonutData = useMemo(() => {
+    if (!report?.expenses) return [];
+    return report.expenses
+      .filter((e) => new Decimal(e.total || '0').gt(0))
+      .map((e, idx) => ({
+        id: e.accountId,
+        name: e.accountName,
+        value: new Decimal(e.total || '0').toNumber(),
+        color: EXPENSE_PALETTE[idx % EXPENSE_PALETTE.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [report]);
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 900, margin: '0 auto', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1080, margin: '0 auto', width: '100%' }}>
       {/* ── Top Control Bar (Hidden from Print) ── */}
       <div
         className="no-print"
@@ -191,8 +251,81 @@ export default function ProfitLossPage() {
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* View Switcher & Action Buttons */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Visual Mode Selector */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: 'rgba(235, 215, 190, 0.3)',
+              padding: 3,
+              borderRadius: 8,
+              border: '1px solid rgba(208, 174, 146, 0.3)',
+              gap: 2,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveViewMode('both')}
+              style={{
+                background: activeViewMode === 'both' ? 'var(--surface)' : 'transparent',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: activeViewMode === 'both' ? 'var(--brown-900)' : 'var(--brown-600)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <Layers size={13} />
+              <span>Combined</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveViewMode('charts')}
+              style={{
+                background: activeViewMode === 'charts' ? 'var(--surface)' : 'transparent',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: activeViewMode === 'charts' ? 'var(--brown-900)' : 'var(--brown-600)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <BarChart3 size={13} />
+              <span>Visual Charts</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveViewMode('statement')}
+              style={{
+                background: activeViewMode === 'statement' ? 'var(--surface)' : 'transparent',
+                border: 'none',
+                borderRadius: 6,
+                padding: '5px 10px',
+                fontSize: 11,
+                fontWeight: 600,
+                color: activeViewMode === 'statement' ? 'var(--brown-900)' : 'var(--brown-600)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <span>Statement</span>
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={() => refetch()}
@@ -245,7 +378,267 @@ export default function ProfitLossPage() {
         </div>
       </div>
 
+      {/* ── Executive Visual Analytics Hub ── */}
+      {(activeViewMode === 'charts' || activeViewMode === 'both') && (
+        <div
+          className="no-print"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            background: 'var(--surface)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(208, 174, 146, 0.4)',
+            padding: '24px 28px',
+            boxShadow: '0 1px 4px rgba(74, 58, 52, 0.04)',
+          }}
+        >
+          {/* Financial Summary Ribbon */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: 14,
+              paddingBottom: 18,
+              borderBottom: '1px solid rgba(208, 174, 146, 0.3)',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--brown-500)' }}>
+                Total Revenue
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--posted)' }}>
+                ₹{totalIncomeDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>Invoiced gross turnover</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--brown-500)' }}>
+                Operating Expenses
+              </span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: '#9E4A38' }}>
+                ₹{totalExpenseDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>Total posted overheads</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--brown-500)' }}>
+                Net Operating Result
+              </span>
+              <span
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: netProfitDec.gte(0) ? 'var(--posted)' : '#9E4A38',
+                }}
+              >
+                ₹{netProfitDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>
+                {netProfitDec.gte(0) ? 'Profitable operation' : 'Operating loss period'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--brown-500)' }}>
+                Net Profit Margin
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 22,
+                    fontWeight: 700,
+                    color: netProfitDec.gte(0) ? 'var(--posted)' : '#9E4A38',
+                  }}
+                >
+                  {netMarginPct}%
+                </span>
+                {netProfitDec.gte(0) ? (
+                  <TrendingUp size={18} style={{ color: 'var(--posted)' }} />
+                ) : (
+                  <TrendingDown size={18} style={{ color: '#9E4A38' }} />
+                )}
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>Net margin on gross sales</span>
+            </div>
+          </div>
+
+          {/* Interactive Visual Graphs Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))', gap: 24, paddingTop: 6 }}>
+            {/* Chart 1: Profitability Bridge & Margins */}
+            <div
+              style={{
+                background: 'rgba(235, 215, 190, 0.1)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid rgba(208, 174, 146, 0.35)',
+                padding: '16px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <BarChart3 size={16} style={{ color: 'var(--brown-700)' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown-900)' }}>
+                    Profitability Flow & Margin
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)' }}>
+                  Revenue vs Outflow
+                </span>
+              </div>
+
+              <div style={{ height: 230, width: '100%' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={bridgeChartData} margin={{ top: 12, right: 12, left: -10, bottom: 4 }}>
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: '#77574A', fontSize: 11, fontFamily: 'var(--font-body)' }}
+                      axisLine={{ stroke: 'rgba(208, 174, 146, 0.5)' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={formatDisplayINR}
+                      tick={{ fill: '#77574A', fontSize: 10, fontFamily: 'var(--font-mono)' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <RechartsTooltip
+                      formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Amount']}
+                      contentStyle={{
+                        background: '#FFF',
+                        borderRadius: 8,
+                        border: '1px solid rgba(208, 174, 146, 0.5)',
+                        fontSize: 12,
+                        fontFamily: 'var(--font-mono)',
+                      }}
+                    />
+                    <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
+                      {bridgeChartData.map((entry, index) => (
+                        <Cell key={`bridge-cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Chart 2: Operating Expense Allocation Donut */}
+            <div
+              style={{
+                background: 'rgba(235, 215, 190, 0.1)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid rgba(208, 174, 146, 0.35)',
+                padding: '16px 18px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <PieIcon size={16} style={{ color: 'var(--brown-700)' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown-900)' }}>
+                    Expense Allocation by Category
+                  </span>
+                </div>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)' }}>
+                  Click slice to inspect ledger
+                </span>
+              </div>
+
+              {expenseDonutData.length > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', height: 230 }}>
+                  <div style={{ width: '55%', height: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={expenseDonutData}
+                          innerRadius={55}
+                          outerRadius={80}
+                          paddingAngle={3}
+                          dataKey="value"
+                          onClick={(data) => {
+                            if (data?.id) setSelectedDrillAccount({ id: data.id, name: data.name });
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {expenseDonutData.map((entry, idx) => (
+                            <Cell key={`pie-cell-${idx}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip
+                          formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Total Expense']}
+                          contentStyle={{
+                            background: '#FFF',
+                            borderRadius: 8,
+                            border: '1px solid rgba(208, 174, 146, 0.5)',
+                            fontSize: 12,
+                            fontFamily: 'var(--font-mono)',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Slices Legend */}
+                  <div
+                    style={{
+                      width: '45%',
+                      maxHeight: 210,
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 6,
+                      paddingLeft: 12,
+                    }}
+                  >
+                    {expenseDonutData.slice(0, 6).map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => setSelectedDrillAccount({ id: item.id, name: item.name })}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 6,
+                          fontSize: 11,
+                          cursor: 'pointer',
+                          padding: '3px 6px',
+                          borderRadius: 4,
+                          background: 'rgba(255,255,255,0.6)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--brown-800)', fontWeight: 500 }}>
+                            {item.name}
+                          </span>
+                        </div>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-900)', flexShrink: 0 }}>
+                          {formatDisplayINR(item.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ height: 230, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-500)', fontSize: 13 }}>
+                  No expense records in this date range.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Financial Statement Document Sheet (Pure Printable Document) ── */}
+      {(activeViewMode === 'statement' || activeViewMode === 'both') && (
       <div
         className="printable-sheet print-avoid-break"
         style={{
@@ -557,6 +950,7 @@ export default function ProfitLossPage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* ── 4-Level Drilldown Modal (Hidden from Print) ── */}
       {selectedDrillAccount && (
