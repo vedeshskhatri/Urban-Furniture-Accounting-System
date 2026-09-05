@@ -276,7 +276,7 @@ export class DashboardService {
       JOIN accounts a ON a.id = l.account_id
       WHERE e.status = 'posted'
         AND e.entry_date >= '2026-05-01'
-        AND e.entry_date <= '2026-08-31'
+        AND e.entry_date <= '2026-09-30'
       GROUP BY 1, 2
       ORDER BY 1 ASC;
     `;

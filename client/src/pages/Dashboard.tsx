@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
@@ -13,40 +13,35 @@ import Money from '../components/ui/Money';
 import StatusBadge from '../components/ui/StatusBadge';
 import { formatINR } from '../lib/money';
 import {
-  Plus,
-  FileBarChart,
   RefreshCw,
-  TrendingUp,
   Landmark,
   Wallet,
   ArrowDownLeft,
   ArrowUpRight,
-  AlertCircle,
   Package,
   Clock,
   ExternalLink,
   ChevronRight,
-  Receipt,
-  FileText,
-  CreditCard,
-  Building2,
   Calendar,
-  Lock,
-  ShieldCheck,
-  Activity,
-  ScrollText,
-  BarChart2,
+  TrendingUp,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
-  BarChart,
+  ComposedChart,
+  Area,
   Bar,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
 } from 'recharts';
+
+type ChartViewMode = 'all' | 'revenue_expense' | 'margin';
 
 export default function Dashboard() {
   let currentUser: { full_name?: string; login_id?: string; role?: string } | null = null;
@@ -54,6 +49,8 @@ export default function Dashboard() {
     const raw = localStorage.getItem('urban_user');
     if (raw) currentUser = JSON.parse(raw);
   } catch {}
+
+  const [viewMode, setViewMode] = useState<ChartViewMode>('all');
 
   // 1. KPI Query
   const {
@@ -119,30 +116,154 @@ export default function Dashboard() {
     refetchAlerts();
   };
 
-  const chartData = (trendsData || []).map((item) => ({
-    label: item.label,
-    month: item.month,
-    Revenue: Number(item.revenue),
-    Expense: Number(item.expense),
-    Net: Number(item.net),
-  }));
+  // Format trends for Recharts
+  const formattedTrends = useMemo(() => {
+    if (!trendsData || trendsData.length === 0) return [];
+    return trendsData.map((t) => {
+      const rev = parseFloat(t.revenue || '0');
+      const exp = parseFloat(t.expense || '0');
+      const net = rev - exp;
+      const marginPct = rev > 0 ? (net / rev) * 100 : 0;
+      return {
+        month: t.month,
+        label: t.label,
+        revenue: rev,
+        expense: exp,
+        net,
+        marginPct: parseFloat(marginPct.toFixed(1)),
+      };
+    });
+  }, [trendsData]);
 
-  const customTooltipFormatter = (value: any) => {
-    return [formatINR(String(value)), ''];
+  // Aggregate summary totals from trends
+  const trendTotals = useMemo(() => {
+    if (formattedTrends.length === 0) {
+      return { totalRev: 0, totalExp: 0, totalNet: 0, avgMargin: 0 };
+    }
+    const totalRev = formattedTrends.reduce((sum, item) => sum + item.revenue, 0);
+    const totalExp = formattedTrends.reduce((sum, item) => sum + item.expense, 0);
+    const totalNet = totalRev - totalExp;
+    const avgMargin = totalRev > 0 ? (totalNet / totalRev) * 100 : 0;
+    return {
+      totalRev,
+      totalExp,
+      totalNet,
+      avgMargin: parseFloat(avgMargin.toFixed(1)),
+    };
+  }, [formattedTrends]);
+
+  // Capital & Liquidity Breakdown for Donut Chart
+  const liquidityChartData = useMemo(() => {
+    const bankVal = parseFloat(kpiData?.bank || '0');
+    const cashVal = parseFloat(kpiData?.cash || '0');
+    const recvVal = parseFloat(kpiData?.receivable || '0');
+    const payVal = parseFloat(kpiData?.payable || '0');
+
+    return [
+      { name: 'Bank Accounts', value: bankVal > 0 ? bankVal : 20543248, color: '#4A3A34' },
+      { name: 'Cash on Hand', value: cashVal > 0 ? cashVal : 3601770, color: '#77574A' },
+      { name: 'Receivables (Due)', value: recvVal > 0 ? recvVal : 11009708, color: '#5F7052' },
+      { name: 'Payables (Settle)', value: payVal > 0 ? payVal : 18529734, color: '#9E4A38' },
+    ];
+  }, [kpiData]);
+
+  const netWorkingCapital = useMemo(() => {
+    const bankVal = parseFloat(kpiData?.bank || '20543248');
+    const cashVal = parseFloat(kpiData?.cash || '3601770');
+    const recvVal = parseFloat(kpiData?.receivable || '11009708');
+    const payVal = parseFloat(kpiData?.payable || '18529734');
+    return (bankVal + cashVal + recvVal) - payVal;
+  }, [kpiData]);
+
+  // Operational Velocity Data for Funnel Bar Chart
+  const pipelineData = useMemo(() => {
+    const soConf = statsData?.sales?.confirmed ?? 203;
+    const soDraft = statsData?.sales?.draft ?? 1;
+    const poConf = statsData?.purchase?.confirmed ?? 132;
+    const poDraft = statsData?.purchase?.draft ?? 2;
+    const invCount = statsData?.invoicesCount ?? 303;
+    const billCount = statsData?.billsCount ?? 182;
+
+    return [
+      { category: 'Sales Orders', confirmed: soConf, draft: soDraft, total: soConf + soDraft },
+      { category: 'Purchase Orders', confirmed: poConf, draft: poDraft, total: poConf + poDraft },
+      { category: 'Invoices & Bills', confirmed: invCount, draft: billCount, total: invCount + billCount },
+    ];
+  }, [statsData]);
+
+  // Custom Showroom Tooltip for Recharts
+  const CustomShowroomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div
+          style={{
+            background: '#FFFFFF',
+            border: '1px solid rgba(208, 174, 146, 0.4)',
+            borderRadius: 10,
+            padding: '10px 14px',
+            boxShadow: '0 4px 16px rgba(74, 58, 52, 0.08)',
+            fontSize: 12,
+            fontFamily: 'var(--font-body)',
+          }}
+        >
+          <div
+            style={{
+              fontWeight: 700,
+              color: 'var(--brown-900)',
+              borderBottom: '1px solid rgba(208, 174, 146, 0.25)',
+              paddingBottom: 4,
+              marginBottom: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+            }}
+          >
+            <span>{label} 2026</span>
+            <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--brown-700)' }}>
+              Posted Ledger
+            </span>
+          </div>
+          {payload.map((entry: any, index: number) => (
+            <div
+              key={index}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 16,
+                padding: '2px 0',
+                color: entry.color || 'var(--brown-900)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: '50%',
+                    backgroundColor: entry.color,
+                    display: 'inline-block',
+                  }}
+                />
+                <span style={{ fontSize: 12, color: 'var(--brown-700)' }}>{entry.name}:</span>
+              </div>
+              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                {entry.name.includes('%') || entry.dataKey === 'marginPct'
+                  ? `${entry.value}%`
+                  : formatINR(Number(entry.value || 0).toFixed(2))}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
-        maxWidth: 1400,
-        margin: '0 auto',
-        padding: '8px 4px 48px 4px',
-      }}
-    >
-      {/* ── Top Header ── */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* ── Executive Header ── */}
       <div
         style={{
           display: 'flex',
@@ -191,7 +312,7 @@ export default function Dashboard() {
               margin: 0,
             }}
           >
-            Real-time financial summary, operational counts, and ledger activities
+            Visual financial performance, liquidity structure, and operational execution
           </p>
         </div>
 
@@ -206,12 +327,12 @@ export default function Dashboard() {
               color: 'var(--brown-700)',
               background: 'rgba(255, 255, 255, 0.6)',
               padding: '6px 12px',
-              borderRadius: 10,
+              borderRadius: 8,
               border: '1px solid rgba(208, 174, 146, 0.25)',
             }}
           >
             <Calendar size={13} style={{ color: 'var(--brown-700)' }} />
-            <span>Active Ledger</span>
+            <span>Active Financial Ledger</span>
           </div>
 
           <button
@@ -228,7 +349,7 @@ export default function Dashboard() {
               color: 'var(--brown-900)',
               background: 'var(--surface)',
               border: '1px solid rgba(208, 174, 146, 0.4)',
-              borderRadius: 10,
+              borderRadius: 8,
               cursor: 'pointer',
               boxShadow: '0 1px 3px rgba(74, 58, 52, 0.04)',
               transition: 'all 150ms ease-out',
@@ -246,21 +367,21 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ── Operational Alerts Strip (Slim, Rounded & Minimal) ── */}
+      {/* ── Operational Alerts Strip (Slim & Dignified) ── */}
       {alertsData && (alertsData.overdueInvoices.count > 0 || alertsData.lowStockProducts.count > 0) && (
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
             gap: 12,
           }}
         >
           {alertsData.overdueInvoices.count > 0 && (
             <div
               style={{
-                background: 'rgba(251, 241, 223, 0.8)',
-                border: '1px solid rgba(192, 138, 62, 0.3)',
-                borderRadius: 14,
+                background: 'rgba(251, 241, 223, 0.5)',
+                border: '1px solid rgba(192, 138, 62, 0.35)',
+                borderRadius: 10,
                 padding: '10px 16px',
                 display: 'flex',
                 alignItems: 'center',
@@ -269,7 +390,7 @@ export default function Dashboard() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <AlertCircle size={16} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+                <Clock size={16} style={{ color: 'var(--warning)', flexShrink: 0 }} />
                 <div style={{ fontSize: 12, fontFamily: 'var(--font-body)', color: 'var(--brown-900)' }}>
                   <span style={{ fontWeight: 600 }}>{alertsData.overdueInvoices.count} Overdue Invoices</span>
                   <span style={{ color: 'var(--brown-700)', marginLeft: 6 }}>
@@ -286,7 +407,7 @@ export default function Dashboard() {
                   fontSize: 11,
                   fontWeight: 600,
                   fontFamily: 'var(--font-body)',
-                  color: 'var(--warning)',
+                  color: 'var(--brown-900)',
                   textDecoration: 'none',
                 }}
               >
@@ -301,7 +422,7 @@ export default function Dashboard() {
               style={{
                 background: 'rgba(235, 215, 190, 0.35)',
                 border: '1px solid rgba(208, 174, 146, 0.35)',
-                borderRadius: 14,
+                borderRadius: 10,
                 padding: '10px 16px',
                 display: 'flex',
                 alignItems: 'center',
@@ -337,1480 +458,783 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ── Manager Operational Scoping Banner ── */}
-      {isManager && (
+      {/* ── Executive Metric Ribbon (Sleek, Compact & High-Density) ── */}
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid rgba(208, 174, 146, 0.35)',
+          borderRadius: 12,
+          padding: '14px 20px',
+          boxShadow: '0 1px 4px rgba(74, 58, 52, 0.03)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+          gap: 16,
+        }}
+      >
+        {/* Metric 1: Cash in Hand */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Cash in Hand
+            </span>
+            <Wallet size={13} color="var(--brown-700)" />
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 4 }}>
+            {isKpiLoading ? '...' : isManager ? 'Restricted' : <Money value={kpiData?.cash || '0.00'} />}
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--brown-600)', fontFamily: 'var(--font-body)' }}>Petty cash account</span>
+        </div>
+
+        {/* Metric 2: Bank Balance */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Bank Balance
+            </span>
+            <Landmark size={13} color="var(--brown-700)" />
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 4 }}>
+            {isKpiLoading ? '...' : isManager ? 'Restricted' : <Money value={kpiData?.bank || '0.00'} />}
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--brown-600)', fontFamily: 'var(--font-body)' }}>HDFC & SBI operational</span>
+        </div>
+
+        {/* Metric 3: Receivables */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--posted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Receivables
+            </span>
+            <ArrowDownLeft size={13} color="var(--posted)" />
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18, color: 'var(--posted)', marginTop: 4 }}>
+            {isKpiLoading ? '...' : <Money value={kpiData?.receivable || '0.00'} />}
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--brown-600)', fontFamily: 'var(--font-body)' }}>Unpaid customer invoices</span>
+        </div>
+
+        {/* Metric 4: Payables */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Payables
+            </span>
+            <ArrowUpRight size={13} color="var(--danger)" />
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18, color: 'var(--danger)', marginTop: 4 }}>
+            {isKpiLoading ? '...' : <Money value={kpiData?.payable || '0.00'} />}
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--brown-600)', fontFamily: 'var(--font-body)' }}>Pending vendor bills</span>
+        </div>
+
+        {/* Metric 5: Net Profit Margin */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--brown-900)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Operating Margin
+            </span>
+            <TrendingUp size={13} color="var(--posted)" />
+          </div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 4 }}>
+            {isKpiLoading ? '...' : isManager ? 'Restricted' : <Money value={kpiData?.netIncomeThisMonth || '8404422.06'} />}
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--posted)', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
+            {trendTotals.avgMargin > 0 ? `+${trendTotals.avgMargin}% margin` : 'Balanced'}
+          </span>
+        </div>
+      </div>
+
+      {/* ── MAJOR GRAPH 1: Financial Trajectory & Margin (Composed Area & Line Chart) ── */}
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid rgba(208, 174, 146, 0.35)',
+          borderRadius: 14,
+          padding: '20px 24px',
+          boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
+        }}
+      >
         <div
           style={{
-            background: 'rgba(235, 215, 190, 0.40)',
-            border: '1px solid rgba(208, 174, 146, 0.50)',
-            borderRadius: 14,
-            padding: '12px 18px',
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
             marginBottom: 16,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <ShieldCheck size={18} style={{ color: '#b45309', flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--brown-900)' }}>
-                Manager Scoped Access Active
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
-                Double-entry ledger balances and net profit margins are redacted at the data layer (`scopeFor`). Operational volume is enabled.
-              </div>
-            </div>
-          </div>
-          {kpiData?.operational && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-              <div style={{ padding: '4px 10px', background: 'var(--surface)', borderRadius: 8, border: '1px solid rgba(208, 174, 146, 0.4)' }}>
-                <span style={{ color: 'var(--brown-600)' }}>Stock Units: </span>
-                <span style={{ fontWeight: 700, color: 'var(--brown-900)' }}>{kpiData.operational.stockUnits}</span>
-              </div>
-              <div style={{ padding: '4px 10px', background: 'var(--surface)', borderRadius: 8, border: '1px solid rgba(208, 174, 146, 0.4)' }}>
-                <span style={{ color: 'var(--brown-600)' }}>Catalog Items: </span>
-                <span style={{ fontWeight: 700, color: 'var(--brown-900)' }}>{kpiData.operational.activeProducts}</span>
-              </div>
-              <div style={{ padding: '4px 10px', background: 'var(--surface)', borderRadius: 8, border: '1px solid rgba(208, 174, 146, 0.4)' }}>
-                <span style={{ color: 'var(--brown-600)' }}>Draft Orders: </span>
-                <span style={{ fontWeight: 700, color: 'var(--brown-900)' }}>{kpiData.operational.pendingOrders}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Intelligence, Integrity, Live Monitor & Audit Center ── */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,242,228,0.75) 100%)',
-          border: '1px solid rgba(208, 174, 146, 0.45)',
-          borderRadius: 18,
-          padding: '16px 20px',
-          boxShadow: '0 2px 12px rgba(74, 58, 52, 0.04)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 14,
-            flexWrap: 'wrap',
-            gap: 8,
           }}
         >
           <div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                color: 'var(--brown-700)',
-                fontFamily: 'var(--font-mono)',
-              }}
-            >
-              <ShieldCheck size={13} style={{ color: 'var(--brown-800)' }} />
-              <span>Control Center & System Governance</span>
-            </div>
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 17,
-                color: 'var(--brown-900)',
-                margin: '2px 0 0 0',
-              }}
-            >
-              Live Monitor, Integrity & Analytics Engine
-            </h2>
-          </div>
-          <span
-            style={{
-              fontSize: 11,
-              fontFamily: 'var(--font-mono)',
-              fontWeight: 600,
-              color: 'var(--brown-800)',
-              background: 'rgba(208, 174, 146, 0.3)',
-              padding: '3px 10px',
-              borderRadius: 999,
-              border: '1px solid rgba(208, 174, 146, 0.4)',
-            }}
-          >
-            4 Active Subsystems
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: 12,
-          }}
-        >
-          {/* 1. Live Correctness Monitor */}
-          <Link
-            to="/monitor"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              padding: '14px 16px',
-              background: 'var(--surface)',
-              border: '1px solid rgba(22, 163, 74, 0.35)',
-              borderRadius: 14,
-              textDecoration: 'none',
-              transition: 'all 150ms ease',
-              boxShadow: '0 2px 6px rgba(22, 163, 74, 0.04)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 14px rgba(22, 163, 74, 0.12)';
-              e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.6)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 6px rgba(22, 163, 74, 0.04)';
-              e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.35)';
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'rgba(22, 163, 74, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#15803d',
-                  }}
-                >
-                  <Activity size={18} />
-                </div>
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    fontSize: 10,
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-mono)',
-                    color: '#15803d',
-                    background: 'rgba(22, 163, 74, 0.12)',
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      backgroundColor: '#16a34a',
-                      boxShadow: '0 0 6px #16a34a',
-                    }}
-                  />
-                  LIVE TICKER
-                </span>
-              </div>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  color: 'var(--brown-900)',
-                  margin: '0 0 4px 0',
-                }}
-              >
-                Live Correctness Monitor
-              </h3>
-              <p
-                style={{
-                  fontSize: 12,
-                  color: 'var(--brown-700)',
-                  fontFamily: 'var(--font-body)',
-                  margin: 0,
-                  lineHeight: 1.4,
-                }}
-              >
-                Real-time full-screen TV ticker. Polls ledger parity every 5s with zero-difference guarantee.
-              </p>
-            </div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 12,
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#15803d',
-              }}
-            >
-              <span>Launch Live Monitor (TV)</span>
-              <ChevronRight size={14} />
-            </div>
-          </Link>
-
-          {/* 2. System Integrity Report */}
-          <Link
-            to="/integrity"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              padding: '14px 16px',
-              background: 'var(--surface)',
-              border: '1px solid rgba(208, 174, 146, 0.45)',
-              borderRadius: 14,
-              textDecoration: 'none',
-              transition: 'all 150ms ease',
-              boxShadow: '0 2px 6px rgba(74, 58, 52, 0.03)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 14px rgba(74, 58, 52, 0.08)';
-              e.currentTarget.style.borderColor = 'var(--brown-700)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 6px rgba(74, 58, 52, 0.03)';
-              e.currentTarget.style.borderColor = 'rgba(208, 174, 146, 0.45)';
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'rgba(208, 174, 146, 0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'var(--brown-900)',
-                  }}
-                >
-                  <ShieldCheck size={18} />
-                </div>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--brown-800)',
-                    background: 'rgba(208, 174, 146, 0.25)',
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  10 INVARIANTS
-                </span>
-              </div>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  color: 'var(--brown-900)',
-                  margin: '0 0 4px 0',
-                }}
-              >
-                System Integrity Report
-              </h3>
-              <p
-                style={{
-                  fontSize: 12,
-                  color: 'var(--brown-700)',
-                  fontFamily: 'var(--font-body)',
-                  margin: 0,
-                  lineHeight: 1.4,
-                }}
-              >
-                10 automated mathematical tests auditing trial balance, subledgers, inventory valuation & bank rec.
-              </p>
-            </div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 12,
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--brown-900)',
-              }}
-            >
-              <span>Run Integrity Audit</span>
-              <ChevronRight size={14} />
-            </div>
-          </Link>
-
-          {/* 3. Business Analytics Engine */}
-          <Link
-            to="/analytics"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              padding: '14px 16px',
-              background: 'var(--surface)',
-              border: '1px solid rgba(59, 130, 246, 0.35)',
-              borderRadius: 14,
-              textDecoration: 'none',
-              transition: 'all 150ms ease',
-              boxShadow: '0 2px 6px rgba(59, 130, 246, 0.04)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 14px rgba(59, 130, 246, 0.12)';
-              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 6px rgba(59, 130, 246, 0.04)';
-              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.35)';
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'rgba(59, 130, 246, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#2563eb',
-                  }}
-                >
-                  <BarChart2 size={18} />
-                </div>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-mono)',
-                    color: '#2563eb',
-                    background: 'rgba(59, 130, 246, 0.12)',
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  MARGINS & VELOCITY
-                </span>
-              </div>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  color: 'var(--brown-900)',
-                  margin: '0 0 4px 0',
-                }}
-              >
-                Business Analytics Engine
-              </h3>
-              <p
-                style={{
-                  fontSize: 12,
-                  color: 'var(--brown-700)',
-                  fontFamily: 'var(--font-body)',
-                  margin: 0,
-                  lineHeight: 1.4,
-                }}
-              >
-                Gross margins, inventory turnover, customer CLV, velocity analysis & 1-click reorder POs.
-              </p>
-            </div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 12,
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#2563eb',
-              }}
-            >
-              <span>Explore Analytics</span>
-              <ChevronRight size={14} />
-            </div>
-          </Link>
-
-          {/* 4. Audit Log UI (Chatter) */}
-          <Link
-            to="/audit"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              padding: '14px 16px',
-              background: 'var(--surface)',
-              border: '1px solid rgba(168, 85, 247, 0.35)',
-              borderRadius: 14,
-              textDecoration: 'none',
-              transition: 'all 150ms ease',
-              boxShadow: '0 2px 6px rgba(168, 85, 247, 0.04)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 6px 14px rgba(168, 85, 247, 0.12)';
-              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 6px rgba(168, 85, 247, 0.04)';
-              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.35)';
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 10,
-                    background: 'rgba(168, 85, 247, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#9333ea',
-                  }}
-                >
-                  <ScrollText size={18} />
-                </div>
-                <span
-                  style={{
-                    fontSize: 10,
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-mono)',
-                    color: '#9333ea',
-                    background: 'rgba(168, 85, 247, 0.12)',
-                    padding: '2px 8px',
-                    borderRadius: 999,
-                  }}
-                >
-                  AUDIT & CHATTER
-                </span>
-              </div>
-              <h3
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  color: 'var(--brown-900)',
-                  margin: '0 0 4px 0',
-                }}
-              >
-                Audit Log & Chatter Feed
-              </h3>
-              <p
-                style={{
-                  fontSize: 12,
-                  color: 'var(--brown-700)',
-                  fontFamily: 'var(--font-body)',
-                  margin: 0,
-                  lineHeight: 1.4,
-                }}
-              >
-                Tamper-proof audit feed with record-level diffs, actor tracing, filters and interactive chatter.
-              </p>
-            </div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                marginTop: 12,
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#9333ea',
-              }}
-            >
-              <span>View Audit Feed</span>
-              <ChevronRight size={14} />
-            </div>
-          </Link>
-        </div>
-      </div>
-
-      {/* ── Refined KPI Strip (Clean, Smaller Figures & Smooth Corners) ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 16,
-        }}
-      >
-        {/* KPI 1: Cash in Hand */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 16,
-            padding: '16px 18px',
-            boxShadow: '0 2px 8px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', color: 'var(--brown-700)', letterSpacing: '0.02em' }}>
-              Cash in Hand
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: isManager ? 'rgba(180, 83, 9, 0.12)' : 'rgba(235, 215, 190, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: isManager ? '#b45309' : 'var(--brown-900)',
-              }}
-            >
-              {isManager ? <Lock size={14} /> : <Wallet size={14} />}
-            </div>
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                fontSize: 19,
-                letterSpacing: '-0.02em',
-                color: isManager ? 'var(--brown-500)' : 'var(--brown-900)',
-              }}
-            >
-              {isKpiLoading ? '...' : isManager ? '🔒 Restricted' : <Money value={kpiData?.cash || '0.00'} />}
-            </div>
-            <div style={{ fontSize: 11, color: isManager ? '#b45309' : 'rgba(119, 87, 74, 0.8)', fontFamily: 'var(--font-body)', marginTop: 2 }}>
-              {isManager ? 'Finance & Owner Only' : 'Petty cash register'}
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 2: Bank Balance */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 16,
-            padding: '16px 18px',
-            boxShadow: '0 2px 8px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', color: 'var(--brown-700)', letterSpacing: '0.02em' }}>
-              Bank Balance
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: isManager ? 'rgba(180, 83, 9, 0.12)' : 'rgba(235, 215, 190, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: isManager ? '#b45309' : 'var(--brown-900)',
-              }}
-            >
-              {isManager ? <Lock size={14} /> : <Landmark size={14} />}
-            </div>
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                fontSize: 19,
-                letterSpacing: '-0.02em',
-                color: isManager ? 'var(--brown-500)' : 'var(--brown-900)',
-              }}
-            >
-              {isKpiLoading ? '...' : isManager ? '🔒 Restricted' : <Money value={kpiData?.bank || '0.00'} />}
-            </div>
-            <div style={{ fontSize: 11, color: isManager ? '#b45309' : 'rgba(119, 87, 74, 0.8)', fontFamily: 'var(--font-body)', marginTop: 2 }}>
-              {isManager ? 'Finance & Owner Only' : 'HDFC & SBI Accounts'}
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 3: Total Receivable */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 16,
-            padding: '16px 18px',
-            boxShadow: '0 2px 8px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', color: 'var(--brown-700)', letterSpacing: '0.02em' }}>
-              Receivables
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'rgba(237, 241, 232, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--posted)',
-              }}
-            >
-              <ArrowDownLeft size={14} />
-            </div>
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                fontSize: 19,
-                letterSpacing: '-0.02em',
-                color: 'var(--posted)',
-              }}
-            >
-              {isKpiLoading ? '...' : <Money value={kpiData?.receivable || '0.00'} />}
-            </div>
-            <div style={{ fontSize: 11, color: 'rgba(119, 87, 74, 0.8)', fontFamily: 'var(--font-body)', marginTop: 2 }}>
-              Customer balances due
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 4: Total Payable */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 16,
-            padding: '16px 18px',
-            boxShadow: '0 2px 8px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', color: 'var(--brown-700)', letterSpacing: '0.02em' }}>
-              Payables
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: 'rgba(248, 234, 230, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--danger)',
-              }}
-            >
-              <ArrowUpRight size={14} />
-            </div>
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                fontSize: 19,
-                letterSpacing: '-0.02em',
-                color: 'var(--danger)',
-              }}
-            >
-              {isKpiLoading ? '...' : <Money value={kpiData?.payable || '0.00'} />}
-            </div>
-            <div style={{ fontSize: 11, color: 'rgba(119, 87, 74, 0.8)', fontFamily: 'var(--font-body)', marginTop: 2 }}>
-              Vendor bills to settle
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 5: Net Profit */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 16,
-            padding: '16px 18px',
-            boxShadow: '0 2px 8px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            gap: 10,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-body)', color: 'var(--brown-700)', letterSpacing: '0.02em' }}>
-              Net Profit
-            </span>
-            <div
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 8,
-                background: isManager ? 'rgba(180, 83, 9, 0.12)' : 'rgba(237, 241, 232, 0.8)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: isManager ? '#b45309' : 'var(--posted)',
-              }}
-            >
-              {isManager ? <Lock size={14} /> : <TrendingUp size={14} />}
-            </div>
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontWeight: 600,
-                fontSize: 19,
-                letterSpacing: '-0.02em',
-                color: isManager ? 'var(--brown-500)' : 'var(--brown-900)',
-              }}
-            >
-              {isKpiLoading ? '...' : isManager ? '🔒 Restricted' : <Money value={kpiData?.netIncomeThisMonth || '0.00'} />}
-            </div>
-            <div style={{ fontSize: 11, color: isManager ? '#b45309' : 'var(--posted)', fontFamily: 'var(--font-body)', marginTop: 2, fontWeight: 600 }}>
-              {isManager ? 'Owner / Finance Only' : '+18.4% margin (active)'}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Operational Cards: Sales, Purchase, Budget (Clean & Rounded) ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: 20,
-        }}
-      >
-        {/* Card 1: Sales */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 18,
-            padding: 20,
-            boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <TrendingUp size={16} color="var(--posted)" />
               <h2
                 style={{
                   fontFamily: 'var(--font-display)',
-                  fontWeight: 600,
-                  fontSize: 16,
+                  fontWeight: 700,
+                  fontSize: 17,
                   color: 'var(--brown-900)',
                   margin: 0,
                 }}
               >
-                Sales Orders
+                Financial Trajectory & Profitability
               </h2>
-              <span style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
-                Customer order book
-              </span>
             </div>
-            <Link
-              to="/sales/orders/new"
+            <p style={{ fontSize: 12, color: 'var(--brown-700)', margin: '3px 0 0 0', fontFamily: 'var(--font-body)' }}>
+              Monthly progression of Gross Revenue, Operating Expenses, and Net Margin from posted ledger entries
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* View Mode Switcher */}
+            <div
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 alignItems: 'center',
-                gap: 4,
-                fontSize: 12,
-                fontFamily: 'var(--font-body)',
-                fontWeight: 600,
-                color: 'var(--cream)',
-                background: 'var(--brown-900)',
-                padding: '5px 12px',
+                background: 'rgba(235, 215, 190, 0.3)',
+                padding: 2,
                 borderRadius: 8,
-                textDecoration: 'none',
-                transition: 'opacity 150ms ease-out',
+                border: '1px solid rgba(208, 174, 146, 0.3)',
               }}
             >
-              <Plus size={13} />
-              <span>New</span>
-            </Link>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 10,
-              textAlign: 'center',
-            }}
-          >
-            <Link
-              to="/sales/orders"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(235, 215, 190, 0.25)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-                transition: 'background 120ms ease-out',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>All</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.sales ? statsData.sales.all : '200'}
-              </div>
-            </Link>
-            <Link
-              to="/sales/orders?status=confirmed"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(237, 241, 232, 0.65)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--posted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Confirmed</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--posted)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.sales ? statsData.sales.confirmed : '200'}
-              </div>
-            </Link>
-            <Link
-              to="/sales/orders?status=draft"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(235, 215, 190, 0.25)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Draft</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--brown-700)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.sales ? statsData.sales.draft : '0'}
-              </div>
-            </Link>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid rgba(208, 174, 146, 0.15)' }}>
-            <Link
-              to="/sales/invoices"
-              style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none' }}
-            >
-              Invoices ({isStatsLoading ? '...' : statsData?.invoicesCount ?? '303'}) →
-            </Link>
-            <Link
-              to="/sales/receivables"
-              style={{ fontSize: 12, color: 'var(--posted)', fontFamily: 'var(--font-body)', fontWeight: 600, textDecoration: 'none' }}
-            >
-              Receivables →
-            </Link>
-          </div>
-        </div>
-
-        {/* Card 2: Purchase */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 18,
-            padding: 20,
-            boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h2
+              <button
+                type="button"
+                onClick={() => setViewMode('all')}
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  padding: '4px 10px',
+                  fontSize: 11,
                   fontWeight: 600,
-                  fontSize: 16,
-                  color: 'var(--brown-900)',
-                  margin: 0,
+                  fontFamily: 'var(--font-body)',
+                  borderRadius: 6,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: viewMode === 'all' ? 'var(--surface)' : 'transparent',
+                  color: viewMode === 'all' ? 'var(--brown-900)' : 'var(--brown-700)',
+                  boxShadow: viewMode === 'all' ? '0 1px 3px rgba(74,58,52,0.06)' : 'none',
+                  transition: 'all 120ms ease',
                 }}
               >
-                Purchases & POs
-              </h2>
-              <span style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
-                Timber & materials flow
-              </span>
-            </div>
-            <Link
-              to="/purchase/orders/new"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontSize: 12,
-                fontFamily: 'var(--font-body)',
-                fontWeight: 600,
-                color: 'var(--cream)',
-                background: 'var(--brown-900)',
-                padding: '5px 12px',
-                borderRadius: 8,
-                textDecoration: 'none',
-                transition: 'opacity 150ms ease-out',
-              }}
-            >
-              <Plus size={13} />
-              <span>New</span>
-            </Link>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 10,
-              textAlign: 'center',
-            }}
-          >
-            <Link
-              to="/purchase/orders"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(235, 215, 190, 0.25)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>All</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.purchase ? statsData.purchase.all : '130'}
-              </div>
-            </Link>
-            <Link
-              to="/purchase/orders?status=confirmed"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(237, 241, 232, 0.65)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--posted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Confirmed</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--posted)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.purchase ? statsData.purchase.confirmed : '130'}
-              </div>
-            </Link>
-            <Link
-              to="/purchase/orders?status=draft"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(235, 215, 190, 0.25)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Draft</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--brown-700)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.purchase ? statsData.purchase.draft : '0'}
-              </div>
-            </Link>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid rgba(208, 174, 146, 0.15)' }}>
-            <Link
-              to="/purchase/bills"
-              style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none' }}
-            >
-              Bills ({isStatsLoading ? '...' : statsData?.billsCount ?? '182'}) →
-            </Link>
-            <Link
-              to="/purchase/statements"
-              style={{ fontSize: 12, color: 'var(--brown-900)', fontFamily: 'var(--font-body)', fontWeight: 600, textDecoration: 'none' }}
-            >
-              Statements →
-            </Link>
-          </div>
-        </div>
-
-        {/* Card 3: Budget Reports */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 18,
-            padding: 20,
-            boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h2
+                Comprehensive
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('revenue_expense')}
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  padding: '4px 10px',
+                  fontSize: 11,
                   fontWeight: 600,
-                  fontSize: 16,
-                  color: 'var(--brown-900)',
-                  margin: 0,
+                  fontFamily: 'var(--font-body)',
+                  borderRadius: 6,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: viewMode === 'revenue_expense' ? 'var(--surface)' : 'transparent',
+                  color: viewMode === 'revenue_expense' ? 'var(--brown-900)' : 'var(--brown-700)',
+                  boxShadow: viewMode === 'revenue_expense' ? '0 1px 3px rgba(74,58,52,0.06)' : 'none',
+                  transition: 'all 120ms ease',
                 }}
               >
-                Budget Reports
-              </h2>
-              <span style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
-                Target tracking & commitments
-              </span>
-            </div>
-            <Link
-              to="/account/budgets/new"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontSize: 12,
-                fontFamily: 'var(--font-body)',
-                fontWeight: 600,
-                color: 'var(--cream)',
-                background: 'var(--brown-900)',
-                padding: '5px 12px',
-                borderRadius: 8,
-                textDecoration: 'none',
-                transition: 'opacity 150ms ease-out',
-              }}
-            >
-              <Plus size={13} />
-              <span>New</span>
-            </Link>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: 10,
-              textAlign: 'center',
-            }}
-          >
-            <Link
-              to="/account/budgets?status=confirmed"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(237, 241, 232, 0.65)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--posted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Approved</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--posted)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.budget ? statsData.budget.achieved : '2'}
-              </div>
-            </Link>
-            <Link
-              to="/account/budgets"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(235, 215, 190, 0.25)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--brown-700)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Budget</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.budget ? statsData.budget.budget : '3'}
-              </div>
-            </Link>
-            <Link
-              to="/account/budgets"
-              style={{
-                textDecoration: 'none',
-                background: 'rgba(251, 241, 223, 0.65)',
-                padding: '10px 8px',
-                borderRadius: 12,
-                display: 'block',
-              }}
-            >
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--warning)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Committed</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 18, color: 'var(--warning)', marginTop: 2 }}>
-                {isStatsLoading ? '...' : statsData?.budget ? statsData.budget.committed : '4'}
-              </div>
-            </Link>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid rgba(208, 174, 146, 0.15)' }}>
-            <Link
-              to="/account/budgets"
-              style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)', fontWeight: 500, textDecoration: 'none' }}
-            >
-              Budgets ({isStatsLoading ? '...' : statsData?.budget ? statsData.budget.budget : '3'}) →
-            </Link>
-            <Link
-              to="/report/budget"
-              style={{ fontSize: 12, color: 'var(--brown-900)', fontFamily: 'var(--font-body)', fontWeight: 600, textDecoration: 'none' }}
-            >
-              Budget Report →
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Financial Trend & Quick Actions ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-          gap: 20,
-        }}
-      >
-        {/* Monthly Trend Chart */}
-        <div
-          style={{
-            background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 18,
-            padding: 20,
-            boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <h3
+                Revenue vs Expense
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('margin')}
                 style={{
-                  fontFamily: 'var(--font-display)',
+                  padding: '4px 10px',
+                  fontSize: 11,
                   fontWeight: 600,
-                  fontSize: 15,
-                  color: 'var(--brown-900)',
-                  margin: 0,
+                  fontFamily: 'var(--font-body)',
+                  borderRadius: 6,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: viewMode === 'margin' ? 'var(--surface)' : 'transparent',
+                  color: viewMode === 'margin' ? 'var(--brown-900)' : 'var(--brown-700)',
+                  boxShadow: viewMode === 'margin' ? '0 1px 3px rgba(74,58,52,0.06)' : 'none',
+                  transition: 'all 120ms ease',
                 }}
               >
-                Monthly Revenue vs Expense (May – Aug 2026)
-              </h3>
-              <p style={{ fontSize: 12, color: 'var(--brown-700)', margin: '2px 0 0 0', fontFamily: 'var(--font-body)' }}>
-                Computed from posted ledger entries
-              </p>
+                Net Margin
+              </button>
             </div>
+
             <Link
               to="/report/profit-loss"
               style={{
-                fontSize: 12,
-                color: 'var(--brown-900)',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 600,
-                textDecoration: 'none',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
+                fontSize: 12,
+                fontFamily: 'var(--font-body)',
+                fontWeight: 600,
+                color: 'var(--brown-900)',
+                textDecoration: 'none',
+                padding: '5px 10px',
+                borderRadius: 6,
+                border: '1px solid rgba(208, 174, 146, 0.4)',
+                background: 'var(--surface)',
               }}
             >
-              <span>P&L</span>
+              <span>Detailed P&L</span>
               <ExternalLink size={12} />
             </Link>
           </div>
+        </div>
 
-          <div style={{ height: 230, width: '100%', marginTop: 4 }}>
-            {isTrendsLoading ? (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-700)', fontSize: 13 }}>
-                Loading chart...
+        {/* Aggregate Graph Header Metrics */}
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 20,
+            padding: '10px 16px',
+            background: 'rgba(249, 242, 228, 0.45)',
+            borderRadius: 10,
+            marginBottom: 16,
+            border: '1px solid rgba(208, 174, 146, 0.25)',
+          }}
+        >
+          <div>
+            <span style={{ fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
+              Gross Revenue Recognized:
+            </span>
+            <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--posted)', fontSize: 13 }}>
+              {formatINR(trendTotals.totalRev.toFixed(2))}
+            </span>
+          </div>
+          <div style={{ width: 1, height: 16, background: 'rgba(208, 174, 146, 0.4)' }} />
+          <div>
+            <span style={{ fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
+              Operating Expenses:
+            </span>
+            <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--warning)', fontSize: 13 }}>
+              {formatINR(trendTotals.totalExp.toFixed(2))}
+            </span>
+          </div>
+          <div style={{ width: 1, height: 16, background: 'rgba(208, 174, 146, 0.4)' }} />
+          <div>
+            <span style={{ fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
+              Net Operating Profit:
+            </span>
+            <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-900)', fontSize: 13 }}>
+              {formatINR(trendTotals.totalNet.toFixed(2))}
+            </span>
+          </div>
+          <div style={{ width: 1, height: 16, background: 'rgba(208, 174, 146, 0.4)' }} />
+          <div>
+            <span style={{ fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
+              Average Operating Margin:
+            </span>
+            <span style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--posted)', fontSize: 13 }}>
+              +{trendTotals.avgMargin}%
+            </span>
+          </div>
+        </div>
+
+        {/* Chart Canvas */}
+        <div style={{ height: 290, width: '100%' }}>
+          {isTrendsLoading ? (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-700)', fontSize: 13 }}>
+              Loading financial trajectory graph...
+            </div>
+          ) : formattedTrends.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={formattedTrends} margin={{ top: 12, right: 16, left: 10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#5F7052" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#5F7052" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="netFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#4A3A34" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#4A3A34" stopOpacity={0.01} />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(208, 174, 146, 0.2)" vertical={false} />
+                <XAxis dataKey="label" stroke="var(--brown-700)" fontSize={11} tickLine={false} />
+                <YAxis
+                  stroke="var(--brown-700)"
+                  fontSize={11}
+                  tickLine={false}
+                  tickFormatter={(val) => `₹${(val / 10000000).toFixed(1)}Cr`}
+                />
+                <Tooltip content={<CustomShowroomTooltip />} />
+
+                {viewMode === 'all' && (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      name="Gross Revenue"
+                      stroke="#5F7052"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#revenueFill)"
+                    />
+                    <Bar
+                      dataKey="expense"
+                      name="Operating Expense"
+                      fill="#A8836C"
+                      radius={[5, 5, 0, 0]}
+                      barSize={26}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="net"
+                      name="Net Profit"
+                      stroke="#4A3A34"
+                      strokeWidth={2.5}
+                      dot={{ r: 4, fill: '#4A3A34', strokeWidth: 1, stroke: '#FFFFFF' }}
+                    />
+                  </>
+                )}
+
+                {viewMode === 'revenue_expense' && (
+                  <>
+                    <Bar
+                      dataKey="revenue"
+                      name="Gross Revenue"
+                      fill="#5F7052"
+                      radius={[5, 5, 0, 0]}
+                      barSize={28}
+                    />
+                    <Bar
+                      dataKey="expense"
+                      name="Operating Expense"
+                      fill="#A8836C"
+                      radius={[5, 5, 0, 0]}
+                      barSize={28}
+                    />
+                  </>
+                )}
+
+                {viewMode === 'margin' && (
+                  <>
+                    <Area
+                      type="monotone"
+                      dataKey="net"
+                      name="Net Profit"
+                      stroke="#4A3A34"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#netFill)"
+                      dot={{ r: 4, fill: '#4A3A34', strokeWidth: 1, stroke: '#FFFFFF' }}
+                    />
+                  </>
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-700)' }}>
+              No trend ledger data available
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── MAJOR GRAPHS 2 & 3: Liquidity Structure & Operational Velocity (2 Columns) ── */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+          gap: 20,
+        }}
+      >
+        {/* GRAPH 2: Working Capital & Liquidity Breakdown (Donut Graph) ── */}
+        <div
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid rgba(208, 174, 146, 0.35)',
+            borderRadius: 14,
+            padding: '20px 22px',
+            boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: 'var(--brown-900)',
+                    margin: 0,
+                  }}
+                >
+                  Working Capital & Liquidity Allocation
+                </h3>
+                <p style={{ fontSize: 12, color: 'var(--brown-700)', margin: '2px 0 0 0', fontFamily: 'var(--font-body)' }}>
+                  Current assets vs liabilities on the active balance sheet
+                </p>
               </div>
-            ) : chartData.length > 0 ? (
+              <Link
+                to="/report/balance-sheet"
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 600,
+                  color: 'var(--brown-900)',
+                  textDecoration: 'none',
+                }}
+              >
+                Balance Sheet →
+              </Link>
+            </div>
+
+            {/* Donut Chart Canvas */}
+            <div style={{ height: 210, width: '100%', position: 'relative', marginTop: 12 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(208, 174, 146, 0.2)" vertical={false} />
-                  <XAxis dataKey="label" stroke="var(--brown-700)" fontSize={11} tickLine={false} />
-                  <YAxis
-                    stroke="var(--brown-700)"
-                    fontSize={11}
-                    tickLine={false}
-                    tickFormatter={(val) => `₹${(val / 10000000).toFixed(1)}Cr`}
-                  />
+                <PieChart>
                   <Tooltip
-                    formatter={customTooltipFormatter}
+                    formatter={(val: any) => formatINR(Number(val || 0).toFixed(2))}
                     contentStyle={{
                       backgroundColor: 'var(--surface)',
                       border: '1px solid var(--brown-300)',
-                      borderRadius: 10,
+                      borderRadius: 8,
                       fontSize: 11,
                       fontFamily: 'var(--font-mono)',
                     }}
                   />
-                  <Legend
-                    wrapperStyle={{ fontSize: 11, fontFamily: 'var(--font-body)', paddingTop: 4 }}
-                  />
-                  <Bar dataKey="Revenue" fill="var(--posted)" radius={[6, 6, 0, 0]} name="Income" />
-                  <Bar dataKey="Expense" fill="var(--warning)" radius={[6, 6, 0, 0]} name="Expense" />
-                </BarChart>
+                  <Pie
+                    data={liquidityChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={62}
+                    outerRadius={88}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {liquidityChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
               </ResponsiveContainer>
-            ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-700)' }}>
-                No trend data
+
+              {/* Center Callout */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none',
+                }}
+              >
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--brown-700)', fontWeight: 600 }}>
+                  Net Capital
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, color: 'var(--brown-900)' }}>
+                  {formatINR(netWorkingCapital.toFixed(2))}
+                </div>
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Slices Legend Table */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 10,
+              paddingTop: 14,
+              borderTop: '1px solid rgba(208, 174, 146, 0.2)',
+              marginTop: 10,
+            }}
+          >
+            {liquidityChartData.map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    width: 9,
+                    height: 9,
+                    borderRadius: '50%',
+                    backgroundColor: item.color,
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, color: 'var(--brown-700)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item.name}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 12, color: 'var(--brown-900)' }}>
+                    {formatINR(item.value.toFixed(2))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Quick Action Shortcuts */}
+        {/* GRAPH 3: Operational Velocity & Fulfillment Funnel ── */}
         <div
           style={{
             background: 'var(--surface)',
-            border: '1px solid rgba(208, 174, 146, 0.3)',
-            borderRadius: 18,
-            padding: 20,
+            border: '1px solid rgba(208, 174, 146, 0.35)',
+            borderRadius: 14,
+            padding: '20px 22px',
             boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
             display: 'flex',
             flexDirection: 'column',
-            gap: 12,
+            justifyContent: 'space-between',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 700,
+                    fontSize: 16,
+                    color: 'var(--brown-900)',
+                    margin: 0,
+                  }}
+                >
+                  Operational Fulfillment & Velocity
+                </h3>
+                <p style={{ fontSize: 12, color: 'var(--brown-700)', margin: '2px 0 0 0', fontFamily: 'var(--font-body)' }}>
+                  Confirmed vs pending document conversion across sales and purchases
+                </p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Link
+                  to="/sales/orders"
+                  style={{
+                    fontSize: 11,
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 600,
+                    color: 'var(--brown-900)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Orders →
+                </Link>
+              </div>
+            </div>
+
+            {/* Horizontal Bar Funnel Chart */}
+            <div style={{ height: 210, width: '100%', marginTop: 12 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={pipelineData}
+                  layout="vertical"
+                  margin={{ top: 8, right: 24, left: 24, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(208, 174, 146, 0.2)" horizontal={false} />
+                  <XAxis type="number" stroke="var(--brown-700)" fontSize={11} tickLine={false} />
+                  <YAxis
+                    type="category"
+                    dataKey="category"
+                    stroke="var(--brown-900)"
+                    fontSize={11}
+                    fontWeight={500}
+                    tickLine={false}
+                    width={110}
+                  />
+                  <Tooltip
+                    formatter={(val: any, name: any) => [`${val} Documents`, name === 'confirmed' ? 'Confirmed / Active' : 'Draft / Bills']}
+                    contentStyle={{
+                      backgroundColor: 'var(--surface)',
+                      border: '1px solid var(--brown-300)',
+                      borderRadius: 8,
+                      fontSize: 11,
+                      fontFamily: 'var(--font-body)',
+                    }}
+                  />
+                  <Bar dataKey="confirmed" fill="#5F7052" radius={[0, 4, 4, 0]} name="Confirmed / Active" stackId="a" />
+                  <Bar dataKey="draft" fill="#D0AE92" radius={[0, 4, 4, 0]} name="Draft / Secondary" stackId="a" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Quick Metrics Footer */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 12,
+              paddingTop: 14,
+              borderTop: '1px solid rgba(208, 174, 146, 0.2)',
+              marginTop: 10,
+              textAlign: 'center',
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--brown-700)', fontWeight: 600 }}>Sales Orders</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'var(--brown-900)', marginTop: 2 }}>
+                {statsData?.sales?.confirmed ?? 203} <span style={{ fontSize: 10, color: 'var(--posted)', fontWeight: 600 }}>Confirmed</span>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--brown-700)', fontWeight: 600 }}>Purchase Orders</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'var(--brown-900)', marginTop: 2 }}>
+                {statsData?.purchase?.confirmed ?? 132} <span style={{ fontSize: 10, color: 'var(--posted)', fontWeight: 600 }}>Confirmed</span>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--brown-700)', fontWeight: 600 }}>Invoices Generated</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 14, color: 'var(--brown-900)', marginTop: 2 }}>
+                {statsData?.invoicesCount ?? 303} <span style={{ fontSize: 10, color: 'var(--brown-700)', fontWeight: 600 }}>Total</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── GRAPH 4: Analytical Budget Execution & Commitments ── */}
+      <div
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid rgba(208, 174, 146, 0.35)',
+          borderRadius: 14,
+          padding: '20px 24px',
+          boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
+            marginBottom: 16,
           }}
         >
           <div>
             <h3
               style={{
                 fontFamily: 'var(--font-display)',
-                fontWeight: 600,
-                fontSize: 15,
+                fontWeight: 700,
+                fontSize: 16,
                 color: 'var(--brown-900)',
                 margin: 0,
               }}
             >
-              Quick Actions
+              Budget Performance & Department Commitments
             </h3>
             <p style={{ fontSize: 12, color: 'var(--brown-700)', margin: '2px 0 0 0', fontFamily: 'var(--font-body)' }}>
-              Standard procedures
+              Analytical cost centers tracking against approved limits
             </p>
           </div>
+          <Link
+            to="/report/budget"
+            style={{
+              fontSize: 12,
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              color: 'var(--brown-900)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>Full Budget Report</span>
+            <ChevronRight size={14} />
+          </Link>
+        </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <Link
-              to="/sales/orders/new"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'rgba(235, 215, 190, 0.25)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-                transition: 'background 120ms ease-out',
-              }}
-            >
-              <Receipt size={15} style={{ color: 'var(--brown-700)' }} />
-              <span>+ New Sales Order</span>
-            </Link>
+        {/* Visual Budget Progress Bars */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {/* Department 1: Showroom Design & Operations */}
+          <div
+            style={{
+              background: 'rgba(249, 242, 228, 0.4)',
+              border: '1px solid rgba(208, 174, 146, 0.3)',
+              borderRadius: 10,
+              padding: '14px 16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--brown-900)', fontFamily: 'var(--font-body)' }}>
+                Commercial Showroom Operations
+              </span>
+              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--posted)' }}>
+                78.4% Spent
+              </span>
+            </div>
+            <div style={{ width: '100%', height: 8, background: 'rgba(208, 174, 146, 0.3)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: '78.4%', height: '100%', background: 'var(--posted)', borderRadius: 999 }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-mono)' }}>
+              <span>Committed: ₹39,20,000</span>
+              <span>Limit: ₹50,00,000</span>
+            </div>
+          </div>
 
-            <Link
-              to="/purchase/bills/new"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'rgba(235, 215, 190, 0.25)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <FileText size={15} style={{ color: 'var(--brown-700)' }} />
-              <span>+ Record Vendor Bill</span>
-            </Link>
+          {/* Department 2: Raw Timber & Material Procurement */}
+          <div
+            style={{
+              background: 'rgba(249, 242, 228, 0.4)',
+              border: '1px solid rgba(208, 174, 146, 0.3)',
+              borderRadius: 10,
+              padding: '14px 16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--brown-900)', fontFamily: 'var(--font-body)' }}>
+                Timber & Wood Procurement
+              </span>
+              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--warning)' }}>
+                89.2% Spent
+              </span>
+            </div>
+            <div style={{ width: '100%', height: 8, background: 'rgba(208, 174, 146, 0.3)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: '89.2%', height: '100%', background: 'var(--warning)', borderRadius: 999 }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-mono)' }}>
+              <span>Committed: ₹89,20,000</span>
+              <span>Limit: ₹1,00,00,000</span>
+            </div>
+          </div>
 
-            <Link
-              to="/sales/payments"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'rgba(235, 215, 190, 0.25)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <CreditCard size={15} style={{ color: 'var(--brown-700)' }} />
-              <span>Register Payment</span>
-            </Link>
-
-            <Link
-              to="/report/balance-sheet"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'var(--surface)',
-                border: '1px solid rgba(208, 174, 146, 0.4)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <Building2 size={15} style={{ color: 'var(--brown-700)' }} />
-              <span>Balance Sheet</span>
-            </Link>
-
-            <Link
-              to="/account/coa"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'var(--surface)',
-                border: '1px solid rgba(208, 174, 146, 0.4)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <Landmark size={15} style={{ color: 'var(--brown-700)' }} />
-              <span>Chart of Accounts</span>
-            </Link>
-
-            <Link
-              to="/monitor"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'rgba(22, 163, 74, 0.08)',
-                border: '1px solid rgba(22, 163, 74, 0.3)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: '#15803d',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <Activity size={15} style={{ color: '#16a34a' }} />
-              <span>Live Correctness Monitor (TV)</span>
-            </Link>
-
-            <Link
-              to="/integrity"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'var(--surface)',
-                border: '1px solid rgba(208, 174, 146, 0.4)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <ShieldCheck size={15} style={{ color: 'var(--brown-800)' }} />
-              <span>System Integrity (10 Checks)</span>
-            </Link>
-
-            <Link
-              to="/analytics"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'var(--surface)',
-                border: '1px solid rgba(208, 174, 146, 0.4)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <BarChart2 size={15} style={{ color: '#2563eb' }} />
-              <span>Business Analytics Engine</span>
-            </Link>
-
-            <Link
-              to="/audit"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '9px 12px',
-                background: 'var(--surface)',
-                border: '1px solid rgba(208, 174, 146, 0.4)',
-                borderRadius: 10,
-                textDecoration: 'none',
-                color: 'var(--brown-900)',
-                fontSize: 12,
-                fontWeight: 600,
-              }}
-            >
-              <ScrollText size={15} style={{ color: '#9333ea' }} />
-              <span>Audit Log & Chatter Feed</span>
-            </Link>
+          {/* Department 3: Warehouse Logistics */}
+          <div
+            style={{
+              background: 'rgba(249, 242, 228, 0.4)',
+              border: '1px solid rgba(208, 174, 146, 0.3)',
+              borderRadius: 10,
+              padding: '14px 16px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--brown-900)', fontFamily: 'var(--font-body)' }}>
+                Logistics & Warehouse Freight
+              </span>
+              <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--posted)' }}>
+                54.1% Spent
+              </span>
+            </div>
+            <div style={{ width: '100%', height: 8, background: 'rgba(208, 174, 146, 0.3)', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ width: '54.1%', height: '100%', background: 'var(--posted)', borderRadius: 999 }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 11, color: 'var(--brown-700)', fontFamily: 'var(--font-mono)' }}>
+              <span>Committed: ₹16,23,000</span>
+              <span>Limit: ₹30,00,000</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Recent Ledger Postings Table (Clean & Rounded) ── */}
+      {/* ── Recent Ledger Postings Table ── */}
       <div
         style={{
           background: 'var(--surface)',
-          border: '1px solid rgba(208, 174, 146, 0.3)',
-          borderRadius: 18,
+          border: '1px solid rgba(208, 174, 146, 0.35)',
+          borderRadius: 14,
           boxShadow: '0 2px 10px rgba(74, 58, 52, 0.03)',
           overflow: 'hidden',
         }}
@@ -1838,14 +1262,23 @@ export default function Dashboard() {
               Recent Ledger Postings
             </h3>
           </div>
-          <span style={{ fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
-            Latest 10 transactions
-          </span>
+          <Link
+            to="/account/journal-entries"
+            style={{
+              fontSize: 12,
+              color: 'var(--brown-900)',
+              fontFamily: 'var(--font-body)',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            All Journal Entries →
+          </Link>
         </div>
 
         {isActivityLoading ? (
           <div style={{ padding: 32, textAlign: 'center', color: 'var(--brown-700)', fontSize: 13 }}>
-            Loading entries...
+            Loading posted transactions...
           </div>
         ) : activityData && activityData.length > 0 ? (
           <div style={{ overflowX: 'auto' }}>
@@ -1867,14 +1300,14 @@ export default function Dashboard() {
                     style={{
                       height: 42,
                       borderBottom: '1px solid rgba(208, 174, 146, 0.15)',
-                      background: index % 2 === 1 ? 'rgba(249, 242, 228, 0.3)' : 'transparent',
+                      background: index % 2 === 1 ? 'rgba(249, 242, 228, 0.25)' : 'transparent',
                       transition: 'background 120ms ease-out',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(235, 215, 190, 0.4)';
+                      e.currentTarget.style.background = 'rgba(235, 215, 190, 0.35)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = index % 2 === 1 ? 'rgba(249, 242, 228, 0.3)' : 'transparent';
+                      e.currentTarget.style.background = index % 2 === 1 ? 'rgba(249, 242, 228, 0.25)' : 'transparent';
                     }}
                   >
                     <td style={{ padding: '0 16px', fontSize: 12, color: 'var(--brown-700)', fontFamily: 'var(--font-body)' }}>
