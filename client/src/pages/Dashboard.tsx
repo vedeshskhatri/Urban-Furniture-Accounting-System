@@ -33,6 +33,9 @@ import {
   Calendar,
   Lock,
   ShieldCheck,
+  Activity,
+  ScrollText,
+  BarChart2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -379,6 +382,474 @@ export default function Dashboard() {
           )}
         </div>
       )}
+
+      {/* ── Intelligence, Integrity, Live Monitor & Audit Center ── */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(249,242,228,0.75) 100%)',
+          border: '1px solid rgba(208, 174, 146, 0.45)',
+          borderRadius: 18,
+          padding: '16px 20px',
+          boxShadow: '0 2px 12px rgba(74, 58, 52, 0.04)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 14,
+            flexWrap: 'wrap',
+            gap: 8,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'var(--brown-700)',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <ShieldCheck size={13} style={{ color: 'var(--brown-800)' }} />
+              <span>Control Center & System Governance</span>
+            </div>
+            <h2
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: 17,
+                color: 'var(--brown-900)',
+                margin: '2px 0 0 0',
+              }}
+            >
+              Live Monitor, Integrity & Analytics Engine
+            </h2>
+          </div>
+          <span
+            style={{
+              fontSize: 11,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 600,
+              color: 'var(--brown-800)',
+              background: 'rgba(208, 174, 146, 0.3)',
+              padding: '3px 10px',
+              borderRadius: 999,
+              border: '1px solid rgba(208, 174, 146, 0.4)',
+            }}
+          >
+            4 Active Subsystems
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 12,
+          }}
+        >
+          {/* 1. Live Correctness Monitor */}
+          <Link
+            to="/monitor"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: '14px 16px',
+              background: 'var(--surface)',
+              border: '1px solid rgba(22, 163, 74, 0.35)',
+              borderRadius: 14,
+              textDecoration: 'none',
+              transition: 'all 150ms ease',
+              boxShadow: '0 2px 6px rgba(22, 163, 74, 0.04)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 14px rgba(22, 163, 74, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(22, 163, 74, 0.04)';
+              e.currentTarget.style.borderColor = 'rgba(22, 163, 74, 0.35)';
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'rgba(22, 163, 74, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#15803d',
+                  }}
+                >
+                  <Activity size={18} />
+                </div>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
+                    color: '#15803d',
+                    background: 'rgba(22, 163, 74, 0.12)',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      backgroundColor: '#16a34a',
+                      boxShadow: '0 0 6px #16a34a',
+                    }}
+                  />
+                  LIVE TICKER
+                </span>
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: 'var(--brown-900)',
+                  margin: '0 0 4px 0',
+                }}
+              >
+                Live Correctness Monitor
+              </h3>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--brown-700)',
+                  fontFamily: 'var(--font-body)',
+                  margin: 0,
+                  lineHeight: 1.4,
+                }}
+              >
+                Real-time full-screen TV ticker. Polls ledger parity every 5s with zero-difference guarantee.
+              </p>
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                marginTop: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#15803d',
+              }}
+            >
+              <span>Launch Live Monitor (TV)</span>
+              <ChevronRight size={14} />
+            </div>
+          </Link>
+
+          {/* 2. System Integrity Report */}
+          <Link
+            to="/integrity"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: '14px 16px',
+              background: 'var(--surface)',
+              border: '1px solid rgba(208, 174, 146, 0.45)',
+              borderRadius: 14,
+              textDecoration: 'none',
+              transition: 'all 150ms ease',
+              boxShadow: '0 2px 6px rgba(74, 58, 52, 0.03)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 14px rgba(74, 58, 52, 0.08)';
+              e.currentTarget.style.borderColor = 'var(--brown-700)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(74, 58, 52, 0.03)';
+              e.currentTarget.style.borderColor = 'rgba(208, 174, 146, 0.45)';
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'rgba(208, 174, 146, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--brown-900)',
+                  }}
+                >
+                  <ShieldCheck size={18} />
+                </div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
+                    color: 'var(--brown-800)',
+                    background: 'rgba(208, 174, 146, 0.25)',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                  }}
+                >
+                  10 INVARIANTS
+                </span>
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: 'var(--brown-900)',
+                  margin: '0 0 4px 0',
+                }}
+              >
+                System Integrity Report
+              </h3>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--brown-700)',
+                  fontFamily: 'var(--font-body)',
+                  margin: 0,
+                  lineHeight: 1.4,
+                }}
+              >
+                10 automated mathematical tests auditing trial balance, subledgers, inventory valuation & bank rec.
+              </p>
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                marginTop: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--brown-900)',
+              }}
+            >
+              <span>Run Integrity Audit</span>
+              <ChevronRight size={14} />
+            </div>
+          </Link>
+
+          {/* 3. Business Analytics Engine */}
+          <Link
+            to="/analytics"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: '14px 16px',
+              background: 'var(--surface)',
+              border: '1px solid rgba(59, 130, 246, 0.35)',
+              borderRadius: 14,
+              textDecoration: 'none',
+              transition: 'all 150ms ease',
+              boxShadow: '0 2px 6px rgba(59, 130, 246, 0.04)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 14px rgba(59, 130, 246, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(59, 130, 246, 0.04)';
+              e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.35)';
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#2563eb',
+                  }}
+                >
+                  <BarChart2 size={18} />
+                </div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
+                    color: '#2563eb',
+                    background: 'rgba(59, 130, 246, 0.12)',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                  }}
+                >
+                  MARGINS & VELOCITY
+                </span>
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: 'var(--brown-900)',
+                  margin: '0 0 4px 0',
+                }}
+              >
+                Business Analytics Engine
+              </h3>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--brown-700)',
+                  fontFamily: 'var(--font-body)',
+                  margin: 0,
+                  lineHeight: 1.4,
+                }}
+              >
+                Gross margins, inventory turnover, customer CLV, velocity analysis & 1-click reorder POs.
+              </p>
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                marginTop: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#2563eb',
+              }}
+            >
+              <span>Explore Analytics</span>
+              <ChevronRight size={14} />
+            </div>
+          </Link>
+
+          {/* 4. Audit Log UI (Chatter) */}
+          <Link
+            to="/audit"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              padding: '14px 16px',
+              background: 'var(--surface)',
+              border: '1px solid rgba(168, 85, 247, 0.35)',
+              borderRadius: 14,
+              textDecoration: 'none',
+              transition: 'all 150ms ease',
+              boxShadow: '0 2px 6px rgba(168, 85, 247, 0.04)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 6px 14px rgba(168, 85, 247, 0.12)';
+              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(168, 85, 247, 0.04)';
+              e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.35)';
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    background: 'rgba(168, 85, 247, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#9333ea',
+                  }}
+                >
+                  <ScrollText size={18} />
+                </div>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: 'var(--font-mono)',
+                    color: '#9333ea',
+                    background: 'rgba(168, 85, 247, 0.12)',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                  }}
+                >
+                  AUDIT & CHATTER
+                </span>
+              </div>
+              <h3
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  color: 'var(--brown-900)',
+                  margin: '0 0 4px 0',
+                }}
+              >
+                Audit Log & Chatter Feed
+              </h3>
+              <p
+                style={{
+                  fontSize: 12,
+                  color: 'var(--brown-700)',
+                  fontFamily: 'var(--font-body)',
+                  margin: 0,
+                  lineHeight: 1.4,
+                }}
+              >
+                Tamper-proof audit feed with record-level diffs, actor tracing, filters and interactive chatter.
+              </p>
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                marginTop: 12,
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#9333ea',
+              }}
+            >
+              <span>View Audit Feed</span>
+              <ChevronRight size={14} />
+            </div>
+          </Link>
+        </div>
+      </div>
 
       {/* ── Refined KPI Strip (Clean, Smaller Figures & Smooth Corners) ── */}
       <div
@@ -1247,6 +1718,88 @@ export default function Dashboard() {
             >
               <Landmark size={15} style={{ color: 'var(--brown-700)' }} />
               <span>Chart of Accounts</span>
+            </Link>
+
+            <Link
+              to="/monitor"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 12px',
+                background: 'rgba(22, 163, 74, 0.08)',
+                border: '1px solid rgba(22, 163, 74, 0.3)',
+                borderRadius: 10,
+                textDecoration: 'none',
+                color: '#15803d',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              <Activity size={15} style={{ color: '#16a34a' }} />
+              <span>Live Correctness Monitor (TV)</span>
+            </Link>
+
+            <Link
+              to="/integrity"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 12px',
+                background: 'var(--surface)',
+                border: '1px solid rgba(208, 174, 146, 0.4)',
+                borderRadius: 10,
+                textDecoration: 'none',
+                color: 'var(--brown-900)',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              <ShieldCheck size={15} style={{ color: 'var(--brown-800)' }} />
+              <span>System Integrity (10 Checks)</span>
+            </Link>
+
+            <Link
+              to="/analytics"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 12px',
+                background: 'var(--surface)',
+                border: '1px solid rgba(208, 174, 146, 0.4)',
+                borderRadius: 10,
+                textDecoration: 'none',
+                color: 'var(--brown-900)',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              <BarChart2 size={15} style={{ color: '#2563eb' }} />
+              <span>Business Analytics Engine</span>
+            </Link>
+
+            <Link
+              to="/audit"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '9px 12px',
+                background: 'var(--surface)',
+                border: '1px solid rgba(208, 174, 146, 0.4)',
+                borderRadius: 10,
+                textDecoration: 'none',
+                color: 'var(--brown-900)',
+                fontSize: 12,
+                fontWeight: 600,
+              }}
+            >
+              <ScrollText size={15} style={{ color: '#9333ea' }} />
+              <span>Audit Log & Chatter Feed</span>
             </Link>
           </div>
         </div>

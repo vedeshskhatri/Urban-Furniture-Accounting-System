@@ -27,6 +27,7 @@ import {
   BarChart2,
   FileSpreadsheet,
   FolderCheck,
+  Activity,
 } from 'lucide-react';
 import { MegaMenu } from './MegaMenu';
 import RecordTimelineDrawer from '../audit/RecordTimelineDrawer';
@@ -65,9 +66,10 @@ const MODULE_SUBNAV_MAP: Record<string, SubNavItem[]> = {
     { label: 'Balance Sheet', to: '/report/balance-sheet', icon: Scale },
     { label: 'Profit & Loss', to: '/report/profit-loss', icon: TrendingUp },
     { label: 'Budget Performance', to: '/report/budget', icon: FileBarChart },
-    { label: 'Analytics Engine', to: '/report/analytics', icon: BarChart2 },
+    { label: 'Analytics Engine', to: '/analytics', icon: BarChart2 },
     { label: 'System Integrity', to: '/integrity', icon: ShieldCheck },
-    { label: 'Audit Log', to: '/audit', icon: ScrollText, adminOnly: true },
+    { label: 'Live Monitor', to: '/monitor', icon: Activity },
+    { label: 'Audit Log & Chatter', to: '/audit', icon: ScrollText },
   ],
   tools: [
     { label: 'Template Library', to: '/tools/templates', icon: FileSpreadsheet },
@@ -267,6 +269,40 @@ export default function AppShell() {
 
           {/* Right Header Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, zIndex: 2 }}>
+            <Link
+              to="/monitor"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 11px',
+                fontSize: 12,
+                fontWeight: 600,
+                color: '#15803d',
+                background: 'rgba(22, 163, 74, 0.08)',
+                border: '1px solid rgba(22, 163, 74, 0.25)',
+                borderRadius: 8,
+                textDecoration: 'none',
+                transition: 'all 120ms ease-out',
+              }}
+              title="Open Live Correctness Monitor (Real-time TV Screen)"
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  backgroundColor: '#16a34a',
+                  display: 'inline-block',
+                  boxShadow: '0 0 6px #16a34a',
+                }}
+              />
+              <Activity size={13} />
+              <span>Live Monitor</span>
+            </Link>
+
             <NavLink
               to="/dashboard"
               style={{
