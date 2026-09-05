@@ -1043,16 +1043,30 @@ export const PortalRoomStudioPage: React.FC = () => {
 
   // Clear all pieces from room
   const handleClearAll = useCallback(() => {
-    if (placedItems.length === 0) return;
-    if (window.confirm('Clear all furniture pieces from this room?')) {
-      placedMeshesRef.current.forEach((group) => {
-        sceneRef.current?.remove(group);
+    placedMeshesRef.current.forEach((group) => {
+      if (sceneRef.current) {
+        sceneRef.current.remove(group);
+      }
+      group.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          mesh.geometry?.dispose();
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((m) => m.dispose());
+          } else if (mesh.material) {
+            mesh.material.dispose();
+          }
+        }
       });
-      placedMeshesRef.current.clear();
-      setPlacedItems([]);
-      setSelectedInstanceId(null);
+    });
+    placedMeshesRef.current.clear();
+    setPlacedItems([]);
+    setSelectedInstanceId(null);
+    if (selectionRingRef.current) {
+      (selectionRingRef.current.material as THREE.MeshBasicMaterial).opacity = 0;
     }
-  }, [placedItems.length]);
+    playWoodClick(1.2);
+  }, []);
 
   // Keyboard Shortcuts (R to rotate, Arrows to nudge, +/- to scale, Delete to remove)
   useEffect(() => {
@@ -1245,22 +1259,38 @@ export const PortalRoomStudioPage: React.FC = () => {
             <>
               <span style={{ color: 'rgba(208, 174, 146, 0.6)' }}>|</span>
               <button
-                onClick={handleClearAll}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleClearAll();
+                }}
                 title="Clear all furniture pieces from room"
                 style={{
                   background: 'none',
-                  border: '1px solid rgba(192, 57, 43, 0.3)',
+                  border: '1px solid rgba(192, 57, 43, 0.35)',
                   borderRadius: 6,
-                  padding: '2px 8px',
+                  padding: '3px 8px',
                   color: 'var(--danger)',
                   fontSize: 11,
                   fontWeight: 600,
                   fontFamily: 'var(--font-display)',
                   cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1,
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
                 <Trash2 size={12} />
-                Clear Room
+                <span>Clear Room</span>
               </button>
             </>
           )}
