@@ -1,7 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+} from 'recharts';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CustomerStatementModal } from './components/CustomerStatementModal';
+import {
+  AlertCircle,
+  BarChart3,
+  PieChart as PieIcon,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Users,
+} from 'lucide-react';
+
+const DEBTOR_PALETTE = [
+  '#9E4A38', // Terracotta (Highest risk)
+  '#C08A3E', // Amber
+  '#77574A', // Walnut
+  '#A8836C', // Sand brown
+  '#5F7052', // Olive
+  '#4A3A34', // Deep Walnut
+];
+
+function formatDisplayINR(num: number): string {
+  if (Math.abs(num) >= 10000000) {
+    return `₹${(num / 10000000).toFixed(2)} Cr`;
+  }
+  if (Math.abs(num) >= 100000) {
+    return `₹${(num / 100000).toFixed(2)} L`;
+  }
+  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+}
 
 export interface CustomerReceivableItem {
   customerId: number;
@@ -74,6 +113,7 @@ export const ReceivablesPage: React.FC = () => {
   const [overdueData, setOverdueData] = useState<OverdueSummary | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showVisualAnalytics, setShowVisualAnalytics] = useState<boolean>(true);
 
   // Expanded invoices in summary view
   const [expandedCustomerId, setExpandedCustomerId] = useState<number | null>(null);
@@ -135,20 +175,49 @@ export const ReceivablesPage: React.FC = () => {
     }
   };
 
-  const grandTotalInvoiced = receivables
-    .reduce((acc, c) => acc + Number(c.totalInvoiced), 0)
-    .toFixed(2);
-  const grandTotalPaid = receivables
-    .reduce((acc, c) => acc + Number(c.totalPaid), 0)
-    .toFixed(2);
-  const grandTotalOutstanding = receivables
-    .reduce((acc, c) => acc + Number(c.totalOutstanding), 0)
-    .toFixed(2);
+  const grandTotalInvoiced = useMemo(
+    () => receivables.reduce((acc, c) => acc + Number(c.totalInvoiced || 0), 0).toFixed(2),
+    [receivables]
+  );
+  const grandTotalPaid = useMemo(
+    () => receivables.reduce((acc, c) => acc + Number(c.totalPaid || 0), 0).toFixed(2),
+    [receivables]
+  );
+  const grandTotalOutstanding = useMemo(
+    () => receivables.reduce((acc, c) => acc + Number(c.totalOutstanding || 0), 0).toFixed(2),
+    [receivables]
+  );
+
+  // Aging Waterfall Data (BarChart)
+  const agingChartData = useMemo(() => {
+    if (!agingData?.totals) return [];
+    return [
+      { name: 'Current', amount: parseFloat(agingData.totals.current || '0'), fill: '#5F7052' },
+      { name: '1-30 Days', amount: parseFloat(agingData.totals.days1_30 || '0'), fill: '#C08A3E' },
+      { name: '31-60 Days', amount: parseFloat(agingData.totals.days31_60 || '0'), fill: '#A8836C' },
+      { name: '61-90 Days', amount: parseFloat(agingData.totals.days61_90 || '0'), fill: '#9E4A38' },
+      { name: '90+ Days Critical', amount: parseFloat(agingData.totals.days90Plus || '0'), fill: '#4A3A34' },
+    ];
+  }, [agingData]);
+
+  // Debtor Concentration Data (Donut Chart)
+  const debtorConcentrationData = useMemo(() => {
+    return receivables
+      .filter(c => parseFloat(c.totalOutstanding || '0') > 0)
+      .sort((a, b) => parseFloat(b.totalOutstanding || '0') - parseFloat(a.totalOutstanding || '0'))
+      .slice(0, 6)
+      .map((c, idx) => ({
+        id: c.customerId,
+        name: c.customerName,
+        value: parseFloat(c.totalOutstanding || '0'),
+        color: DEBTOR_PALETTE[idx % DEBTOR_PALETTE.length],
+      }));
+  }, [receivables]);
 
   return (
-    <div className="w-full">
+    <div className="w-full flex flex-col gap-5">
       {/* Title & Stats Ribbon */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold font-display text-brown-900">
             Receivables & Aging Analysis
@@ -157,35 +226,45 @@ export const ReceivablesPage: React.FC = () => {
             Customer balance tracking, aging buckets, and statement ledger
           </p>
         </div>
-        <div className="flex items-center space-x-2 bg-surface p-1.5 border border-brown-300 rounded-[8px] shadow-sm">
+        <div className="flex items-center space-x-2 flex-wrap">
           <button
-            onClick={() => setActiveTab('summary')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[6px] transition-colors ${
-              activeTab === 'summary'
-                ? 'bg-brown-900 text-cream shadow-xs'
-                : 'text-brown-700 hover:bg-brown-100'
-            }`}
+            onClick={() => setShowVisualAnalytics(prev => !prev)}
+            className="inline-flex items-center gap-1.5 bg-surface border border-brown-300 hover:bg-brown-100 text-brown-900 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors shadow-xs"
           >
-            Customer Summary
+            <BarChart3 className="w-3.5 h-3.5 text-brown-700" />
+            <span>{showVisualAnalytics ? 'Hide Analytics' : 'Visual Analytics'}</span>
+            {showVisualAnalytics ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
-          <button
-            onClick={() => setActiveTab('aging')}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-[6px] transition-colors ${
-              activeTab === 'aging'
-                ? 'bg-brown-900 text-cream shadow-xs'
-                : 'text-brown-700 hover:bg-brown-100'
-            }`}
-          >
-            Aging Buckets
-          </button>
+          <div className="flex items-center space-x-1 bg-surface p-1 border border-brown-300 rounded-[8px] shadow-xs">
+            <button
+              onClick={() => setActiveTab('summary')}
+              className={`px-3 py-1 text-xs font-semibold rounded-[6px] transition-colors ${
+                activeTab === 'summary'
+                  ? 'bg-brown-900 text-cream shadow-xs'
+                  : 'text-brown-700 hover:bg-brown-100'
+              }`}
+            >
+              Customer Summary
+            </button>
+            <button
+              onClick={() => setActiveTab('aging')}
+              className={`px-3 py-1 text-xs font-semibold rounded-[6px] transition-colors ${
+                activeTab === 'aging'
+                  ? 'bg-brown-900 text-cream shadow-xs'
+                  : 'text-brown-700 hover:bg-brown-100'
+              }`}
+            >
+              Aging Buckets
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Overdue Alert Banner if any overdue invoices exist */}
       {overdueData && overdueData.overdueCount > 0 && (
-        <div className="bg-danger-bg border-l-4 border-danger p-4 rounded-r-[8px] mb-6 flex items-start justify-between shadow-sm">
-          <div className="flex items-start space-x-3">
-            <span className="text-danger text-lg font-bold">⚠️</span>
+        <div className="bg-danger-bg border-l-4 border-danger p-3.5 rounded-r-[8px] flex items-start justify-between shadow-xs">
+          <div className="flex items-start space-x-2.5">
+            <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
             <div>
               <h3 className="text-sm font-bold text-danger">
                 Overdue Invoice Alert: {overdueData.overdueCount} Invoices Exceeding Due Dates
@@ -208,44 +287,148 @@ export const ReceivablesPage: React.FC = () => {
         </div>
       )}
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-surface border border-brown-300 rounded-[10px] p-4 shadow-sm">
-          <span className="text-xs font-semibold text-brown-500 uppercase tracking-wider block">
-            Total Revenue Billed
-          </span>
-          <span className="text-2xl font-bold font-mono text-brown-900 mt-1 block">
-            ₹{Number(grandTotalInvoiced).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-          </span>
-          <span className="text-[11px] text-brown-500 mt-1 block">
-            Across {receivables.length} active customers
-          </span>
-        </div>
+      {/* ── Executive Visual Aging & Concentration Suite ── */}
+      {showVisualAnalytics && (
+        <div className="bg-surface border border-brown-300/70 rounded-[10px] p-5 shadow-xs flex flex-col gap-4">
+          {/* KPI Ribbon */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-3 border-b border-brown-200">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brown-500">Total Billed Volume</span>
+              <span className="text-xl font-bold font-mono text-brown-900 mt-0.5">
+                ₹{Number(grandTotalInvoiced).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] text-brown-600">Across {receivables.length} active customer accounts</span>
+            </div>
 
-        <div className="bg-surface border border-brown-300 rounded-[10px] p-4 shadow-sm">
-          <span className="text-xs font-semibold text-brown-500 uppercase tracking-wider block">
-            Total Inward Receipts
-          </span>
-          <span className="text-2xl font-bold font-mono text-posted mt-1 block">
-            ₹{Number(grandTotalPaid).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-          </span>
-          <span className="text-[11px] text-brown-500 mt-1 block">
-            Cash & Bank collections applied
-          </span>
-        </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brown-500">Inward Cash Receipts</span>
+              <span className="text-xl font-bold font-mono text-posted mt-0.5">
+                ₹{Number(grandTotalPaid).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] text-brown-600">Cash & Bank clearances applied</span>
+            </div>
 
-        <div className="bg-surface border border-brown-300 rounded-[10px] p-4 shadow-sm">
-          <span className="text-xs font-semibold text-brown-500 uppercase tracking-wider block">
-            Net Outstanding Due
-          </span>
-          <span className="text-2xl font-bold font-mono text-danger mt-1 block">
-            ₹{Number(grandTotalOutstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-          </span>
-          <span className="text-[11px] text-danger mt-1 block">
-            Awaiting customer payment
-          </span>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-brown-500">Net Outstanding Debt</span>
+              <span className="text-xl font-bold font-mono text-danger mt-0.5">
+                ₹{Number(grandTotalOutstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] text-danger">Uncollected commercial claims</span>
+            </div>
+          </div>
+
+          {/* Recharts Visualizations Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
+            {/* Chart 1: Aging Buckets Waterfall */}
+            <div className="bg-brown-50/40 border border-brown-200/80 rounded-[8px] p-3.5 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-brown-700" />
+                  <span className="text-xs font-bold text-brown-900">Outstanding Aging Buckets</span>
+                </div>
+                <span className="text-[11px] font-mono text-brown-600">Receivable Distribution</span>
+              </div>
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={agingChartData} margin={{ top: 8, right: 8, left: -14, bottom: 0 }}>
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fill: '#77574A', fontSize: 10 }}
+                      axisLine={{ stroke: 'rgba(208, 174, 146, 0.5)' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tickFormatter={formatDisplayINR}
+                      tick={{ fill: '#77574A', fontSize: 9, fontFamily: 'monospace' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <RechartsTooltip
+                      formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Outstanding']}
+                      contentStyle={{
+                        background: '#FFF',
+                        borderRadius: 6,
+                        border: '1px solid rgba(208, 174, 146, 0.5)',
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      }}
+                    />
+                    <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+                      {agingChartData.map((entry, index) => (
+                        <Cell key={`aging-cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Chart 2: Debtor Concentration Donut */}
+            <div className="bg-brown-50/40 border border-brown-200/80 rounded-[8px] p-3.5 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-brown-700" />
+                  <span className="text-xs font-bold text-brown-900">Top Debtor Concentration</span>
+                </div>
+                <span className="text-[11px] font-mono text-brown-600">Receivable Exposure</span>
+              </div>
+
+              {debtorConcentrationData.length > 0 ? (
+                <div className="flex items-center h-44">
+                  <div className="w-1/2 h-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={debtorConcentrationData}
+                          innerRadius={40}
+                          outerRadius={65}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {debtorConcentrationData.map((entry, idx) => (
+                            <Cell key={`debtor-cell-${idx}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <RechartsTooltip
+                          formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Due']}
+                          contentStyle={{
+                            background: '#FFF',
+                            borderRadius: 6,
+                            border: '1px solid rgba(208, 174, 146, 0.5)',
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="w-1/2 flex flex-col gap-1.5 pl-2 overflow-y-auto max-h-40">
+                    {debtorConcentrationData.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between gap-1 text-[11px] px-2 py-1 rounded bg-brown-50/60"
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="truncate text-brown-800">{item.name}</span>
+                        </div>
+                        <span className="font-mono font-semibold text-brown-900 shrink-0">
+                          {formatDisplayINR(item.value)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-44 flex items-center justify-center text-xs text-brown-500">
+                  No outstanding customer balances.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content Area */}
       {loading ? (
