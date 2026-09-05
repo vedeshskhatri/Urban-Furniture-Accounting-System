@@ -910,17 +910,18 @@ export const PortalCataloguePage: React.FC = () => {
                     {/* Product Name */}
                     <h3
                       style={{
-                        fontFamily: 'var(--font-display)',
+                        fontFamily: 'var(--font-body)',
                         fontSize: 14.5,
-                        fontWeight: 700,
-                        color: 'var(--brown-900)',
-                        margin: '0 0 10px',
-                        lineHeight: 1.35,
+                        fontWeight: 500,
+                        color: 'var(--brown-800)',
+                        margin: '0 0 8px',
+                        lineHeight: 1.4,
                         display: '-webkit-box',
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
-                        height: 38,
+                        height: 40,
+                        letterSpacing: '-0.01em',
                       }}
                       title={product.name}
                     >
@@ -943,7 +944,7 @@ export const PortalCataloguePage: React.FC = () => {
                           }}
                         />
                       ))}
-                      <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)', marginLeft: 4 }}>
+                      <span style={{ fontSize: 11, fontFamily: 'var(--font-body)', fontWeight: 500, color: 'var(--brown-600)', marginLeft: 4 }}>
                         4 Finishes
                       </span>
                     </div>
@@ -955,9 +956,9 @@ export const PortalCataloguePage: React.FC = () => {
                       <span
                         style={{
                           fontFamily: 'var(--font-mono)',
-                          fontSize: 17,
-                          fontWeight: 800,
-                          color: 'var(--brown-900)',
+                          fontSize: 16.5,
+                          fontWeight: 600,
+                          color: 'var(--brown-800)',
                           fontVariantNumeric: 'tabular-nums',
                         }}
                       >
@@ -1234,9 +1235,9 @@ export const PortalCataloguePage: React.FC = () => {
                 <h2
                   style={{
                     fontFamily: 'var(--font-display)',
-                    fontSize: 22,
-                    fontWeight: 800,
-                    color: 'var(--brown-900)',
+                    fontSize: 21,
+                    fontWeight: 600,
+                    color: 'var(--brown-800)',
                     margin: '0 0 12px',
                     lineHeight: 1.3,
                   }}
@@ -1249,9 +1250,9 @@ export const PortalCataloguePage: React.FC = () => {
                   <span
                     style={{
                       fontFamily: 'var(--font-mono)',
-                      fontSize: 22,
-                      fontWeight: 800,
-                      color: 'var(--brown-900)',
+                      fontSize: 21,
+                      fontWeight: 600,
+                      color: 'var(--brown-800)',
                     }}
                   >
                     {formatINR(quickViewProduct.sales_price)}
