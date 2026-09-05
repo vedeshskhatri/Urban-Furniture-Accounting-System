@@ -15,8 +15,6 @@ import {
   Search,
 } from 'lucide-react';
 import { GlobalCommandPalette } from '../../components/common/GlobalCommandPalette';
-import { LiveLedgerAuditBadge } from '../../components/common/LiveLedgerAuditBadge';
-import { DemoRoleSwitcher } from '../../components/common/DemoRoleSwitcher';
 
 export const PortalLayout: React.FC = () => {
   const { user, logout } = usePortalAuth();
@@ -56,11 +54,11 @@ export const PortalLayout: React.FC = () => {
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          backgroundColor: 'rgba(252, 250, 246, 0.88)',
-          backdropFilter: 'blur(20px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          backgroundColor: 'rgba(253, 250, 246, 0.92)',
+          backdropFilter: 'blur(24px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
           borderBottom: '1px solid rgba(214, 198, 180, 0.35)',
-          boxShadow: '0 4px 24px -2px rgba(44, 34, 30, 0.04)',
+          boxShadow: '0 2px 16px -2px rgba(44, 34, 30, 0.03)',
           transition: 'all 200ms ease',
         }}
       >
@@ -68,12 +66,12 @@ export const PortalLayout: React.FC = () => {
           style={{
             maxWidth: '92rem',
             margin: '0 auto',
-            padding: '0 32px',
-            height: 68,
+            padding: '0 28px',
+            height: 64,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: 24,
+            gap: 20,
           }}
         >
           {/* Left: Refined Architectural Brand Mark */}
@@ -83,70 +81,53 @@ export const PortalLayout: React.FC = () => {
               textDecoration: 'none',
               display: 'flex',
               alignItems: 'center',
-              gap: 14,
+              gap: 12,
               cursor: 'pointer',
               flexShrink: 0,
             }}
           >
             <div
               style={{
-                width: 38,
-                height: 38,
-                borderRadius: 10,
-                backgroundColor: 'var(--brown-900, #261914)',
+                width: 34,
+                height: 34,
+                borderRadius: 8,
+                backgroundColor: '#1F1714',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 3px 10px rgba(38, 25, 20, 0.2)',
+                boxShadow: '0 2px 8px rgba(31, 23, 20, 0.18)',
                 flexShrink: 0,
-                transition: 'transform 180ms ease',
               }}
             >
-              <ChairIcon size={22} color="#FBF9F5" />
+              <ChairIcon size={18} color="#FAF7F2" />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: 15,
-                    fontWeight: 800,
-                    letterSpacing: '0.06em',
-                    color: 'var(--brown-900)',
-                    lineHeight: 1,
-                  }}
-                >
-                  URBAN FURNITURE
-                </span>
-                <span
-                  style={{
-                    fontSize: 9,
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: 700,
-                    letterSpacing: '0.12em',
-                    textTransform: 'uppercase',
-                    color: '#8C6D53',
-                    backgroundColor: 'rgba(140, 109, 83, 0.12)',
-                    border: '1px solid rgba(140, 109, 83, 0.25)',
-                    padding: '2px 7px',
-                    borderRadius: 4,
-                    lineHeight: 1.2,
-                  }}
-                >
-                  ATELIER
-                </span>
-              </div>
-              <div
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <span
                 style={{
-                  fontSize: 10.5,
-                  fontFamily: 'var(--font-mono)',
-                  color: 'var(--brown-600)',
-                  letterSpacing: '0.03em',
+                  fontFamily: 'var(--font-display)',
+                  fontSize: 14,
+                  fontWeight: 800,
+                  letterSpacing: '0.08em',
+                  color: '#1F1714',
+                  lineHeight: 1.1,
                 }}
               >
-                Client Showroom &amp; Ledger
-              </div>
+                URBAN FURNITURE
+              </span>
+              <span
+                style={{
+                  fontSize: 9,
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 600,
+                  letterSpacing: '0.14em',
+                  textTransform: 'uppercase',
+                  color: '#8C7362',
+                  lineHeight: 1,
+                }}
+              >
+                Atelier Showroom
+              </span>
             </div>
           </Link>
 
@@ -156,35 +137,30 @@ export const PortalLayout: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              backgroundColor: 'rgba(240, 234, 224, 0.55)',
-              padding: '4px',
-              borderRadius: 12,
-              border: '1px solid rgba(214, 198, 180, 0.5)',
-              boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
             }}
           >
-            {/* Dashboard */}
+            {/* Dashboard Overview */}
             <NavLink
               to="/portal"
               end
               style={({ isActive }) => ({
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
-                padding: '7px 15px',
-                borderRadius: 8,
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 7,
                 fontSize: 13,
                 fontFamily: 'var(--font-display)',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#FFFFFF' : 'var(--brown-700)',
-                backgroundColor: isActive ? 'var(--brown-900)' : 'transparent',
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? '#FAF7F2' : '#5C4A3E',
+                backgroundColor: isActive ? '#1F1714' : 'transparent',
                 textDecoration: 'none',
-                boxShadow: isActive ? '0 2px 8px rgba(38, 25, 20, 0.18)' : 'none',
-                transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: isActive ? '0 2px 8px rgba(31, 23, 20, 0.18)' : 'none',
+                transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
               })}
             >
               <LayoutDashboard size={14} />
-              <span>Dashboard</span>
+              <span>Overview</span>
             </NavLink>
 
             {/* Furniture Catalogue */}
@@ -193,17 +169,17 @@ export const PortalLayout: React.FC = () => {
               style={({ isActive }) => ({
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
-                padding: '7px 15px',
-                borderRadius: 8,
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 7,
                 fontSize: 13,
                 fontFamily: 'var(--font-display)',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#FFFFFF' : 'var(--brown-700)',
-                backgroundColor: isActive ? 'var(--brown-900)' : 'transparent',
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? '#FAF7F2' : '#5C4A3E',
+                backgroundColor: isActive ? '#1F1714' : 'transparent',
                 textDecoration: 'none',
-                boxShadow: isActive ? '0 2px 8px rgba(38, 25, 20, 0.18)' : 'none',
-                transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: isActive ? '0 2px 8px rgba(31, 23, 20, 0.18)' : 'none',
+                transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
               })}
             >
               <Layers size={14} />
@@ -216,17 +192,17 @@ export const PortalLayout: React.FC = () => {
               style={({ isActive }) => ({
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 7,
-                padding: '7px 15px',
-                borderRadius: 8,
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 7,
                 fontSize: 13,
                 fontFamily: 'var(--font-display)',
-                fontWeight: isActive ? 700 : 500,
-                color: isActive ? '#FFFFFF' : 'var(--brown-700)',
-                backgroundColor: isActive ? 'var(--brown-900)' : 'transparent',
+                fontWeight: isActive ? 600 : 500,
+                color: isActive ? '#FAF7F2' : '#5C4A3E',
+                backgroundColor: isActive ? '#1F1714' : 'transparent',
                 textDecoration: 'none',
-                boxShadow: isActive ? '0 2px 8px rgba(38, 25, 20, 0.18)' : 'none',
-                transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)',
+                boxShadow: isActive ? '0 2px 8px rgba(31, 23, 20, 0.18)' : 'none',
+                transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
               })}
             >
               <Sparkles size={14} />
@@ -240,17 +216,17 @@ export const PortalLayout: React.FC = () => {
                 style={({ isActive }) => ({
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 7,
-                  padding: '7px 15px',
-                  borderRadius: 8,
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 7,
                   fontSize: 13,
                   fontFamily: 'var(--font-display)',
-                  fontWeight: isActive ? 700 : 500,
-                  color: isActive ? '#FFFFFF' : 'var(--brown-700)',
-                  backgroundColor: isActive ? 'var(--brown-900)' : 'transparent',
+                  fontWeight: isActive ? 600 : 500,
+                  color: isActive ? '#FAF7F2' : '#5C4A3E',
+                  backgroundColor: isActive ? '#1F1714' : 'transparent',
                   textDecoration: 'none',
-                  boxShadow: isActive ? '0 2px 8px rgba(38, 25, 20, 0.18)' : 'none',
-                  transition: 'all 160ms cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: isActive ? '0 2px 8px rgba(31, 23, 20, 0.18)' : 'none',
+                  transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
                 })}
               >
                 <Receipt size={14} />
@@ -261,8 +237,42 @@ export const PortalLayout: React.FC = () => {
 
           {/* Right: Actions & User Session */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            <LiveLedgerAuditBadge />
-            <DemoRoleSwitcher />
+            {/* Quick Spotlight Search Trigger */}
+            <button
+              onClick={() => {
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+              }}
+              title="Quick Search & Command Palette (⌘K)"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 7,
+                padding: '5px 10px',
+                borderRadius: 7,
+                fontSize: 12,
+                fontFamily: 'var(--font-display)',
+                color: '#6E5A4E',
+                backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                border: '1px solid rgba(214, 198, 180, 0.45)',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+              }}
+            >
+              <Search size={13} color="#8C7362" />
+              <span style={{ fontSize: 11.5 }}>Search</span>
+              <kbd
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'var(--font-mono)',
+                  padding: '1px 4px',
+                  borderRadius: 3,
+                  backgroundColor: 'rgba(140, 115, 98, 0.1)',
+                  color: '#8C7362',
+                }}
+              >
+                ⌘K
+              </kbd>
+            </button>
 
             {/* Back to ERP for staff */}
             {isInternalStaff && (
@@ -271,10 +281,10 @@ export const PortalLayout: React.FC = () => {
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 5,
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  fontSize: 11,
+                  gap: 4,
+                  padding: '5px 10px',
+                  borderRadius: 7,
+                  fontSize: 11.5,
                   fontWeight: 600,
                   fontFamily: 'var(--font-display)',
                   color: '#5C3D2E',
@@ -284,9 +294,9 @@ export const PortalLayout: React.FC = () => {
                   transition: 'all 140ms ease',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--brown-900)';
-                  e.currentTarget.style.color = 'var(--cream)';
-                  e.currentTarget.style.borderColor = 'var(--brown-900)';
+                  e.currentTarget.style.backgroundColor = '#1F1714';
+                  e.currentTarget.style.color = '#FAF7F2';
+                  e.currentTarget.style.borderColor = '#1F1714';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = 'rgba(235, 215, 190, 0.35)';
@@ -301,31 +311,31 @@ export const PortalLayout: React.FC = () => {
             )}
 
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {/* Client Profile Cardlet */}
                 <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 10,
-                    padding: '4px 12px 4px 4px',
-                    borderRadius: 10,
-                    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+                    gap: 8,
+                    padding: '4px 10px 4px 4px',
+                    borderRadius: 8,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
                     border: '1px solid rgba(214, 198, 180, 0.45)',
-                    boxShadow: '0 1px 4px rgba(44, 34, 30, 0.03)',
+                    boxShadow: '0 1px 3px rgba(44, 34, 30, 0.03)',
                   }}
                 >
                   <div
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      backgroundColor: 'var(--brown-900)',
-                      color: 'var(--cream)',
+                      width: 26,
+                      height: 26,
+                      borderRadius: 6,
+                      backgroundColor: '#1F1714',
+                      color: '#FAF7F2',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: 700,
                       fontFamily: 'var(--font-display)',
                       letterSpacing: '0.04em',
@@ -333,38 +343,17 @@ export const PortalLayout: React.FC = () => {
                   >
                     {initials}
                   </div>
-                  <div style={{ lineHeight: 1.15 }}>
+                  <div style={{ lineHeight: 1.2 }}>
                     <div
                       style={{
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        color: 'var(--brown-900)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: '#1F1714',
                         fontFamily: 'var(--font-display)',
                         whiteSpace: 'nowrap',
                       }}
                     >
                       {user.full_name}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 10,
-                        color: 'var(--brown-600)',
-                        fontFamily: 'var(--font-mono)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 5,
-                          height: 5,
-                          borderRadius: '50%',
-                          backgroundColor: '#2E7D32',
-                          display: 'inline-block',
-                        }}
-                      />
-                      Verified Client
                     </div>
                   </div>
                 </div>
@@ -377,60 +366,51 @@ export const PortalLayout: React.FC = () => {
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: 34,
-                    height: 34,
-                    borderRadius: 8,
-                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                    width: 30,
+                    height: 30,
+                    borderRadius: 7,
                     border: '1px solid rgba(214, 198, 180, 0.45)',
-                    color: 'var(--brown-700)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    color: '#8C7362',
                     cursor: 'pointer',
-                    transition: 'all 140ms ease',
+                    transition: 'all 120ms ease',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--danger-bg)';
-                    e.currentTarget.style.color = 'var(--danger)';
-                    e.currentTarget.style.borderColor = 'var(--danger)';
+                    e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
+                    e.currentTarget.style.color = '#C0392B';
+                    e.currentTarget.style.borderColor = 'rgba(192, 57, 43, 0.3)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.6)';
-                    e.currentTarget.style.color = 'var(--brown-700)';
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                    e.currentTarget.style.color = '#8C7362';
                     e.currentTarget.style.borderColor = 'rgba(214, 198, 180, 0.45)';
                   }}
                 >
-                  <LogOut size={14} />
+                  <LogOut size={13} />
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => navigate('/login?portal=customer')}
+              <Link
+                to="/login?portal=customer"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  padding: '8px 16px',
-                  borderRadius: 8,
-                  backgroundColor: 'var(--brown-900)',
-                  color: 'var(--cream)',
-                  border: 'none',
+                  padding: '6px 14px',
+                  borderRadius: 7,
                   fontSize: 12,
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontFamily: 'var(--font-display)',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(74, 58, 52, 0.18)',
+                  color: '#FAF7F2',
+                  backgroundColor: '#1F1714',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 8px rgba(31, 23, 20, 0.16)',
                   transition: 'all 140ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(74, 58, 52, 0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(74, 58, 52, 0.18)';
                 }}
               >
                 <LogIn size={13} />
                 <span>Client Sign In</span>
-              </button>
+              </Link>
             )}
           </div>
         </div>

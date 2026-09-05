@@ -68,6 +68,150 @@ interface PlacedFurniture {
 type AmbienceMode = 'morning' | 'studio' | 'dusk';
 type CameraViewMode = 'walkin' | 'overview' | 'topdown';
 
+export interface RoomStyleConcept {
+  id: string;
+  name: string;
+  tagline: string;
+  category: 'Living' | 'Workspace' | 'Bedroom' | 'Hospitality' | 'Custom';
+  badge: string;
+  accentColor: string;
+  description: string;
+  ambience: AmbienceMode;
+  cameraView: CameraViewMode;
+  ceilingLight: boolean;
+  standingLamp: boolean;
+  palette: string[];
+  items: Array<{
+    query: string;
+    fallbackQuery?: string;
+    position: [number, number, number];
+    rotationY: number;
+    nameLabel: string;
+  }>;
+}
+
+export const ROOM_STYLES: RoomStyleConcept[] = [
+  {
+    id: 'japandi-lounge',
+    name: 'Japandi Minimalist Living',
+    tagline: 'Warm organic tones, low-profile seating, and calm negative space',
+    category: 'Living',
+    badge: 'POPULAR • LIVING',
+    accentColor: '#B88E65',
+    description: 'A harmonious blend of Scandinavian functionality and Japanese rustic minimalism. Natural timber, tactile linen, and soft diffused daylight.',
+    ambience: 'morning',
+    cameraView: 'walkin',
+    ceilingLight: true,
+    standingLamp: true,
+    palette: ['#F5EFE6', '#D6C5B3', '#8C6D53', '#261914'],
+    items: [
+      { query: 'Couch Large', position: [0, 0, -1.8], rotationY: 0, nameLabel: 'Large Minimalist Sofa' },
+      { query: 'Table Round Small', position: [0, 0, -0.4], rotationY: 0, nameLabel: 'Solid Oak Coffee Table' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [1.85, 0, -0.6], rotationY: -Math.PI / 4, nameLabel: 'Linen Lounge Chair' },
+      { query: 'Chair by Poly by Google', fallbackQuery: 'Chair', position: [-1.85, 0, -0.6], rotationY: Math.PI / 4, nameLabel: 'Sculptural Accent Chair' },
+      { query: 'Standing lamp', position: [-2.3, 0, -2.1], rotationY: 0, nameLabel: 'Standing Floor Lamp' },
+    ],
+  },
+  {
+    id: 'executive-study',
+    name: 'Executive Penthouse Study',
+    tagline: 'High-focus workstation with ergonomic leather seating and library walls',
+    category: 'Workspace',
+    badge: 'EXECUTIVE • STUDY',
+    accentColor: '#4A5B68',
+    description: 'An architectural workspace designed for deep strategic focus. Clean geometric desk, ergonomic task support, and dual floor-to-ceiling bookshelves.',
+    ambience: 'studio',
+    cameraView: 'overview',
+    ceilingLight: true,
+    standingLamp: false,
+    palette: ['#1C2327', '#42515C', '#9CB1BF', '#EFF4F7'],
+    items: [
+      { query: 'Desk by CreativeTrio', fallbackQuery: 'Desk by Quaternius', position: [0, 0, -0.9], rotationY: Math.PI, nameLabel: 'Executive Writing Desk' },
+      { query: 'Office Chair by Quaternius', fallbackQuery: 'Office Chair', position: [0, 0, -1.7], rotationY: 0, nameLabel: 'Ergonomic Swivel Armchair' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [1.1, 0, 0.4], rotationY: -Math.PI * 0.75, nameLabel: 'Client Visitor Chair' },
+      { query: 'Bookcase with Books by Quaternius', fallbackQuery: 'Bookshelf', position: [-2.3, 0, -1.5], rotationY: Math.PI / 2, nameLabel: 'Tall Library Bookcase' },
+      { query: 'Bookshelf by CreativeTrio', fallbackQuery: 'Shelf', position: [2.3, 0, -1.5], rotationY: -Math.PI / 2, nameLabel: 'Architectural Display Shelf' },
+    ],
+  },
+  {
+    id: 'zen-bedroom',
+    name: 'Zen Master Bedroom Suite',
+    tagline: 'Tranquil sleeping sanctuary with floating platform bed and indirect twilight glow',
+    category: 'Bedroom',
+    badge: 'SANCTUARY • BEDROOM',
+    accentColor: '#8C6D53',
+    description: 'Engineered for restorative serenity. Floating low double bed flanked by symmetric nightstands and warm floor illumination.',
+    ambience: 'dusk',
+    cameraView: 'walkin',
+    ceilingLight: false,
+    standingLamp: true,
+    palette: ['#2A1F19', '#634E41', '#BAA594', '#F8F4EE'],
+    items: [
+      { query: 'Bed Double by Quaternius', fallbackQuery: 'Bed Double', position: [0, 0, -1.3], rotationY: 0, nameLabel: 'Double Platform Bed' },
+      { query: 'Night Stand by Quaternius', fallbackQuery: 'Night Stand', position: [-1.75, 0, -1.3], rotationY: 0, nameLabel: 'Left Bedside Stand' },
+      { query: 'Night Stand by Quaternius', fallbackQuery: 'Night Stand', position: [1.75, 0, -1.3], rotationY: 0, nameLabel: 'Right Bedside Stand' },
+      { query: 'Drawer by Quaternius', fallbackQuery: 'Drawer', position: [2.4, 0, 0.5], rotationY: -Math.PI / 2, nameLabel: 'Oak Linen Chest' },
+      { query: 'Standing lamp', position: [-2.2, 0, 0.5], rotationY: 0, nameLabel: 'Twilight Accent Lamp' },
+    ],
+  },
+  {
+    id: 'social-salon',
+    name: 'Contemporary Social Salon',
+    tagline: 'Curved circular conversational arrangement for hospitality and entertaining',
+    category: 'Hospitality',
+    badge: 'HOSPITALITY • SALON',
+    accentColor: '#9E5D43',
+    description: 'An open, welcoming salon grouping that encourages effortless conversation with multi-angle seating and tea surface.',
+    ambience: 'morning',
+    cameraView: 'overview',
+    ceilingLight: true,
+    standingLamp: true,
+    palette: ['#281C17', '#73412F', '#C48A76', '#FAF4F1'],
+    items: [
+      { query: 'Couch Medium by Quaternius', fallbackQuery: 'Couch', position: [0, 0, -1.6], rotationY: 0, nameLabel: 'Curved Medium Sofa' },
+      { query: 'Chair by Poly by Google', fallbackQuery: 'Chair', position: [-1.65, 0, -0.4], rotationY: Math.PI / 3, nameLabel: 'Sculptural Lounge Chair' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [1.65, 0, -0.4], rotationY: -Math.PI / 3, nameLabel: 'Fabric Accent Chair' },
+      { query: 'Table Round Small', fallbackQuery: 'Table', position: [0, 0, -0.3], rotationY: 0, nameLabel: 'Round Conversation Table' },
+      { query: 'Shelf Small by Quaternius', fallbackQuery: 'Drawer', position: [0, 0, -2.5], rotationY: 0, nameLabel: 'Low Wall Credenza' },
+    ],
+  },
+  {
+    id: 'nordic-atelier',
+    name: 'Nordic Creative Atelier',
+    tagline: 'Compact multifunctional studio layout balancing productivity and rest',
+    category: 'Workspace',
+    badge: 'URBAN • COMPACT',
+    accentColor: '#4F7267',
+    description: 'Optimized for high-density metropolitan lofts. Dedicated workstation zone adjacent to a minimalist daybed and compact storage.',
+    ambience: 'studio',
+    cameraView: 'walkin',
+    ceilingLight: true,
+    standingLamp: false,
+    palette: ['#1C2A26', '#39534B', '#7A9E93', '#F0F5F3'],
+    items: [
+      { query: 'Desk by Quaternius', fallbackQuery: 'Desk', position: [-1.2, 0, -1.3], rotationY: 0, nameLabel: 'Solid Oak Writing Desk' },
+      { query: 'Office Chair by Quaternius', fallbackQuery: 'Office Chair', position: [-1.2, 0, -0.5], rotationY: Math.PI, nameLabel: 'Ergonomic Task Chair' },
+      { query: 'Bed Single by Quaternius', fallbackQuery: 'Bed Single', position: [1.6, 0, -1.1], rotationY: 0, nameLabel: 'Minimalist Single Daybed' },
+      { query: 'Shelf Small by Quaternius', fallbackQuery: 'Shelf', position: [-2.3, 0, 0.5], rotationY: Math.PI / 2, nameLabel: 'Open Wall Shelving' },
+    ],
+  },
+  {
+    id: 'blank',
+    name: 'Bespoke Blank Atelier',
+    tagline: 'Completely clear studio floor ready for your custom spatial curation',
+    category: 'Custom',
+    badge: 'CLEAN SLATE',
+    accentColor: '#6B584C',
+    description: 'Resets the studio to an empty room canvas. Freely browse the furniture library to drag and drop your bespoke dream space.',
+    ambience: 'morning',
+    cameraView: 'walkin',
+    ceilingLight: true,
+    standingLamp: true,
+    palette: ['#FFFFFF', '#EFECE6', '#D1C6B9', '#2E241E'],
+    items: [],
+  },
+];
+
 export const PortalRoomStudioPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -143,6 +287,8 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [showGrid, setShowGrid] = useState<boolean>(false);
   const [isDockOpen, setIsDockOpen] = useState<boolean>(true);
   const [activeMenu, setActiveMenu] = useState<'presets' | 'lighting' | null>(null);
+  const [isRoomStylesModalOpen, setIsRoomStylesModalOpen] = useState<boolean>(false);
+  const [roomStyleFilter, setRoomStyleFilter] = useState<string>('All');
   const [loadingModel, setLoadingModel] = useState<boolean>(false);
   const [isDraggingOverCanvas, setIsDraggingOverCanvas] = useState<boolean>(false);
 
@@ -764,7 +910,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   }, [selectedInstanceId, placedItems]);
 
   // 6. Add Furniture Model to Scene (with In-Memory Caching for 0ms Instant Placement)
-  const handleAddFurniture = useCallback((model: ShowroomModel, customPos?: [number, number, number]) => {
+  const handleAddFurniture = useCallback((model: ShowroomModel, customPos?: [number, number, number], customRot?: number) => {
     if (!sceneRef.current) return;
 
     const instanceId = `item-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
@@ -776,6 +922,7 @@ export const PortalRoomStudioPage: React.FC = () => {
       0,
       (Math.random() - 0.5) * 2.0 - 0.4,
     ];
+    const initialRot = customRot || 0;
 
     // Check if model prototype is already cached in memory
     const cached = modelCacheRef.current.get(modelUrl);
@@ -785,6 +932,9 @@ export const PortalRoomStudioPage: React.FC = () => {
       group.add(inner);
       group.scale.set(cached.baseScale, cached.baseScale, cached.baseScale);
       group.position.set(pos[0], 0, pos[2]);
+      if (initialRot !== 0) {
+        group.rotation.y = initialRot;
+      }
 
       sceneRef.current.add(group);
       placedMeshesRef.current.set(instanceId, group);
@@ -796,7 +946,7 @@ export const PortalRoomStudioPage: React.FC = () => {
         category: model.category,
         url: modelUrl,
         position: [pos[0], 0, pos[2]],
-        rotationY: 0,
+        rotationY: initialRot,
         scale: cached.baseScale,
         scaleFactor: 1.0,
       };
@@ -847,6 +997,9 @@ export const PortalRoomStudioPage: React.FC = () => {
         group.add(inner);
         group.scale.set(scale, scale, scale);
         group.position.set(pos[0], 0, pos[2]);
+        if (initialRot !== 0) {
+          group.rotation.y = initialRot;
+        }
 
         sceneRef.current?.add(group);
         placedMeshesRef.current.set(instanceId, group);
@@ -858,7 +1011,7 @@ export const PortalRoomStudioPage: React.FC = () => {
           category: model.category,
           url: modelUrl,
           position: [pos[0], 0, pos[2]],
-          rotationY: 0,
+          rotationY: initialRot,
           scale,
           scaleFactor: 1.0,
         };
@@ -1169,42 +1322,60 @@ export const PortalRoomStudioPage: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedInstanceId, handleRotateSelected, handleRemoveSelected, handleNudgeSelected, handleScaleSelected]);
 
-  // Load Preset Spaces
-  const handleLoadPreset = (preset: 'lounge' | 'study' | 'bedroom' | 'blank') => {
+  // ── Curated Room Styles Application Engine ──
+  const handleApplyRoomStyle = (style: RoomStyleConcept) => {
+    // 1. Clear existing pieces from 3D scene
     placedMeshesRef.current.forEach((mesh) => {
       sceneRef.current?.remove(mesh);
     });
     placedMeshesRef.current.clear();
     setPlacedItems([]);
     setSelectedInstanceId(null);
+    setIsRoomStylesModalOpen(false);
     setActiveMenu(null);
 
-    if (preset === 'blank') return;
+    // 2. Set ambience & lighting fixtures
+    setAmbience(style.ambience);
+    setCeilingLightOn(style.ceilingLight);
+    setStandingLampOn(style.standingLamp);
+    handleSetCameraView(style.cameraView);
 
-    if (preset === 'lounge') {
-      const couch = catalogModels.find((m) => m.filename.includes('Couch Large by Quaternius') || m.filename.includes('Couch Large'));
-      const table = catalogModels.find((m) => m.filename.includes('Table Round Small by Quaternius') || m.filename.includes('Table Round'));
-      const chair = catalogModels.find((m) => m.filename.includes('Chair by Quaternius') || m.filename.includes('Chair'));
-      if (couch) handleAddFurniture(couch, [0, 0, -1.5]);
-      if (table) handleAddFurniture(table, [0, 0, -0.2]);
-      if (chair) handleAddFurniture(chair, [1.6, 0, -0.4]);
-      handleSetCameraView('walkin');
-    } else if (preset === 'study') {
-      const desk = catalogModels.find((m) => m.filename.includes('Desk by Quaternius') || m.filename.includes('Desk by CreativeTrio') || m.filename.includes('Desk'));
-      const chair = catalogModels.find((m) => m.filename.includes('Office Chair by Quaternius') || m.filename.includes('Office Chair'));
-      const shelf = catalogModels.find((m) => m.filename.includes('Bookshelf by CreativeTrio') || m.filename.includes('Bookcase'));
-      if (desk) handleAddFurniture(desk, [0, 0, -0.8]);
-      if (chair) handleAddFurniture(chair, [0, 0, 0.6]);
-      if (shelf) handleAddFurniture(shelf, [-2.2, 0, -1.8]);
-      handleSetCameraView('overview');
-    } else if (preset === 'bedroom') {
-      const bed = catalogModels.find((m) => m.filename.includes('Bed Double by Quaternius') || m.filename.includes('Bed Double'));
-      const stand = catalogModels.find((m) => m.filename.includes('Night Stand by Quaternius') || m.filename.includes('Night Stand'));
-      const drawer = catalogModels.find((m) => m.filename.includes('Drawer by Quaternius') || m.filename.includes('Drawer'));
-      if (bed) handleAddFurniture(bed, [0, 0, -1.2]);
-      if (stand) handleAddFurniture(stand, [-1.8, 0, -1.2]);
-      if (drawer) handleAddFurniture(drawer, [2.2, 0, 0.4]);
-      handleSetCameraView('walkin');
+    if (style.items.length === 0) {
+      playWoodClick(0.9);
+      return;
+    }
+
+    // 3. Place each curated furniture item with exact position and rotation
+    style.items.forEach((item) => {
+      const q = item.query.toLowerCase();
+      let model = catalogModels.find(
+        (m) => m.filename.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)
+      );
+      if (!model && item.fallbackQuery) {
+        const fb = item.fallbackQuery.toLowerCase();
+        model = catalogModels.find(
+          (m) => m.filename.toLowerCase().includes(fb) || m.name.toLowerCase().includes(fb)
+        );
+      }
+      if (model) {
+        handleAddFurniture(model, item.position, item.rotationY);
+      }
+    });
+
+    playChimeSuccess();
+  };
+
+  // Backward compatibility wrapper
+  const handleLoadPreset = (preset: 'lounge' | 'study' | 'bedroom' | 'blank') => {
+    const map: Record<string, string> = {
+      lounge: 'japandi-lounge',
+      study: 'executive-study',
+      bedroom: 'zen-bedroom',
+      blank: 'blank',
+    };
+    const match = ROOM_STYLES.find((s) => s.id === (map[preset] || preset));
+    if (match) {
+      handleApplyRoomStyle(match);
     }
   };
 
@@ -1265,11 +1436,11 @@ export const PortalRoomStudioPage: React.FC = () => {
             pointerEvents: 'auto',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 8,
             backgroundColor: 'rgba(253, 250, 246, 0.94)',
             backdropFilter: 'blur(16px)',
             WebkitBackdropFilter: 'blur(16px)',
-            padding: '6px 14px',
+            padding: '5px 12px',
             borderRadius: 8,
             border: '1px solid rgba(208, 174, 146, 0.45)',
             boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
@@ -1281,7 +1452,7 @@ export const PortalRoomStudioPage: React.FC = () => {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--brown-700)',
+              color: '#5C4A3E',
               display: 'flex',
               alignItems: 'center',
               gap: 5,
@@ -1289,110 +1460,45 @@ export const PortalRoomStudioPage: React.FC = () => {
               fontWeight: 600,
               fontFamily: 'var(--font-display)',
               padding: '2px 4px',
+              borderRadius: 5,
+              transition: 'all 120ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(44, 34, 30, 0.06)';
+              e.currentTarget.style.color = '#1F1714';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = '#5C4A3E';
             }}
           >
-            <ArrowLeft size={14} />
+            <ArrowLeft size={13} />
             Catalogue
           </button>
-          <span style={{ color: 'rgba(208, 174, 146, 0.6)' }}>|</span>
+          <div style={{ width: 1, height: 14, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
           <span
             style={{
               fontSize: 12.5,
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              color: 'var(--brown-900)',
+              color: '#1F1714',
             }}
           >
-            Japandi Room Studio
+            3D Studio Atelier
           </span>
           <span
             style={{
-              fontSize: 10.5,
+              fontSize: 10,
               fontFamily: 'var(--font-mono)',
-              color: 'var(--posted)',
-              backgroundColor: 'var(--posted-bg)',
+              color: placedItems.length > 0 ? '#2E7D32' : '#8C7362',
+              backgroundColor: placedItems.length > 0 ? '#E8F5E9' : 'rgba(140, 115, 98, 0.1)',
               padding: '2px 7px',
               borderRadius: 4,
               fontWeight: 600,
             }}
           >
-            {placedItems.length} {placedItems.length === 1 ? 'Piece' : 'Pieces'}
+            {placedItems.length} {placedItems.length === 1 ? 'piece' : 'pieces'}
           </span>
-
-          {placedItems.length > 0 && (
-            <>
-              <span style={{ color: 'rgba(208, 174, 146, 0.6)' }}>|</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleClearAll();
-                }}
-                title="Clear all furniture pieces from room"
-                style={{
-                  background: 'none',
-                  border: '1px solid rgba(192, 57, 43, 0.35)',
-                  borderRadius: 6,
-                  padding: '3px 8px',
-                  color: 'var(--danger)',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fontFamily: 'var(--font-display)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  whiteSpace: 'nowrap',
-                  lineHeight: 1,
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Trash2 size={12} />
-                <span>Clear Room</span>
-              </button>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleExportSnapshot();
-                }}
-                title="Export high-resolution architectural room blueprint"
-                style={{
-                  background: 'none',
-                  border: '1px solid rgba(208, 174, 146, 0.5)',
-                  borderRadius: 6,
-                  padding: '3px 8px',
-                  color: 'var(--brown-800)',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fontFamily: 'var(--font-display)',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  whiteSpace: 'nowrap',
-                  lineHeight: 1,
-                  transition: 'background-color 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <Camera size={12} />
-                <span>Export Plan</span>
-              </button>
-            </>
-          )}
         </div>
 
         {/* Center: Camera View Perspectives (Walk-In, Dollhouse, Top Down) */}
@@ -1478,72 +1584,121 @@ export const PortalRoomStudioPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Right: Lighting & Presets */}
-        <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Preset Layouts */}
-          <div style={{ position: 'relative' }}>
+        {/* Right: Room Styles & Tools */}
+        <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 7 }}>
+          {/* Architectural Room Styles Showcase Trigger */}
+          <button
+            onClick={() => {
+              playWoodClick(0.95);
+              setIsRoomStylesModalOpen(true);
+            }}
+            title="Browse Curated Architectural Room Styles"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: '#1F1714',
+              color: '#FAF7F2',
+              padding: '6px 13px',
+              borderRadius: 8,
+              border: 'none',
+              boxShadow: '0 2px 10px rgba(31, 23, 20, 0.2)',
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: 'var(--font-display)',
+              cursor: 'pointer',
+              transition: 'all 140ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 14px rgba(31, 23, 20, 0.26)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 2px 10px rgba(31, 23, 20, 0.2)';
+            }}
+          >
+            <Sparkles size={13} color="#E8C39E" />
+            <span>Room Styles</span>
+            <span
+              style={{
+                fontSize: 9.5,
+                fontFamily: 'var(--font-mono)',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                padding: '1px 5px',
+                borderRadius: 4,
+                fontWeight: 700,
+              }}
+            >
+              6
+            </span>
+          </button>
+
+          {/* Export Architectural Blueprint */}
+          <button
+            onClick={handleExportSnapshot}
+            title="Export high-resolution architectural room blueprint"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              backgroundColor: 'rgba(253, 250, 246, 0.94)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              padding: '6px 11px',
+              borderRadius: 8,
+              border: '1px solid rgba(208, 174, 146, 0.45)',
+              boxShadow: '0 2px 8px rgba(44, 34, 30, 0.05)',
+              fontSize: 11.5,
+              fontWeight: 600,
+              fontFamily: 'var(--font-display)',
+              color: '#1F1714',
+              cursor: 'pointer',
+              transition: 'all 120ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(253, 250, 246, 0.94)';
+            }}
+          >
+            <Camera size={13} color="#5C4A3E" />
+            <span>Export Plan</span>
+          </button>
+
+          {/* Clear Room Button (when room has furniture) */}
+          {placedItems.length > 0 && (
             <button
-              onClick={() => setActiveMenu(activeMenu === 'presets' ? null : 'presets')}
+              onClick={handleClearAll}
+              title="Clear all furniture from room"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
+                gap: 4,
                 backgroundColor: 'rgba(253, 250, 246, 0.94)',
                 backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                padding: '6px 12px',
+                padding: '6px 9px',
                 borderRadius: 8,
-                border: '1px solid rgba(208, 174, 146, 0.45)',
-                boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
-                fontSize: 12,
+                border: '1px solid rgba(192, 57, 43, 0.3)',
+                fontSize: 11.5,
                 fontWeight: 600,
                 fontFamily: 'var(--font-display)',
-                color: 'var(--brown-900)',
+                color: '#C0392B',
                 cursor: 'pointer',
+                transition: 'all 120ms ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(253, 250, 246, 0.94)';
               }}
             >
-              <Layers size={14} color="var(--brown-700)" />
-              Room Styles
-              <ChevronDown size={13} />
+              <Trash2 size={12} />
+              <span>Clear</span>
             </button>
-
-            {activeMenu === 'presets' && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '115%',
-                  right: 0,
-                  width: 210,
-                  backgroundColor: 'var(--surface)',
-                  borderRadius: 8,
-                  border: '1px solid var(--brown-300)',
-                  boxShadow: '0 8px 24px rgba(44, 34, 30, 0.12)',
-                  padding: 6,
-                  zIndex: 50,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4,
-                }}
-              >
-                <button onClick={() => handleLoadPreset('lounge')} style={styles.menuItem}>
-                  <span style={{ fontWeight: 600 }}>Minimalist Lounge</span>
-                  <span style={{ fontSize: 10, color: 'var(--brown-700)' }}>Couch, Table, Armchair</span>
-                </button>
-                <button onClick={() => handleLoadPreset('study')} style={styles.menuItem}>
-                  <span style={{ fontWeight: 600 }}>Executive Study</span>
-                  <span style={{ fontSize: 10, color: 'var(--brown-700)' }}>Desk, Swivel Chair, Bookshelf</span>
-                </button>
-                <button onClick={() => handleLoadPreset('bedroom')} style={styles.menuItem}>
-                  <span style={{ fontWeight: 600 }}>Zen Bedroom Suite</span>
-                  <span style={{ fontSize: 10, color: 'var(--brown-700)' }}>Double Bed, Nightstand, Drawer</span>
-                </button>
-                <div style={{ height: 1, backgroundColor: 'var(--brown-100)', margin: '2px 0' }} />
-                <button onClick={() => handleLoadPreset('blank')} style={{ ...styles.menuItem, color: 'var(--danger)' }}>
-                  <span style={{ fontWeight: 600 }}>Clear All (Blank Room)</span>
-                </button>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Ambience & Lighting */}
           <div style={{ position: 'relative' }}>
@@ -2356,6 +2511,332 @@ export const PortalRoomStudioPage: React.FC = () => {
               >
                 View Customer Invoices →
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Curated Room Styles Architectural Showcase Modal ── */}
+      {isRoomStylesModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 140,
+            backgroundColor: 'rgba(18, 14, 12, 0.65)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px 16px',
+          }}
+          onClick={() => setIsRoomStylesModalOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 960,
+              maxHeight: '88vh',
+              backgroundColor: '#FCFAF6',
+              borderRadius: 16,
+              border: '1px solid rgba(214, 198, 180, 0.6)',
+              boxShadow: '0 24px 64px -8px rgba(31, 23, 20, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                padding: '20px 24px 16px',
+                borderBottom: '1px solid rgba(214, 198, 180, 0.4)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 16,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Sparkles size={16} color="#B88E65" />
+                  <h2
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      fontFamily: 'var(--font-display)',
+                      color: '#1F1714',
+                      margin: 0,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    Curated Room Styles &amp; Interior Concepts
+                  </h2>
+                </div>
+                <p
+                  style={{
+                    fontSize: 12,
+                    color: '#7C675C',
+                    margin: 0,
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
+                  Apply pre-configured interior spaces with coordinated furniture, tailored lighting ambience, and optimized camera perspectives.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsRoomStylesModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 6,
+                  borderRadius: 6,
+                  color: '#7C675C',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(44, 34, 30, 0.08)';
+                  e.currentTarget.style.color = '#1F1714';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#7C675C';
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Category Tabs Filter */}
+            <div
+              style={{
+                padding: '12px 24px',
+                borderBottom: '1px solid rgba(214, 198, 180, 0.25)',
+                display: 'flex',
+                gap: 6,
+                backgroundColor: 'rgba(247, 243, 235, 0.6)',
+              }}
+            >
+              {['All', 'Living', 'Workspace', 'Bedroom', 'Hospitality', 'Custom'].map((cat) => {
+                const isActive = roomStyleFilter === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setRoomStyleFilter(cat)}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: 6,
+                      border: '1px solid',
+                      borderColor: isActive ? '#1F1714' : 'rgba(214, 198, 180, 0.5)',
+                      backgroundColor: isActive ? '#1F1714' : 'transparent',
+                      color: isActive ? '#FAF7F2' : '#5C4A3E',
+                      fontSize: 11.5,
+                      fontWeight: isActive ? 600 : 500,
+                      fontFamily: 'var(--font-display)',
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    {cat === 'All' ? 'All Styles (6)' : cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Styles Cards Grid */}
+            <div
+              style={{
+                padding: '20px 24px',
+                overflowY: 'auto',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 16,
+              }}
+            >
+              {ROOM_STYLES.filter((s) => roomStyleFilter === 'All' || s.category === roomStyleFilter).map((style) => (
+                <div
+                  key={style.id}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 12,
+                    border: '1px solid rgba(214, 198, 180, 0.55)',
+                    boxShadow: '0 2px 10px rgba(44, 34, 30, 0.04)',
+                    padding: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    transition: 'all 150ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.borderColor = style.accentColor;
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(44, 34, 30, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.borderColor = 'rgba(214, 198, 180, 0.55)';
+                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(44, 34, 30, 0.04)';
+                  }}
+                >
+                  <div>
+                    {/* Palette swatches & Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <span
+                        style={{
+                          fontSize: 9,
+                          fontFamily: 'var(--font-mono)',
+                          fontWeight: 700,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          color: style.accentColor,
+                          backgroundColor: `${style.accentColor}18`,
+                          border: `1px solid ${style.accentColor}35`,
+                          padding: '2px 7px',
+                          borderRadius: 4,
+                        }}
+                      >
+                        {style.badge}
+                      </span>
+
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        {style.palette.map((hex, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              backgroundColor: hex,
+                              border: '1px solid rgba(0,0,0,0.1)',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Title & Tagline */}
+                    <h3
+                      style={{
+                        fontSize: 14.5,
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-display)',
+                        color: '#1F1714',
+                        margin: '0 0 4px',
+                      }}
+                    >
+                      {style.name}
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: 11,
+                        color: '#63534B',
+                        margin: '0 0 10px',
+                        lineHeight: 1.35,
+                      }}
+                    >
+                      {style.tagline}
+                    </p>
+
+                    {/* Included Furniture Pieces Tags */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+                      {style.items.length > 0 ? (
+                        style.items.map((item, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              fontSize: 10,
+                              fontFamily: 'var(--font-mono)',
+                              backgroundColor: '#F7F3EB',
+                              color: '#5C4A3E',
+                              padding: '2px 6px',
+                              borderRadius: 4,
+                              border: '1px solid rgba(214, 198, 180, 0.4)',
+                            }}
+                          >
+                            {item.nameLabel}
+                          </span>
+                        ))
+                      ) : (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontFamily: 'var(--font-mono)',
+                            color: '#9C7862',
+                            fontStyle: 'italic',
+                          }}
+                        >
+                          Resets to 0 pieces (Empty studio)
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Ambience note */}
+                    <div
+                      style={{
+                        fontSize: 10,
+                        color: '#8C7362',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 5,
+                        marginTop: 6,
+                      }}
+                    >
+                      <span>Mood:</span>
+                      <span style={{ fontWeight: 600, textTransform: 'capitalize', color: '#1F1714' }}>
+                        {style.ambience} light • {style.cameraView} perspective
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Apply Button */}
+                  <button
+                    onClick={() => handleApplyRoomStyle(style)}
+                    style={{
+                      width: '100%',
+                      padding: '7px 12px',
+                      borderRadius: 7,
+                      border: 'none',
+                      backgroundColor: style.id === 'blank' ? 'rgba(192, 57, 43, 0.08)' : '#1F1714',
+                      color: style.id === 'blank' ? '#C0392B' : '#FAF7F2',
+                      fontSize: 11.5,
+                      fontWeight: 600,
+                      fontFamily: 'var(--font-display)',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 6,
+                      transition: 'all 120ms ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (style.id === 'blank') {
+                        e.currentTarget.style.backgroundColor = '#C0392B';
+                        e.currentTarget.style.color = '#FAF7F2';
+                      } else {
+                        e.currentTarget.style.backgroundColor = style.accentColor;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (style.id === 'blank') {
+                        e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
+                        e.currentTarget.style.color = '#C0392B';
+                      } else {
+                        e.currentTarget.style.backgroundColor = '#1F1714';
+                      }
+                    }}
+                  >
+                    {style.id === 'blank' ? <Trash2 size={12} /> : <Sparkles size={12} />}
+                    <span>{style.id === 'blank' ? 'Clear Studio (Blank Canvas)' : `Apply ${style.name}`}</span>
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
