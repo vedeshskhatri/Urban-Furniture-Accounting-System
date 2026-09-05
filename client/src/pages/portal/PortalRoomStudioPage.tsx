@@ -34,6 +34,7 @@ import {
   Volume2,
   VolumeX,
   CheckCircle,
+  Camera,
 } from 'lucide-react';
 import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
@@ -1068,6 +1069,69 @@ export const PortalRoomStudioPage: React.FC = () => {
     playWoodClick(1.2);
   }, []);
 
+  // Export High-Resolution Blueprint Snapshot
+  const handleExportSnapshot = useCallback(() => {
+    if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+    playWoodClick(1.2);
+
+    // Hide selection ring for clean architectural snapshot
+    if (selectionRingRef.current) {
+      selectionRingRef.current.visible = false;
+    }
+
+    rendererRef.current.render(sceneRef.current, cameraRef.current);
+    const canvas = rendererRef.current.domElement;
+
+    // Create an offscreen composite canvas with architectural title card
+    const composite = document.createElement('canvas');
+    composite.width = canvas.width;
+    composite.height = canvas.height;
+    const ctx = composite.getContext('2d');
+    if (!ctx) return;
+
+    // Draw the 3D scene
+    ctx.drawImage(canvas, 0, 0);
+
+    // Draw architectural title block at bottom-left
+    const boxWidth = 360;
+    const boxHeight = 76;
+    const pad = 24;
+    ctx.fillStyle = 'rgba(253, 250, 246, 0.95)';
+    ctx.strokeStyle = 'rgba(208, 174, 146, 0.7)';
+    ctx.lineWidth = 2;
+    if (ctx.roundRect) {
+      ctx.roundRect(pad, composite.height - boxHeight - pad, boxWidth, boxHeight, 8);
+    } else {
+      ctx.rect(pad, composite.height - boxHeight - pad, boxWidth, boxHeight);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#261914';
+    ctx.font = 'bold 15px "Montserrat", sans-serif';
+    ctx.fillText('URBAN FURNITURE • 3D ROOM PROPOSAL', pad + 16, composite.height - boxHeight - pad + 30);
+
+    ctx.fillStyle = '#7C675C';
+    ctx.font = '12px "IBM Plex Mono", monospace';
+    ctx.fillText(
+      `${placedItems.length} Handcrafted Pieces • Camera: ${cameraView.toUpperCase()}`,
+      pad + 16,
+      composite.height - boxHeight - pad + 52
+    );
+
+    // Restore selection ring visibility
+    if (selectionRingRef.current && selectedInstanceId) {
+      selectionRingRef.current.visible = true;
+    }
+
+    // Trigger download
+    const link = document.createElement('a');
+    link.download = `Urban-Furniture-Blueprint-${Date.now()}.png`;
+    link.href = composite.toDataURL('image/png');
+    link.click();
+    playChimeSuccess();
+  }, [placedItems.length, cameraView, selectedInstanceId]);
+
   // Keyboard Shortcuts (R to rotate, Arrows to nudge, +/- to scale, Delete to remove)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1291,6 +1355,41 @@ export const PortalRoomStudioPage: React.FC = () => {
               >
                 <Trash2 size={12} />
                 <span>Clear Room</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  handleExportSnapshot();
+                }}
+                title="Export high-resolution architectural room blueprint"
+                style={{
+                  background: 'none',
+                  border: '1px solid rgba(208, 174, 146, 0.5)',
+                  borderRadius: 6,
+                  padding: '3px 8px',
+                  color: 'var(--brown-800)',
+                  fontSize: 11,
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-display)',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1,
+                  transition: 'background-color 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <Camera size={12} />
+                <span>Export Plan</span>
               </button>
             </>
           )}

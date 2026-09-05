@@ -12,7 +12,11 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Compass,
+  Search,
 } from 'lucide-react';
+import { GlobalCommandPalette } from '../../components/common/GlobalCommandPalette';
+import { LiveLedgerAuditBadge } from '../../components/common/LiveLedgerAuditBadge';
+import { DemoRoleSwitcher } from '../../components/common/DemoRoleSwitcher';
 
 export const PortalLayout: React.FC = () => {
   const { user, logout } = usePortalAuth();
@@ -256,7 +260,10 @@ export const PortalLayout: React.FC = () => {
           </nav>
 
           {/* Right: Actions & User Session */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <LiveLedgerAuditBadge />
+            <DemoRoleSwitcher />
+
             {/* Back to ERP for staff */}
             {isInternalStaff && (
               <a
@@ -480,6 +487,7 @@ export const PortalLayout: React.FC = () => {
           </div>
         </div>
       </footer>
+      <GlobalCommandPalette />
     </div>
   );
 };
