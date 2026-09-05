@@ -34,8 +34,6 @@ import RecordTimelineDrawer from '../audit/RecordTimelineDrawer';
 import api from '../../lib/axios';
 import { BrandLogo } from '../ui/BrandLogo';
 import { GlobalCommandPalette } from '../common/GlobalCommandPalette';
-import { LiveLedgerAuditBadge } from '../common/LiveLedgerAuditBadge';
-import { DemoRoleSwitcher } from '../common/DemoRoleSwitcher';
 
 interface SubNavItem {
   label: string;
@@ -272,42 +270,6 @@ export default function AppShell() {
 
           {/* Right Header Controls */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, zIndex: 2 }}>
-            <LiveLedgerAuditBadge />
-            <DemoRoleSwitcher />
-            <Link
-              to="/monitor"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 11px',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#15803d',
-                background: 'rgba(22, 163, 74, 0.08)',
-                border: '1px solid rgba(22, 163, 74, 0.25)',
-                borderRadius: 8,
-                textDecoration: 'none',
-                transition: 'all 120ms ease-out',
-              }}
-              title="Open Live Correctness Monitor (Real-time TV Screen)"
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  backgroundColor: '#16a34a',
-                  display: 'inline-block',
-                  boxShadow: '0 0 6px #16a34a',
-                }}
-              />
-              <Activity size={13} />
-              <span>Live Monitor</span>
-            </Link>
-
             <NavLink
               to="/dashboard"
               style={{
