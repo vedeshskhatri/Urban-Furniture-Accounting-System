@@ -104,7 +104,7 @@ export default function Signup() {
           {/* App Brand Logo container */}
           <div style={styles.appLogoBox}>
             <div style={styles.logoBadge}>
-              <ChairIcon size={20} color="var(--cream, #F9F2E4)" />
+              <ChairIcon size={24} color="var(--cream, #F9F2E4)" />
             </div>
             <div style={styles.logoTextCol}>
               <span style={styles.appLogoText}>Urban Furniture</span>
@@ -348,7 +348,7 @@ const styles = {
     maxWidth: 490,
   } as React.CSSProperties,
   appLogoBox: {
-    width: 175,
+    width: 190,
     height: 56,
     margin: '0 auto 30px auto',
     border: '1.5px solid var(--brown-700, #77574A)',
@@ -356,18 +356,19 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 12,
     background: 'rgba(235, 215, 190, 0.3)',
   } as React.CSSProperties,
   logoBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 6,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     background: 'var(--brown-900, #4A3A34)',
     color: 'var(--cream, #F9F2E4)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
     fontFamily: 'var(--font-display, "Montserrat", sans-serif)',
     fontWeight: 700,
     fontSize: 14,
@@ -375,19 +376,22 @@ const styles = {
   logoTextCol: {
     display: 'flex',
     flexDirection: 'column' as const,
+    justifyContent: 'center',
   },
   appLogoText: {
     fontFamily: 'var(--font-display, "Montserrat", sans-serif)',
     fontWeight: 700,
     fontSize: 14,
     color: 'var(--brown-900, #4A3A34)',
-    lineHeight: 1.1,
+    lineHeight: 1.2,
   } as React.CSSProperties,
   appLogoSub: {
     fontSize: 10,
     color: 'var(--brown-600, #8C6A58)',
     fontWeight: 500,
     letterSpacing: '0.02em',
+    lineHeight: 1.2,
+    marginTop: 2,
   } as React.CSSProperties,
   form: {
     display: 'flex',
