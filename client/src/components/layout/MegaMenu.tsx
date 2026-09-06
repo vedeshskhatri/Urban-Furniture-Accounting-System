@@ -53,6 +53,7 @@ const MEGA_MENU_COLUMNS: ColumnData[] = [
       { label: 'Balancesheet', to: '/report/balance-sheet', tab: 'Report', view: 'report-balancesheet' },
       { label: 'Profit and Loss', to: '/report/profit-loss', tab: 'Report', view: 'report-pnl' },
       { label: 'Budget Report', to: '/report/budget', tab: 'Report', view: 'report-budget' },
+      { label: 'GST Returns (GSTR-1 / 3B)', to: '/report/gst', tab: 'Report', view: 'report-gst' },
       { label: 'Business Analytics Engine', to: '/analytics', tab: 'Report', view: 'analytics' },
       { label: 'System Integrity Report (10/10)', to: '/integrity', tab: 'Report', view: 'integrity' },
       { label: 'Live Correctness Monitor (Ticker)', to: '/monitor', tab: 'Report', view: 'monitor' },

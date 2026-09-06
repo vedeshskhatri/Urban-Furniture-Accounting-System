@@ -59,6 +59,7 @@ import ProfitLossPage from './pages/reports/ProfitLossPage';
 import BudgetReportPage from './pages/reports/BudgetReportPage';
 import VerifyPage from './pages/reports/VerifyPage';
 import AnalyticsPage from './pages/reports/AnalyticsPage';
+import GstReportPage from './pages/reports/GstReportPage';
 
 // Customer Portal
 import PortalApp from './pages/portal/PortalApp';
@@ -168,6 +169,7 @@ export function App() {
           <Route path="balance-sheet" element={<BalanceSheetPage />} />
           <Route path="profit-loss" element={<ProfitLossPage />} />
           <Route path="budget" element={<BudgetReportPage />} />
+          <Route path="gst" element={<GstReportPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
         </Route>
 
