@@ -72,7 +72,12 @@ export default function BalanceSheetPage() {
   });
 
   const handlePrint = () => {
-    window.print();
+    if (activeViewMode === 'charts') {
+      setActiveViewMode('both');
+      setTimeout(() => window.print(), 120);
+    } else {
+      window.print();
+    }
   };
 
   const isBalanced = report?.isBalanced ?? true;
@@ -394,7 +399,7 @@ export default function BalanceSheetPage() {
             onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--brown-900)')}
           >
             <Printer size={13} />
-            <span>Print Balance Sheet</span>
+            <span>Print / Export PDF</span>
           </button>
         </div>
       </div>

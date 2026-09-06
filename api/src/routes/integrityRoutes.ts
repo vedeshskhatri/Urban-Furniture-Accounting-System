@@ -50,8 +50,30 @@ function renderReportHtml(report: IntegrityReport): string {
   return `<!DOCTYPE html>
   <html><head><meta charset="utf-8"><title>System Integrity Report</title>
   <style>
-    @page { size: A4; margin: 15mm; }
-    body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:#26211C; background:#FFFFFF; margin:0; padding:24px; }
+    @page { size: A4; margin: 12mm 15mm 15mm 15mm; }
+    @media print {
+      .no-print-bar { display: none !important; }
+      body { background: #FFFFFF !important; padding: 0 !important; }
+      .page-container { padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
+    }
+    body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color:#26211C; background:#FAF8F5; margin:0; padding:0; }
+    .no-print-bar {
+      position: sticky; top: 0; background: #382A24; color: #FAF8F5; padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18); z-index: 9999;
+    }
+    .print-btn {
+      background: #EBD7BE; color: #382A24; border: 1px solid #D0AE92; font-weight: 700;
+      padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    }
+    .close-btn {
+      background: transparent; color: #EBD7BE; border: 1px solid rgba(235, 215, 190, 0.4);
+      padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    }
+    .page-container {
+      max-width: 800px; margin: 24px auto; background: #FFFFFF; padding: 40px;
+      border-radius: 8px; box-shadow: 0 2px 12px rgba(74, 58, 52, 0.08);
+    }
     h1 { font-size:22px; font-weight:800; margin:0 0 4px 0; color:#26211C; }
     .sub { color:#77574A; font-size:12px; }
     table { width:100%; border-collapse:collapse; margin-top:20px; }
@@ -60,15 +82,35 @@ function renderReportHtml(report: IntegrityReport): string {
     .footer { margin-top:32px; border-top:1px solid #E5DFD7; padding-top:14px; font-size:10px; color:#77574A; text-align:center; }
   </style></head>
   <body>
-    <h1>URBAN FURNITURE — System Integrity Report</h1>
-    <div class="sub">Ten checks run live against the production database. Every value below is a real query result.</div>
-    <div class="summary">${report.passed} / ${report.total} checks passed${report.failed ? ` &nbsp;·&nbsp; ${report.failed} failed` : ''}${report.unknown ? ` &nbsp;·&nbsp; ${report.unknown} unknown` : ''}</div>
-    <div class="sub" style="margin-top:6px;">Run at ${escapeHtml(report.runAt)}</div>
-    <table>
-      <thead><tr><th style="width:36px;">#</th><th>Check</th><th style="text-align:right;width:120px;">Value</th><th style="text-align:center;width:90px;">Status</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="footer">Generated deterministically by the Urban Furniture Accounting Engine · Strictly Offline</div>
+    <div class="no-print-bar">
+      <div style="font-size: 13px; font-weight: 600;">
+        <span style="color: #EBD7BE; font-weight: 800;">URBAN FURNITURE</span> &nbsp;•&nbsp; System Integrity Report (10/10 Live Audit)
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button type="button" class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+        <button type="button" class="close-btn" onclick="window.close()">✕ Close</button>
+      </div>
+    </div>
+
+    <div class="page-container">
+      <h1>URBAN FURNITURE — System Integrity Report</h1>
+      <div class="sub">Ten checks run live against the production database. Every value below is a real query result.</div>
+      <div class="summary">${report.passed} / ${report.total} checks passed${report.failed ? ` &nbsp;·&nbsp; ${report.failed} failed` : ''}${report.unknown ? ` &nbsp;·&nbsp; ${report.unknown} unknown` : ''}</div>
+      <div class="sub" style="margin-top:6px;">Run at ${escapeHtml(report.runAt)}</div>
+      <table>
+        <thead><tr><th style="width:36px;">#</th><th>Check</th><th style="text-align:right;width:120px;">Value</th><th style="text-align:center;width:90px;">Status</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="footer">Generated deterministically by the Urban Furniture Accounting Engine · Strictly Offline</div>
+    </div>
+
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          try { window.print(); } catch (e) {}
+        }, 350);
+      });
+    </script>
   </body></html>`;
 }
 

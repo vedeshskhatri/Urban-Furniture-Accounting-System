@@ -32,16 +32,77 @@ export class PdfService {
         <style>
           @page {
             size: A4;
-            margin: 15mm;
+            margin: 12mm 15mm 15mm 15mm;
+          }
+          @media print {
+            .no-print-bar {
+              display: none !important;
+            }
+            body {
+              padding: 0 !important;
+              background: #FFFFFF !important;
+            }
+            .page-container {
+              padding: 0 !important;
+            }
           }
           body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #26211C;
-            background: #FFFFFF;
+            background: #FAF8F5;
             margin: 0;
-            padding: 24px;
+            padding: 0;
             font-size: 13px;
             line-height: 1.5;
+          }
+          .no-print-bar {
+            position: sticky;
+            top: 0;
+            background: #382A24;
+            color: #FAF8F5;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+            z-index: 9999;
+          }
+          .print-btn {
+            background: #EBD7BE;
+            color: #382A24;
+            border: 1px solid #D0AE92;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 120ms ease;
+          }
+          .print-btn:hover {
+            background: #DFCAAE;
+          }
+          .close-btn {
+            background: transparent;
+            color: #EBD7BE;
+            border: 1px solid rgba(235, 215, 190, 0.4);
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+          }
+          .close-btn:hover {
+            background: rgba(235, 215, 190, 0.15);
+          }
+          .page-container {
+            max-width: 800px;
+            margin: 24px auto;
+            background: #FFFFFF;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(74, 58, 52, 0.08);
           }
           .header {
             display: flex;
@@ -142,96 +203,120 @@ export class PdfService {
         </style>
       </head>
       <body>
-        <div class="header">
-          <div style="display: flex; align-items: center; gap: 12px;">
-            <svg width="36" height="36" viewBox="0 0 1000 1000" fill="#4A3A34">
-              <path d="M 252 637 L 254 637 L 255 638 L 259 638 L 260 637 L 262 637 L 263 638 L 291 638 L 293 637 L 295 638 L 295 642 L 294 643 L 294 654 L 293 655 L 293 673 L 292 674 L 292 688 L 291 689 L 291 697 L 290 698 L 290 717 L 289 718 L 289 732 L 288 733 L 288 742 L 287 743 L 287 758 L 286 759 L 286 773 L 285 774 L 285 784 L 284 785 L 284 803 L 283 804 L 283 818 L 282 819 L 282 828 L 281 829 L 281 848 L 280 849 L 280 858 L 279 859 L 271 859 L 270 860 L 268 860 L 266 857 L 266 846 L 265 845 L 265 837 L 264 836 L 264 814 L 263 813 L 263 805 L 262 804 L 262 793 L 261 792 L 261 773 L 260 772 L 260 757 L 259 756 L 259 750 L 258 749 L 258 731 L 257 730 L 257 716 L 256 715 L 256 705 L 255 704 L 255 685 L 254 684 L 254 672 L 253 671 L 253 664 L 252 663 L 252 648 L 251 647 L 251 644 L 252 643 L 251 642 L 251 638 L 252 637 Z" />
-            </svg>
-            <div>
-              <div class="brand">URBAN FURNITURE</div>
-              <div style="color: #7B7267; font-size: 12px; margin-top: 4px;">Accounting System &amp; Enterprise Ledger</div>
-            </div>
+        <div class="no-print-bar">
+          <div style="font-size: 13px; font-weight: 600;">
+            <span style="color: #EBD7BE; font-weight: 800;">URBAN FURNITURE</span> &nbsp;•&nbsp; Official Invoice Document (${invoice.number})
           </div>
-          <div style="text-align: right;">
-            <div style="font-size: 20px; font-weight: 800; font-family: monospace;">${invoice.number}</div>
-            <div style="margin-top: 6px;">
-              <span class="badge badge-${invoice.status}">${invoice.status}</span>
-              <span class="badge badge-${invoice.paymentStatus}" style="margin-left: 6px;">${invoice.paymentStatus.replace('_', ' ')}</span>
-            </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="print-btn" onclick="window.print()">
+              🖨️ Print / Save as PDF
+            </button>
+            <button type="button" class="close-btn" onclick="window.close()">
+              ✕ Close
+            </button>
           </div>
         </div>
 
-        <div class="meta-grid">
-          <div class="meta-box">
-            <div class="meta-title">Billed To</div>
-            <div style="font-size: 15px; font-weight: 700; color: #26211C;">${invoice.customerName}</div>
-            <div style="color: #574F45; font-size: 12px; margin-top: 4px;">Customer ID: #${invoice.customerId}</div>
-            ${invoice.soNumber ? `<div style="color: #574F45; font-size: 12px; margin-top: 2px;">Originating SO: <strong>${invoice.soNumber}</strong></div>` : ''}
+        <div class="page-container">
+          <div class="header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <svg width="36" height="36" viewBox="0 0 1000 1000" fill="#4A3A34">
+                <path d="M 252 637 L 254 637 L 255 638 L 259 638 L 260 637 L 262 637 L 263 638 L 291 638 L 293 637 L 295 638 L 295 642 L 294 643 L 294 654 L 293 655 L 293 673 L 292 674 L 292 688 L 291 689 L 291 697 L 290 698 L 290 717 L 289 718 L 289 732 L 288 733 L 288 742 L 287 743 L 287 758 L 286 759 L 286 773 L 285 774 L 285 784 L 284 785 L 284 803 L 283 804 L 283 818 L 282 819 L 282 828 L 281 829 L 281 848 L 280 849 L 280 858 L 279 859 L 271 859 L 270 860 L 268 860 L 266 857 L 266 846 L 265 845 L 265 837 L 264 836 L 264 814 L 263 813 L 263 805 L 262 804 L 262 793 L 261 792 L 261 773 L 260 772 L 260 757 L 259 756 L 259 750 L 258 749 L 258 731 L 257 730 L 257 716 L 256 715 L 256 705 L 255 704 L 255 685 L 254 684 L 254 672 L 253 671 L 253 664 L 252 663 L 252 648 L 251 647 L 251 644 L 252 643 L 251 642 L 251 638 L 252 637 Z" />
+              </svg>
+              <div>
+                <div class="brand">URBAN FURNITURE</div>
+                <div style="color: #7B7267; font-size: 12px; margin-top: 4px;">Accounting System &amp; Enterprise Ledger</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 20px; font-weight: 800; font-family: monospace;">${invoice.number}</div>
+              <div style="margin-top: 6px;">
+                <span class="badge badge-${invoice.status}">${invoice.status}</span>
+                <span class="badge badge-${invoice.paymentStatus}" style="margin-left: 6px;">${invoice.paymentStatus.replace('_', ' ')}</span>
+              </div>
+            </div>
           </div>
 
-          <div class="meta-box">
-            <div class="meta-title">Invoice Details</div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-              <span style="color: #574F45;">Invoice Date:</span>
-              <strong style="font-family: monospace;">${invoice.invoiceDate}</strong>
+          <div class="meta-grid">
+            <div class="meta-box">
+              <div class="meta-title">Billed To</div>
+              <div style="font-size: 15px; font-weight: 700; color: #26211C;">${invoice.customerName}</div>
+              <div style="color: #574F45; font-size: 12px; margin-top: 4px;">Customer ID: #${invoice.customerId}</div>
+              ${invoice.soNumber ? `<div style="color: #574F45; font-size: 12px; margin-top: 2px;">Originating SO: <strong>${invoice.soNumber}</strong></div>` : ''}
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-              <span style="color: #574F45;">Due Date:</span>
-              <strong style="font-family: monospace;">${invoice.dueDate || '-'}</strong>
+
+            <div class="meta-box">
+              <div class="meta-title">Invoice Details</div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #574F45;">Invoice Date:</span>
+                <strong style="font-family: monospace;">${invoice.invoiceDate}</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #574F45;">Due Date:</span>
+                <strong style="font-family: monospace;">${invoice.dueDate || '-'}</strong>
+              </div>
+              ${invoice.journalEntryNumber ? `
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: #574F45;">Journal Entry:</span>
+                <strong style="font-family: monospace;">${invoice.journalEntryNumber}</strong>
+              </div>` : ''}
             </div>
-            ${invoice.journalEntryNumber ? `
-            <div style="display: flex; justify-content: space-between;">
-              <span style="color: #574F45;">Journal Entry:</span>
-              <strong style="font-family: monospace;">${invoice.journalEntryNumber}</strong>
-            </div>` : ''}
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;">#</th>
+                <th style="text-align: left;">Product / Item</th>
+                <th style="text-align: left;">Analytics</th>
+                <th style="width: 60px; text-align: right;">Qty</th>
+                <th style="width: 90px; text-align: right;">Unit Price</th>
+                <th style="width: 60px; text-align: right;">Tax</th>
+                <th style="width: 100px; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linesHtml}
+            </tbody>
+          </table>
+
+          <div class="totals-section">
+            <div class="totals-box">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span style="font-family: monospace;">₹${parseFloat(invoice.subtotal).toFixed(2)}</span>
+              </div>
+              <div class="total-row">
+                <span>Tax Total:</span>
+                <span style="font-family: monospace;">₹${parseFloat(invoice.taxTotal).toFixed(2)}</span>
+              </div>
+              <div class="total-row grand-total">
+                <span>Total:</span>
+                <span style="font-family: monospace;">₹${parseFloat(invoice.total).toFixed(2)}</span>
+              </div>
+              <div class="total-row" style="margin-top: 8px; color: #137333;">
+                <span>Amount Paid:</span>
+                <span style="font-family: monospace;">- ₹${parseFloat(invoice.amountPaid).toFixed(2)}</span>
+              </div>
+              <div class="total-row" style="font-weight: 700; color: ${parseFloat(invoice.amountDue) > 0 ? '#C5221F' : '#137333'};">
+                <span>Amount Due:</span>
+                <span style="font-family: monospace;">₹${parseFloat(invoice.amountDue).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            Generated deterministically by Urban Furniture Accounting Engine · Strictly Offline &amp; Immutable
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 40px; text-align: center;">#</th>
-              <th style="text-align: left;">Product / Item</th>
-              <th style="text-align: left;">Analytics</th>
-              <th style="width: 60px; text-align: right;">Qty</th>
-              <th style="width: 90px; text-align: right;">Unit Price</th>
-              <th style="width: 60px; text-align: right;">Tax</th>
-              <th style="width: 100px; text-align: right;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${linesHtml}
-          </tbody>
-        </table>
-
-        <div class="totals-section">
-          <div class="totals-box">
-            <div class="total-row">
-              <span>Subtotal:</span>
-              <span style="font-family: monospace;">₹${parseFloat(invoice.subtotal).toFixed(2)}</span>
-            </div>
-            <div class="total-row">
-              <span>Tax Total:</span>
-              <span style="font-family: monospace;">₹${parseFloat(invoice.taxTotal).toFixed(2)}</span>
-            </div>
-            <div class="total-row grand-total">
-              <span>Total:</span>
-              <span style="font-family: monospace;">₹${parseFloat(invoice.total).toFixed(2)}</span>
-            </div>
-            <div class="total-row" style="margin-top: 8px; color: #137333;">
-              <span>Amount Paid:</span>
-              <span style="font-family: monospace;">- ₹${parseFloat(invoice.amountPaid).toFixed(2)}</span>
-            </div>
-            <div class="total-row" style="font-weight: 700; color: ${parseFloat(invoice.amountDue) > 0 ? '#C5221F' : '#137333'};">
-              <span>Amount Due:</span>
-              <span style="font-family: monospace;">₹${parseFloat(invoice.amountDue).toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="footer">
-          Generated deterministically by Urban Furniture Accounting Engine · Strictly Offline &amp; Immutable
-        </div>
+        <script>
+          window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+              try { window.print(); } catch (e) {}
+            }, 350);
+          });
+        </script>
       </body>
       </html>
     `;

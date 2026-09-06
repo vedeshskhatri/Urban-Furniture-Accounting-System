@@ -72,7 +72,12 @@ export default function ProfitLossPage() {
   });
 
   const handlePrint = () => {
-    window.print();
+    if (activeViewMode === 'charts') {
+      setActiveViewMode('both');
+      setTimeout(() => window.print(), 120);
+    } else {
+      window.print();
+    }
   };
 
   const isNetProfitPositive = report
@@ -398,7 +403,7 @@ export default function ProfitLossPage() {
             onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--brown-900)')}
           >
             <Printer size={13} />
-            <span>Print Profit & Loss</span>
+            <span>Print / Export PDF</span>
           </button>
         </div>
       </div>

@@ -206,7 +206,7 @@ export default function BudgetReportPage() {
             onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--brown-900)')}
           >
             <Printer size={13} />
-            <span>Print Budget Report</span>
+            <span>Print / Export PDF</span>
           </button>
         </div>
       </div>
@@ -376,9 +376,9 @@ export default function BudgetReportPage() {
           </div>
         </div>
 
-        {/* ── Visual Progress Breakdown (Hidden in print if needed or cleanly rendered) ── */}
+        {/* ── Visual Progress Breakdown (Hidden from print) ── */}
         <div
-          className="print-avoid-break"
+          className="print-avoid-break no-print"
           style={{
             display: 'grid',
             gridTemplateColumns: '180px 1fr',

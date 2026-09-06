@@ -147,7 +147,7 @@ export const PortalBillDetail: React.FC = () => {
   return (
     <div className="space-y-6 font-body">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print print:hidden">
         <button
           onClick={() => navigate('/portal/bills')}
           className="text-xs font-semibold text-brown-700 hover:text-brown-900 flex items-center gap-1 transition-colors font-body cursor-pointer"
@@ -166,15 +166,15 @@ export const PortalBillDetail: React.FC = () => {
           )}
           <button
             onClick={() => window.print()}
-            className="px-3.5 py-2 bg-surface border border-brown-300 hover:bg-brown-100/50 text-brown-800 font-semibold text-xs rounded-[8px] transition-colors shadow-xs font-body cursor-pointer"
+            className="px-3.5 py-2 bg-surface border border-brown-300 hover:bg-brown-100/50 text-brown-800 font-semibold text-xs rounded-[8px] transition-colors shadow-xs font-body cursor-pointer flex items-center gap-1.5"
           >
-            Print / PDF
+            <span>🖨️ Print / Save as PDF</span>
           </button>
         </div>
       </div>
 
       {/* Main Bill Card */}
-      <div className="bg-surface border border-brown-300 rounded-[14px] p-8 shadow-sm">
+      <div className="printable-sheet bg-surface border border-brown-300 rounded-[14px] p-8 shadow-sm print:border-none print:shadow-none print:p-0">
         {/* Document Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-brown-200/60 gap-4">
           <div>

@@ -211,6 +211,12 @@ body {
 }
 
 /* ── Professional Accounting Print Media Rules ─────────────────── */
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -227,13 +233,23 @@ body {
     min-height: auto !important;
   }
 
-  /* Completely hide all UI navigation, shell headers, buttons, toolbars, modals */
+  /* Completely hide all UI navigation, shell headers, buttons, toolbars, drawers, backdrop overlays */
   header,
   nav,
   .no-print,
+  .print-hide,
+  .print\:hidden,
   button,
-  .print-hide {
+  input,
+  select,
+  .backdrop-blur-xs,
+  .backdrop-blur-sm,
+  [role="dialog"] > div:first-child {
     display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
   }
 
   main {
@@ -244,7 +260,7 @@ body {
     background: #ffffff !important;
   }
 
-  /* Make financial document sheet fill page without borders/shadows */
+  /* Make financial document sheet fill page without borders/shadows/clipping */
   .printable-sheet {
     box-shadow: none !important;
     border: none !important;
@@ -253,9 +269,26 @@ body {
     max-width: 100% !important;
     width: 100% !important;
     background: #ffffff !important;
+    overflow: visible !important;
+    display: block !important;
   }
 
-  /* Prevent awkward page break splits inside tables and statement blocks */
+  /* Ensure tables render cleanly across pages */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
+  /* Prevent awkward page break splits inside statement blocks */
   .print-avoid-break {
     break-inside: avoid !important;
     page-break-inside: avoid !important;

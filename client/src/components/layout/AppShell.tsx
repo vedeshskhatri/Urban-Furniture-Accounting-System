@@ -83,6 +83,7 @@ export default function AppShell() {
       {/* ── Top Navigation Bar ── */}
       <header
         ref={headerRef}
+        className="no-print"
         style={{
           background: 'var(--surface)',
           borderBottom: '1px solid rgba(208, 174, 146, 0.35)',
@@ -300,8 +301,10 @@ export default function AppShell() {
         <Outlet />
       </main>
 
-      <RecordTimelineDrawer />
-      <GlobalCommandPalette />
+      <div className="no-print">
+        <RecordTimelineDrawer />
+        <GlobalCommandPalette />
+      </div>
     </div>
   );
 }

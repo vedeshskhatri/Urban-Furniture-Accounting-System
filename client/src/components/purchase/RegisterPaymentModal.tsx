@@ -49,9 +49,119 @@ export const RegisterPaymentModal: React.FC<RegisterPaymentModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Print voucher handler
+  // Dedicated Printable Voucher Handler
   const handlePrint = () => {
-    window.print();
+    const html = `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Payment Voucher - ${docNumber}</title>
+      <style>
+        @page { size: A4; margin: 15mm; }
+        @media print {
+          .no-print-bar { display: none !important; }
+          body { background: #FFFFFF !important; padding: 0 !important; }
+          .voucher { box-shadow: none !important; margin: 0 !important; border: 1.5px solid #26211C !important; }
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #26211C; background: #FAF8F5; margin: 0; padding: 0; font-size: 13px; line-height: 1.5; }
+        .no-print-bar { position: sticky; top: 0; background: #382A24; color: #FAF8F5; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.18); z-index: 9999; }
+        .print-btn { background: #EBD7BE; color: #382A24; border: 1px solid #D0AE92; font-weight: 700; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .close-btn { background: transparent; color: #EBD7BE; border: 1px solid rgba(235, 215, 190, 0.4); padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .voucher { max-width: 760px; margin: 24px auto; background: #FFFFFF; padding: 40px; border-radius: 8px; box-shadow: 0 2px 12px rgba(74, 58, 52, 0.08); border: 1.5px solid #26211C; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #26211C; padding-bottom: 16px; margin-bottom: 24px; }
+        .brand { font-size: 20px; font-weight: 800; color: #26211C; }
+        .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #E5DFD7; }
+        .label { color: #574F45; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .val { font-weight: 700; color: #26211C; }
+        .amount-box { margin: 24px 0; padding: 16px; background: #FAF8F5; border: 1.5px solid #D0AE92; border-radius: 6px; text-align: center; }
+        .amount-val { font-size: 28px; font-weight: 800; font-family: monospace; color: #26211C; }
+        .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 60px; }
+        .sign-line { border-top: 1px solid #26211C; padding-top: 8px; text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #574F45; }
+      </style>
+    </head>
+    <body>
+      <div class="no-print-bar">
+        <div style="font-size: 13px; font-weight: 600;">
+          <span style="color: #EBD7BE; font-weight: 800;">URBAN FURNITURE</span> &nbsp;•&nbsp; Official Payment Voucher (${docNumber})
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+          <button type="button" class="close-btn" onclick="window.close()">✕ Close</button>
+        </div>
+      </div>
+
+      <div class="voucher">
+        <div class="header">
+          <div>
+            <div class="brand">URBAN FURNITURE</div>
+            <div style="color: #7B7267; font-size: 12px; margin-top: 2px;">Enterprise Ledger &amp; Double-Entry Accounting</div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 18px; font-weight: 800; color: #26211C;">OFFICIAL PAYMENT VOUCHER</div>
+            <div style="font-size: 12px; color: #7B7267; margin-top: 4px;">Date: ${paymentDate}</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <span class="label">Document Ref</span>
+          <span class="val" style="font-family: monospace;">${docNumber}</span>
+        </div>
+        <div class="row">
+          <span class="label">Party / Partner</span>
+          <span class="val">${partnerName}</span>
+        </div>
+        <div class="row">
+          <span class="label">Payment Type</span>
+          <span class="val" style="text-transform: uppercase;">${isInvoice ? 'Customer Receipt (Inflow)' : 'Vendor Payment (Outflow)'}</span>
+        </div>
+        <div class="row">
+          <span class="label">Payment Method</span>
+          <span class="val" style="text-transform: uppercase;">${method === 'bank' ? 'Bank Transfer' : 'Cash on Hand'}</span>
+        </div>
+        <div class="row">
+          <span class="label">Debit Account</span>
+          <span class="val" style="font-family: monospace;">${isInvoice ? (method === 'bank' ? 'Bank Accounts (1020)' : 'Cash on Hand (1010)') : 'Accounts Payable / Sundry Creditors (2000)'}</span>
+        </div>
+        <div class="row">
+          <span class="label">Credit Account</span>
+          <span class="val" style="font-family: monospace;">${isInvoice ? 'Accounts Receivable / Sundry Debtors (1200)' : (method === 'bank' ? 'Bank Accounts (1020)' : 'Cash on Hand (1010)')}</span>
+        </div>
+        <div class="row">
+          <span class="label">Memo / Description</span>
+          <span class="val">${memo || '—'}</span>
+        </div>
+
+        <div class="amount-box">
+          <div class="label" style="margin-bottom: 6px;">Total Amount Paid</div>
+          <div class="amount-val">₹${amount}</div>
+        </div>
+
+        <div class="signatures">
+          <div class="sign-line">Prepared By (Cashier / Accountant)</div>
+          <div class="sign-line">Authorized Signatory / Seal</div>
+        </div>
+
+        <div style="margin-top: 40px; text-align: center; font-size: 10.5px; color: #7B7267; border-top: 1px solid #E5DFD7; padding-top: 12px;">
+          Generated deterministically by Urban Furniture Accounting Engine · Strictly Offline &amp; Immutable
+        </div>
+      </div>
+
+      <script>
+        window.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            try { window.print(); } catch (e) {}
+          }, 350);
+        });
+      </script>
+    </body>
+    </html>`;
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(html);
+      printWin.document.close();
+      printWin.focus();
+    }
   };
 
   // Compute remaining balance if this payment is submitted

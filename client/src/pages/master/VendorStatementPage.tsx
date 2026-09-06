@@ -62,7 +62,7 @@ export const VendorStatementPage: React.FC<VendorStatementPageProps> = ({
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       {/* Top Action Bar */}
-      <div className="flex items-center justify-between print:hidden">
+      <div className="flex items-center justify-between no-print print:hidden">
         <div className="flex items-center gap-2">
           <button
             onClick={onBack}
@@ -88,16 +88,16 @@ export const VendorStatementPage: React.FC<VendorStatementPageProps> = ({
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 bg-surface hover:bg-brown-50 text-brown-800 border border-brown-300 px-3.5 py-1.5 rounded-lg text-sm font-medium shadow-xs transition-all"
+            className="inline-flex items-center gap-2 bg-surface hover:bg-brown-50 text-brown-800 border border-brown-300 px-3.5 py-1.5 rounded-lg text-sm font-medium shadow-xs transition-all cursor-pointer"
           >
             <Printer className="w-4 h-4" />
-            Print Statement
+            Print / Export PDF
           </button>
         </div>
       </div>
 
       {/* Statement Card */}
-      <div className="bg-surface rounded-2xl border border-brown-200/80 shadow-sm p-8 print:border-none print:shadow-none print:p-0">
+      <div className="printable-sheet bg-surface rounded-2xl border border-brown-200/80 shadow-sm p-8 print:border-none print:shadow-none print:p-0">
         {/* Statement Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between border-b border-brown-200/80 pb-6 gap-6">
           <div>
