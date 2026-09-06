@@ -247,7 +247,8 @@ CREATE TABLE sales_orders (
   subtotal     DECIMAL(14,2) NOT NULL DEFAULT 0,
   tax_total    DECIMAL(14,2) NOT NULL DEFAULT 0,
   total        DECIMAL(14,2) NOT NULL DEFAULT 0,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE sales_order_lines (

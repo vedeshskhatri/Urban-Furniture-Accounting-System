@@ -53,6 +53,7 @@ export interface SalesOrderDTO {
   invoiceStatus?: string | null;
   isInvoiced?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export class SalesOrderService {
@@ -205,7 +206,7 @@ export class SalesOrderService {
       // Update sales_orders record
       await tx.query(
         `UPDATE sales_orders
-         SET customer_id = $1, order_date = $2, subtotal = $3, tax_total = $4, total = $5
+         SET customer_id = $1, order_date = $2, subtotal = $3, tax_total = $4, total = $5, updated_at = NOW()
          WHERE id = $6`,
         [
           input.customerId,
@@ -477,6 +478,7 @@ export class SalesOrderService {
       invoiceStatus: linkedInvoice ? linkedInvoice.status : null,
       isInvoiced: Boolean(linkedInvoice),
       createdAt: so.created_at ? new Date(so.created_at).toISOString() : '',
+      updatedAt: so.updated_at ? new Date(so.updated_at).toISOString() : '',
     };
   }
 
