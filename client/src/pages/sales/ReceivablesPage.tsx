@@ -413,9 +413,14 @@ export const ReceivablesPage: React.FC = () => {
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                           <span className="truncate text-brown-800">{item.name}</span>
                         </div>
-                        <span className="font-mono font-semibold text-brown-900 shrink-0">
-                          {formatDisplayINR(item.value)}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-mono font-semibold text-brown-900">
+                            ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          <span className="text-[10px] text-brown-500 font-mono hidden sm:inline">
+                            ({formatDisplayINR(item.value)})
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>
