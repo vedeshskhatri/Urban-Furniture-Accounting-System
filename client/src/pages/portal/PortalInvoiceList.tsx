@@ -29,6 +29,9 @@ export interface PortalInvoiceListItem {
   number: string;
   invoiceDate: string;
   dueDate: string;
+  status?: string;
+  soId?: number | null;
+  soNumber?: string | null;
   total: string;
   amountPaid: string;
   amountDue: string;
@@ -667,13 +670,22 @@ export const PortalInvoiceList: React.FC = () => {
                       e.currentTarget.style.backgroundColor = isEven ? '#FFFFFF' : 'rgba(249, 246, 240, 0.5)';
                     }}
                   >
-                    {/* Invoice Number */}
+                    {/* Invoice Number & Originating Order */}
                     <td style={{ padding: '16px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <FileText size={15} color="var(--brown-600)" />
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, color: 'var(--brown-900)' }}>
-                          {row.number}
-                        </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <FileText size={15} color="var(--brown-600)" />
+                          <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 13, color: 'var(--brown-900)' }}>
+                            {row.number}
+                          </span>
+                        </div>
+                        {row.soNumber && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 23 }}>
+                            <span style={{ fontSize: 10.5, fontFamily: 'var(--font-mono)', color: 'var(--brown-700)', backgroundColor: 'rgba(208, 174, 146, 0.3)', padding: '1px 6px', borderRadius: 4 }}>
+                              From Order {row.soNumber}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </td>
 

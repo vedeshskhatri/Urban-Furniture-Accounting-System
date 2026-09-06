@@ -7,6 +7,7 @@ import {
   Layers,
   Sparkles,
   Receipt,
+  ShoppingBag,
   LogOut,
   LogIn,
   ArrowUpRight,
@@ -248,6 +249,31 @@ export const PortalLayout: React.FC = () => {
               <Sparkles size={14} />
               <span>3D Studio</span>
             </NavLink>
+
+            {/* My Orders (when authenticated) */}
+            {user && (
+              <NavLink
+                to="/portal/orders"
+                style={({ isActive }) => ({
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: isActive ? 700 : 500,
+                  color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
+                  backgroundColor: isActive ? 'rgba(235, 215, 190, 0.35)' : 'transparent',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                  transition: 'background 120ms ease, color 120ms ease',
+                })}
+              >
+                <ShoppingBag size={14} />
+                <span>My Orders</span>
+              </NavLink>
+            )}
 
             {/* My Invoices (when authenticated) */}
             {user && (

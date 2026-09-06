@@ -212,13 +212,17 @@ export class PortalService {
          ci.number,
          ci.invoice_date AS "invoiceDate",
          ci.due_date AS "dueDate",
+         ci.status,
+         ci.so_id AS "soId",
+         so.number AS "soNumber",
          vis.total::text,
          vis.amount_paid::text AS "amountPaid",
          vis.amount_due::text AS "amountDue",
          vis.payment_status AS "paymentStatus"
        FROM customer_invoices ci
+       LEFT JOIN sales_orders so ON so.id = ci.so_id
        JOIN v_invoice_status vis ON vis.invoice_id = ci.id
-       WHERE ci.customer_id = $1 AND ci.status = 'confirmed'
+       WHERE ci.customer_id = $1 AND ci.status != 'cancelled'
        ORDER BY ci.invoice_date DESC, ci.id DESC`,
       [scope.customerId]
     );
@@ -243,6 +247,9 @@ export class PortalService {
          ci.number,
          ci.invoice_date AS "invoiceDate",
          ci.due_date AS "dueDate",
+         ci.status,
+         ci.so_id AS "soId",
+         so.number AS "soNumber",
          ci.subtotal::text,
          ci.tax_total::text AS "taxTotal",
          vis.total::text,
@@ -250,6 +257,7 @@ export class PortalService {
          vis.amount_due::text AS "amountDue",
          vis.payment_status AS "paymentStatus"
        FROM customer_invoices ci
+       LEFT JOIN sales_orders so ON so.id = ci.so_id
        JOIN v_invoice_status vis ON vis.invoice_id = ci.id
        WHERE ci.id = $1 AND ci.customer_id = $2`,
       [invoiceId, scope.customerId]
@@ -286,6 +294,9 @@ export class PortalService {
       number: inv.number,
       invoiceDate: inv.invoiceDate ? new Date(inv.invoiceDate).toISOString().split('T')[0] : '',
       dueDate: inv.dueDate ? new Date(inv.dueDate).toISOString().split('T')[0] : '',
+      status: inv.status,
+      soId: inv.soId,
+      soNumber: inv.soNumber,
       subtotal: inv.subtotal,
       taxTotal: inv.taxTotal,
       total: inv.total,
@@ -294,6 +305,110 @@ export class PortalService {
       paymentStatus: inv.paymentStatus,
       lines: linesRes.rows,
       payments,
+    };
+  }
+
+  /**
+   * Fetch customer's own sales orders via scopeFor() data-layer scoping
+   */
+  static async getPortalOrders(user: UserPayload) {
+    const scope = scopeFor(user, 'sales_order');
+
+    const res = await pool.query(
+      `SELECT 
+         so.id,
+         so.number,
+         so.order_date AS "orderDate",
+         so.status,
+         so.subtotal::text,
+         so.tax_total::text AS "taxTotal",
+         so.total::text,
+         ci.id AS "invoiceId",
+         ci.number AS "invoiceNumber",
+         ci.status AS "invoiceStatus",
+         vis.payment_status AS "paymentStatus",
+         vis.amount_due::text AS "amountDue",
+         (
+           SELECT json_agg(json_build_object(
+             'id', sol.id,
+             'productId', sol.product_id,
+             'productName', p.name,
+             'sku', p.sku,
+             'qty', sol.qty::text,
+             'unitPrice', sol.unit_price::text,
+             'taxRate', sol.tax_rate::text,
+             'total', sol.total::text
+           ) ORDER BY sol.line_no)
+           FROM sales_order_lines sol
+           JOIN products p ON p.id = sol.product_id
+           WHERE sol.so_id = so.id
+         ) AS lines
+       FROM sales_orders so
+       LEFT JOIN customer_invoices ci ON ci.so_id = so.id AND ci.status != 'cancelled'
+       LEFT JOIN v_invoice_status vis ON vis.invoice_id = ci.id
+       WHERE so.customer_id = $1
+       ORDER BY so.order_date DESC, so.id DESC`,
+      [scope.customerId]
+    );
+
+    return res.rows.map(r => ({
+      ...r,
+      orderDate: r.orderDate ? new Date(r.orderDate).toISOString().split('T')[0] : '',
+      lines: r.lines || [],
+    }));
+  }
+
+  /**
+   * Fetch specific sales order detail for portal customer
+   */
+  static async getPortalOrderById(orderId: number, user: UserPayload) {
+    const scope = scopeFor(user, 'sales_order');
+
+    const res = await pool.query(
+      `SELECT 
+         so.id,
+         so.number,
+         so.order_date AS "orderDate",
+         so.status,
+         so.subtotal::text,
+         so.tax_total::text AS "taxTotal",
+         so.total::text,
+         ci.id AS "invoiceId",
+         ci.number AS "invoiceNumber",
+         ci.status AS "invoiceStatus",
+         vis.payment_status AS "paymentStatus",
+         vis.amount_due::text AS "amountDue",
+         (
+           SELECT json_agg(json_build_object(
+             'id', sol.id,
+             'productId', sol.product_id,
+             'productName', p.name,
+             'sku', p.sku,
+             'qty', sol.qty::text,
+             'unitPrice', sol.unit_price::text,
+             'taxRate', sol.tax_rate::text,
+             'total', sol.total::text
+           ) ORDER BY sol.line_no)
+           FROM sales_order_lines sol
+           JOIN products p ON p.id = sol.product_id
+           WHERE sol.so_id = so.id
+         ) AS lines
+       FROM sales_orders so
+       LEFT JOIN customer_invoices ci ON ci.so_id = so.id AND ci.status != 'cancelled'
+       LEFT JOIN v_invoice_status vis ON vis.invoice_id = ci.id
+       WHERE so.id = $1 AND so.customer_id = $2`,
+      [orderId, scope.customerId]
+    );
+
+    if (res.rows.length === 0) {
+      return null;
+    }
+
+    const r = res.rows[0];
+    return {
+      ...r,
+      orderDate: r.orderDate ? new Date(r.orderDate).toISOString().split('T')[0] : '',
+      lines: r.lines || [],
     };
   }
 
@@ -309,8 +424,8 @@ export class PortalService {
     const scope = scopeFor(user, 'invoice');
 
     // Verify invoice belongs to this contact at data layer
-    const invRes = await pool.query(
-      `SELECT ci.id, vis.amount_due
+    const invRes = await pool.query<{ id: number; amount_due: string; status: string }>(
+      `SELECT ci.id, vis.amount_due, ci.status
        FROM customer_invoices ci
        JOIN v_invoice_status vis ON vis.invoice_id = ci.id
        WHERE ci.id = $1 AND ci.customer_id = $2`,
@@ -319,6 +434,12 @@ export class PortalService {
 
     if (invRes.rows.length === 0) {
       throw new Error('Invoice not found or unauthorized');
+    }
+
+    // If invoice is in draft, confirm and post it first so payment allocation succeeds cleanly
+    if (invRes.rows[0].status === 'draft') {
+      const { InvoiceService } = await import('./invoiceService');
+      await InvoiceService.confirmInvoice(invoiceId, user.id);
     }
 
     const due = new Decimal(invRes.rows[0].amount_due);

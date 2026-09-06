@@ -282,7 +282,17 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
         <div className="flex items-center space-x-3">
           <button
             type="button"
-            onClick={() => navigate('/sales/invoices')}
+            onClick={() => {
+              if (onBack) {
+                onBack();
+              } else if (invoice?.soId) {
+                navigate(`/sales/orders/${invoice.soId}`);
+              } else if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/sales/invoices');
+              }
+            }}
             className="px-3 py-1.5 text-sm font-medium text-brown-700 hover:text-brown-900 transition-colors"
           >
             ← Back

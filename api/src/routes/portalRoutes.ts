@@ -101,6 +101,35 @@ portalRouter.get('/me', requireAuth, requirePortalContact, (req: AuthenticatedRe
   return sendSuccess(res, { user: req.user });
 });
 
+// 4b. GET /api/portal/orders - Contact's OWN sales orders (scoped at data layer)
+portalRouter.get('/orders', requireAuth, requirePortalContact, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const orders = await PortalService.getPortalOrders(req.user!);
+    return sendSuccess(res, orders);
+  } catch (err: any) {
+    return sendError(res, 'SERVER_ERROR', err.message, 500);
+  }
+});
+
+// 4c. GET /api/portal/orders/:id - Specific sales order with items (scoped at data layer)
+portalRouter.get('/orders/:id', requireAuth, requirePortalContact, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const orderId = parseInt(String(req.params.id), 10);
+    if (isNaN(orderId)) {
+      return sendError(res, 'INVALID_ID', 'Order ID must be a number', 400);
+    }
+
+    const order = await PortalService.getPortalOrderById(orderId, req.user!);
+    if (!order) {
+      return sendError(res, 'NOT_FOUND', `Sales Order #${orderId} not found or unauthorized`, 404);
+    }
+
+    return sendSuccess(res, order);
+  } catch (err: any) {
+    return sendError(res, 'SERVER_ERROR', err.message, 500);
+  }
+});
+
 // 5. GET /api/portal/invoices - Contact's OWN invoices only (scoped at data layer)
 portalRouter.get('/invoices', requireAuth, requirePortalContact, async (req: AuthenticatedRequest, res: Response) => {
   try {

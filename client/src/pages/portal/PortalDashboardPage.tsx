@@ -20,6 +20,8 @@ import {
   ArrowUpRight,
   BadgeAlert,
   Zap,
+  ShoppingBag,
+  FileText,
 } from 'lucide-react';
 import { usePortalAuth } from './PortalAuthGuard';
 import { formatINR } from '../../lib/money';
@@ -49,6 +51,25 @@ interface RecentInvoice {
   total: string;
   amountDue: string;
   paymentStatus: string;
+}
+
+interface RecentOrder {
+  id: number;
+  number: string;
+  orderDate: string;
+  status: string;
+  total: string;
+  invoiceId: number | null;
+  invoiceNumber: string | null;
+  paymentStatus: string | null;
+  amountDue: string | null;
+  lines: Array<{
+    id: number;
+    productName: string;
+    qty: string;
+    unitPrice: string;
+    total: string;
+  }>;
 }
 
 const ROOMS = [
@@ -109,6 +130,8 @@ export const PortalDashboardPage: React.FC = () => {
     count: 0,
   });
   const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [activeActivityTab, setActiveActivityTab] = useState<'orders' | 'invoices'>('orders');
   const [featuredProducts, setFeaturedProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -176,28 +199,35 @@ export const PortalDashboardPage: React.FC = () => {
       })
       .catch(() => {});
 
-    // 2. Fetch customer invoices if authenticated
+    // 2. Fetch customer invoices & orders if authenticated
     if (user) {
       setLoading(true);
-      api.get('/api/portal/invoices')
-        .then((res) => {
-          const json = res.data;
-          if (json?.data && Array.isArray(json.data)) {
+      Promise.all([
+        api.get('/api/portal/invoices').catch(() => ({ data: { data: [] } })),
+        api.get('/api/portal/orders').catch(() => ({ data: { data: [] } })),
+      ])
+        .then(([invRes, ordRes]) => {
+          const invData = invRes.data?.data || [];
+          if (Array.isArray(invData)) {
             let due = 0;
             let invoiced = 0;
-            json.data.forEach((inv: any) => {
+            invData.forEach((inv: any) => {
               due += parseFloat(inv.amountDue || '0');
               invoiced += parseFloat(inv.total || '0');
             });
             setInvoiceSummary({
               totalDue: due.toFixed(2),
               totalInvoiced: invoiced.toFixed(2),
-              count: json.data.length,
+              count: invData.length,
             });
-            setRecentInvoices(json.data.slice(0, 4));
+            setRecentInvoices(invData.slice(0, 4));
+          }
+
+          const ordData = ordRes.data?.data || [];
+          if (Array.isArray(ordData)) {
+            setRecentOrders(ordData.slice(0, 4));
           }
         })
-        .catch(() => {})
         .finally(() => setLoading(false));
     }
   }, [user]);
@@ -583,6 +613,438 @@ export const PortalDashboardPage: React.FC = () => {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Recent Orders & Live Invoices Panel */}
+          <div
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderRadius: 20,
+              padding: '24px 28px',
+              border: '1px solid rgba(208, 174, 146, 0.35)',
+              boxShadow: '0 4px 16px rgba(74, 58, 52, 0.05)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 18,
+            }}
+          >
+            {/* Header & Tabs */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--brown-600)' }}>
+                    Atelier Activity
+                  </span>
+                </div>
+                <h3
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: 'var(--brown-900)',
+                    margin: 0,
+                  }}
+                >
+                  Your Active Orders &amp; Invoices
+                </h3>
+              </div>
+
+              {/* Tab Switcher */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 4,
+                  backgroundColor: 'rgba(240, 234, 224, 0.65)',
+                  padding: 4,
+                  borderRadius: 10,
+                  border: '1px solid rgba(208, 174, 146, 0.45)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setActiveActivityTab('orders')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: 12,
+                    fontWeight: activeActivityTab === 'orders' ? 700 : 500,
+                    fontFamily: 'var(--font-display)',
+                    backgroundColor: activeActivityTab === 'orders' ? 'var(--brown-900)' : 'transparent',
+                    color: activeActivityTab === 'orders' ? 'var(--cream)' : 'var(--brown-800)',
+                    cursor: 'pointer',
+                    transition: 'all 120ms ease',
+                  }}
+                >
+                  <ShoppingBag size={13} />
+                  <span>Recent Orders ({recentOrders.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveActivityTab('invoices')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '6px 14px',
+                    borderRadius: 8,
+                    border: 'none',
+                    fontSize: 12,
+                    fontWeight: activeActivityTab === 'invoices' ? 700 : 500,
+                    fontFamily: 'var(--font-display)',
+                    backgroundColor: activeActivityTab === 'invoices' ? 'var(--brown-900)' : 'transparent',
+                    color: activeActivityTab === 'invoices' ? 'var(--cream)' : 'var(--brown-800)',
+                    cursor: 'pointer',
+                    transition: 'all 120ms ease',
+                  }}
+                >
+                  <FileText size={13} />
+                  <span>Tax Invoices ({recentInvoices.length})</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Tab 1: Recent Orders */}
+            {activeActivityTab === 'orders' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {recentOrders.length === 0 ? (
+                  <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--brown-600)', fontSize: 13 }}>
+                    No sales orders found on your profile.
+                  </div>
+                ) : (
+                  recentOrders.map((order) => {
+                    const amountDue = parseFloat(order.amountDue || '0');
+                    const hasInvoice = !!order.invoiceId;
+                    const isSettled = order.paymentStatus === 'paid' || (hasInvoice && amountDue <= 0);
+
+                    return (
+                      <div
+                        key={order.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: 12,
+                          padding: '12px 16px',
+                          borderRadius: 12,
+                          backgroundColor: 'rgba(251, 248, 242, 0.7)',
+                          border: '1px solid rgba(208, 174, 146, 0.3)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 8,
+                              backgroundColor: 'rgba(235, 215, 190, 0.45)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--brown-800)',
+                            }}
+                          >
+                            <ShoppingBag size={18} />
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: 13.5, color: 'var(--brown-900)' }}>
+                                {order.number}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: '1px 6px',
+                                  borderRadius: 999,
+                                  color: order.status === 'confirmed' ? 'var(--posted)' : 'var(--brown-700)',
+                                  backgroundColor: order.status === 'confirmed' ? 'var(--posted-bg)' : 'rgba(208, 174, 146, 0.35)',
+                                }}
+                              >
+                                {order.status === 'confirmed' ? 'Confirmed' : 'Draft'}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: 11, color: 'var(--brown-600)', marginTop: 2 }}>
+                              {order.lines?.[0]?.productName
+                                ? `${order.lines[0].productName} ${order.lines.length > 1 ? `+${order.lines.length - 1} more` : ''}`
+                                : `${order.lines?.length || 0} pieces`}
+                              {' • '}
+                              {order.orderDate
+                                ? new Date(order.orderDate).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })
+                                : ''}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Middle & Right */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: 14, color: 'var(--brown-900)' }}>
+                              {formatINR(order.total)}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: hasInvoice ? (isSettled ? 'var(--posted)' : 'var(--danger)') : 'var(--brown-500)', fontWeight: 600 }}>
+                              {hasInvoice
+                                ? isSettled
+                                  ? '✓ Invoice Settled'
+                                  : `Invoice Due: ${formatINR(order.amountDue || '0')}`
+                                : 'Pending Invoice'}
+                            </div>
+                          </div>
+
+                          {hasInvoice && amountDue > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/portal/invoices/${order.invoiceId}`)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                padding: '7px 14px',
+                                borderRadius: 8,
+                                backgroundColor: 'var(--brown-900)',
+                                color: 'var(--cream)',
+                                border: 'none',
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                transition: 'all 120ms ease',
+                              }}
+                            >
+                              <Zap size={11} color="#F2C94C" />
+                              <span>Pay with Razorpay</span>
+                            </button>
+                          ) : hasInvoice ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/portal/invoices/${order.invoiceId}`)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '6px 12px',
+                                borderRadius: 8,
+                                backgroundColor: 'transparent',
+                                color: 'var(--brown-800)',
+                                border: '1px solid var(--brown-300)',
+                                fontSize: 11,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <span>View Receipt</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => navigate('/portal/orders')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '6px 12px',
+                                borderRadius: 8,
+                                backgroundColor: 'transparent',
+                                color: 'var(--brown-800)',
+                                border: '1px solid var(--brown-300)',
+                                fontSize: 11,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <span>Details</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                  <Link
+                    to="/portal/orders"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                      color: 'var(--brown-900)',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>View All Orders ({recentOrders.length})</span>
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Tab 2: Recent Invoices */}
+            {activeActivityTab === 'invoices' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {recentInvoices.length === 0 ? (
+                  <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--brown-600)', fontSize: 13 }}>
+                    No customer invoices found.
+                  </div>
+                ) : (
+                  recentInvoices.map((inv) => {
+                    const due = parseFloat(inv.amountDue || '0');
+                    const isPaid = inv.paymentStatus === 'paid' || due <= 0;
+
+                    return (
+                      <div
+                        key={inv.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: 12,
+                          padding: '12px 16px',
+                          borderRadius: 12,
+                          backgroundColor: 'rgba(251, 248, 242, 0.7)',
+                          border: '1px solid rgba(208, 174, 146, 0.3)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 8,
+                              backgroundColor: 'rgba(235, 215, 190, 0.45)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--brown-800)',
+                            }}
+                          >
+                            <FileText size={18} />
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: 13.5, color: 'var(--brown-900)' }}>
+                                {inv.number}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontWeight: 700,
+                                  padding: '1px 6px',
+                                  borderRadius: 999,
+                                  color: isPaid ? 'var(--posted)' : 'var(--danger)',
+                                  backgroundColor: isPaid ? 'var(--posted-bg)' : 'var(--danger-bg)',
+                                }}
+                              >
+                                {isPaid ? 'Settled' : 'Payment Due'}
+                              </span>
+                            </div>
+
+                            <div style={{ fontSize: 11, color: 'var(--brown-600)', marginTop: 2 }}>
+                              Date:{' '}
+                              {inv.invoiceDate
+                                ? new Date(inv.invoiceDate).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  })
+                                : ''}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 800, fontSize: 14, color: 'var(--brown-900)' }}>
+                              {formatINR(inv.total)}
+                            </div>
+                            <div style={{ fontSize: 10.5, color: isPaid ? 'var(--posted)' : 'var(--danger)', fontWeight: 600 }}>
+                              {isPaid ? 'Cleared in General Ledger' : `Due: ${formatINR(inv.amountDue)}`}
+                            </div>
+                          </div>
+
+                          {!isPaid ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/portal/invoices/${inv.id}`)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 5,
+                                padding: '7px 14px',
+                                borderRadius: 8,
+                                backgroundColor: 'var(--brown-900)',
+                                color: 'var(--cream)',
+                                border: 'none',
+                                fontSize: 11,
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <Zap size={11} color="#F2C94C" />
+                              <span>Settle via Razorpay</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/portal/invoices/${inv.id}`)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: 4,
+                                padding: '6px 12px',
+                                borderRadius: 8,
+                                backgroundColor: 'transparent',
+                                color: 'var(--brown-800)',
+                                border: '1px solid var(--brown-300)',
+                                fontSize: 11,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <span>View Receipt</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 4 }}>
+                  <Link
+                    to="/portal/invoices"
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                      color: 'var(--brown-900)',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <span>View All Invoices ({recentInvoices.length})</span>
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

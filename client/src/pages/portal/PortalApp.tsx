@@ -14,6 +14,7 @@ import { PortalCataloguePage } from './PortalCataloguePage';
 import { PortalProductViewerPage } from './PortalProductViewerPage';
 import { PortalDashboardPage } from './PortalDashboardPage';
 import { PortalRoomStudioPage } from './PortalRoomStudioPage';
+import { PortalOrderList } from './PortalOrderList';
 
 /**
  * Portal route tree.
@@ -24,6 +25,7 @@ import { PortalRoomStudioPage } from './PortalRoomStudioPage';
  *   - Interactive 3D Room Studio: /portal/studio, /portal/planner
  *   - Public browseable catalogue: /portal/catalogue, /portal/catalogue/:id
  *   - Authenticated customer & vendor (behind PortalAuthGuard):
+ *       /portal/orders,
  *       /portal/invoices, /portal/invoices/:id,
  *       /portal/payments,
  *       /portal/bills, /portal/bills/:id
@@ -52,6 +54,7 @@ export const PortalApp: React.FC = () => {
 
           {/* Authenticated customer & vendor routes */}
           <Route element={<PortalAuthGuard />}>
+            <Route path="orders" element={<PortalOrderList />} />
             <Route path="invoices" element={<PortalInvoiceList />} />
             <Route path="invoices/:id" element={<PortalInvoiceDetail />} />
             <Route path="payments" element={<PortalPaymentList />} />
