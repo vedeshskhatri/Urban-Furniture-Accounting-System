@@ -131,7 +131,47 @@ export const PortalDashboardPage: React.FC = () => {
             image_url: resolveProductImage(p),
             model_url: p.model_url || resolveProductModel(p),
           }));
-          setFeaturedProducts(enriched.slice(0, 8));
+
+          // Pick 8 diverse pieces from different categories and different images (no duplicates)
+          const distinctFeatured: any[] = [];
+          const seenImages = new Set<string>();
+          const seenCategories = new Set<string>();
+
+          // Pass 1: One signature piece per category
+          for (const p of enriched) {
+            const img = p.image_url;
+            const cat = p.category || 'Other';
+            if (!seenCategories.has(cat) && !seenImages.has(img)) {
+              seenCategories.add(cat);
+              seenImages.add(img);
+              distinctFeatured.push(p);
+              if (distinctFeatured.length >= 8) break;
+            }
+          }
+
+          // Pass 2: Fill remaining slots with pieces that have distinct images
+          if (distinctFeatured.length < 8) {
+            for (const p of enriched) {
+              const img = p.image_url;
+              if (!seenImages.has(img)) {
+                seenImages.add(img);
+                distinctFeatured.push(p);
+                if (distinctFeatured.length >= 8) break;
+              }
+            }
+          }
+
+          // Fallback if needed
+          if (distinctFeatured.length < 8) {
+            for (const p of enriched) {
+              if (!distinctFeatured.some((f) => f.id === p.id)) {
+                distinctFeatured.push(p);
+                if (distinctFeatured.length >= 8) break;
+              }
+            }
+          }
+
+          setFeaturedProducts(distinctFeatured.slice(0, 8));
         }
       })
       .catch(() => {});
@@ -874,7 +914,7 @@ export const PortalDashboardPage: React.FC = () => {
                 <img
                   src={p.image_url || resolveProductImage(p)}
                   alt={p.name}
-                  onError={(e) => { e.currentTarget.src = resolveProductImage(p); }}
+                  onError={(e) => { e.currentTarget.src = resolveProductImage({ ...p, image_url: null }); }}
                   style={{
                     width: '100%',
                     height: '100%',

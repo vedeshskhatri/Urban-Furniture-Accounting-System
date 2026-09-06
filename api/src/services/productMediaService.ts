@@ -20,11 +20,6 @@ const CATEGORY_RULES: Record<string, { rules: ImageRule[]; defaultImage: string;
     defaultModel: '/Models/Bed Double by Quaternius - BuRay4fVFr.glb',
     rules: [
       {
-        match: ['cirrus', 'nimbus', 'mattress'],
-        image: '/images/products/cirrus-mattress.jpg',
-        model: '/Models/Bed Single by Quaternius - ianC28eMOF.glb',
-      },
-      {
         match: ['drift', 'storage bed'],
         image: '/images/products/drift-storage-bed.jpg',
         model: '/Models/Bed Single by Quaternius - ianC28eMOF.glb',
@@ -35,13 +30,18 @@ const CATEGORY_RULES: Record<string, { rules: ImageRule[]; defaultImage: string;
         model: '/Models/Bed Double by Quaternius - BuRay4fVFr.glb',
       },
       {
-        match: ['halcyon', 'solstice', 'platform'],
+        match: ['teak', 'single bed', 'urban teak', 'solid wood, single'],
+        image: '/images/products/urban-teak-single-bed.jpg',
+        model: '/Models/Bed Single by Quaternius - ianC28eMOF.glb',
+      },
+      {
+        match: ['halcyon', 'solstice', 'platform', 'solid wood, queen', 'solid wood, king'],
         image: '/images/products/halcyon-platform-bed.jpg',
         model: '/Models/Bed Double by Kenney - wcmbCZ63mg.glb',
       },
       {
-        match: ['teak', 'single bed', 'urban teak'],
-        image: '/images/products/urban-teak-single-bed.jpg',
+        match: ['cirrus', 'nimbus', 'mattress'],
+        image: '/images/products/cirrus-mattress.jpg',
         model: '/Models/Bed Single by Quaternius - ianC28eMOF.glb',
       },
       {
