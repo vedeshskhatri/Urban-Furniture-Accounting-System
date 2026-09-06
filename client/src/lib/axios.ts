@@ -16,7 +16,14 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('urban_token') || localStorage.getItem('urban_portal_token');
+  const url = config.url || '';
+  const isPortalApi = url.startsWith('/api/portal');
+  
+  // Never leak customer portal token to internal administrative routes!
+  const token = isPortalApi
+    ? (localStorage.getItem('urban_portal_token') || localStorage.getItem('urban_token'))
+    : localStorage.getItem('urban_token');
+
   if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -26,18 +33,25 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const url = error.config?.url || '';
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+
+    if (status === 401 || status === 403) {
       if (!url.includes('/login') && !url.includes('/accept-invite')) {
-        localStorage.removeItem('urban_token');
-        localStorage.removeItem('urban_logged_in');
-        if (window.location.pathname.startsWith('/portal')) {
+        const isPortal = url.startsWith('/api/portal') || window.location.pathname.startsWith('/portal');
+        if (isPortal) {
           localStorage.removeItem('urban_portal_token');
+          localStorage.removeItem('urban_portal_user');
           if (!window.location.pathname.includes('/login')) {
             window.location.href = '/login?portal=customer';
           }
-        } else if (!window.location.pathname.startsWith('/login') && window.location.pathname !== '/') {
-          window.location.href = '/login';
+        } else {
+          localStorage.removeItem('urban_token');
+          localStorage.removeItem('urban_logged_in');
+          localStorage.removeItem('urban_user');
+          if (!window.location.pathname.startsWith('/login') && window.location.pathname !== '/') {
+            window.location.href = '/login';
+          }
         }
       }
     }

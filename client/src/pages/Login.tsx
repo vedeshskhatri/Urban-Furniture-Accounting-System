@@ -59,6 +59,10 @@ export default function Login() {
         loginId: loginId.trim(),
         password,
       });
+      // Purge any conflicting portal session tokens
+      localStorage.removeItem('urban_portal_token');
+      localStorage.removeItem('urban_portal_user');
+
       localStorage.setItem('urban_logged_in', 'true');
       if (res.data?.data?.token) {
         localStorage.setItem('urban_token', res.data.data.token);
@@ -85,6 +89,11 @@ export default function Login() {
         loginId: customerLoginId.trim(),
         password: customerPassword,
       });
+      // Purge any conflicting admin session tokens
+      localStorage.removeItem('urban_token');
+      localStorage.removeItem('urban_logged_in');
+      localStorage.removeItem('urban_user');
+
       localStorage.setItem('urban_portal_user', JSON.stringify(res.data?.data?.user));
       if (res.data?.data?.token) {
         localStorage.setItem('urban_portal_token', res.data.data.token);
