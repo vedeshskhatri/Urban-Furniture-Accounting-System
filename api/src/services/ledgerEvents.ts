@@ -118,11 +118,13 @@ export async function fetchLedgerIntegrityPayload(): Promise<LedgerChangedPayloa
     total_credit: string;
     difference: string;
   }>(`
-    SELECT 
-      COALESCE(SUM(debit), 0)::numeric(14,2)::text AS total_debit,
-      COALESCE(SUM(credit), 0)::numeric(14,2)::text AS total_credit,
-      (COALESCE(SUM(debit), 0) - COALESCE(SUM(credit), 0))::numeric(14,2)::text AS difference
-    FROM journal_entry_lines;
+    SELECT
+      COALESCE(SUM(jel.debit), 0)::numeric(14,2)::text AS total_debit,
+      COALESCE(SUM(jel.credit), 0)::numeric(14,2)::text AS total_credit,
+      (COALESCE(SUM(jel.debit), 0) - COALESCE(SUM(jel.credit), 0))::numeric(14,2)::text AS difference
+    FROM journal_entry_lines jel
+    JOIN journal_entries je ON je.id = jel.entry_id
+    WHERE je.status = 'posted';
   `);
 
   const countsRes = await pool.query<{

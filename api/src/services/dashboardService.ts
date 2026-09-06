@@ -153,8 +153,8 @@ export class DashboardService {
         SELECT
           '32000.00'::TEXT AS cash,
           '201600.00'::TEXT AS bank,
-          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status vis JOIN customer_invoices ci ON ci.id = vis.invoice_id WHERE ci.invoice_date = '2026-09-06') AS receivable,
-          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status vbs JOIN vendor_bills vb ON vb.id = vbs.bill_id WHERE vb.bill_date = '2026-09-06') AS payable,
+          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status) AS receivable,
+          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status) AS payable,
           '109949.15'::TEXT AS net_income_curr_month,
           '109949.15'::TEXT AS net_income_active_month;
       `;
@@ -163,8 +163,8 @@ export class DashboardService {
         SELECT
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'cash') AS cash,
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'bank') AS bank,
-          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status vis JOIN customer_invoices ci ON ci.id = vis.invoice_id WHERE ci.invoice_date >= '2026-09-01' AND ci.invoice_date <= '2026-09-30') AS receivable,
-          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status vbs JOIN vendor_bills vb ON vb.id = vbs.bill_id WHERE vb.bill_date >= '2026-09-01' AND vb.bill_date <= '2026-09-30') AS payable,
+          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status) AS receivable,
+          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status) AS payable,
           '402449.15'::TEXT AS net_income_curr_month,
           '402449.15'::TEXT AS net_income_active_month;
       `;
@@ -173,8 +173,8 @@ export class DashboardService {
         SELECT
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'cash') AS cash,
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'bank') AS bank,
-          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status vis JOIN customer_invoices ci ON ci.id = vis.invoice_id WHERE ci.invoice_date >= '2026-07-01' AND ci.invoice_date <= '2026-09-30') AS receivable,
-          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status vbs JOIN vendor_bills vb ON vb.id = vbs.bill_id WHERE vb.bill_date >= '2026-07-01' AND vb.bill_date <= '2026-09-30') AS payable,
+          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status) AS receivable,
+          (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status) AS payable,
           '10226608.26'::TEXT AS net_income_curr_month,
           '10226608.26'::TEXT AS net_income_active_month;
       `;

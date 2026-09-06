@@ -175,14 +175,26 @@ export default function MonitorPage() {
 
   const socketRef = useRef<Socket | null>(null);
 
-  // ── Prime from REST on mount ──────────────────────────────────────────
+  // ── Prime from REST on mount + poll as a safety net ───────────────────
+  // The socket is the primary channel, but if a `ledger:changed` event is
+  // missed (reconnect gap, dropped frame, StrictMode remount) the figures
+  // would silently go stale. A lightweight poll keeps them in sync.
   useEffect(() => {
-    fetch('/api/verify', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((body) => {
-        if (body?.data) setLedger(body.data as LedgerPayload);
-      })
-      .catch(() => {/* ignore — socket will deliver data soon */});
+    let cancelled = false;
+    const refresh = () => {
+      fetch('/api/verify', { credentials: 'include' })
+        .then((r) => r.json())
+        .then((body) => {
+          if (!cancelled && body?.data) setLedger(body.data as LedgerPayload);
+        })
+        .catch(() => {/* ignore — socket or the next poll will recover */});
+    };
+    refresh();
+    const timer = setInterval(refresh, 10_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, []);
 
   // ── Socket.IO setup ───────────────────────────────────────────────────
@@ -190,6 +202,9 @@ export default function MonitorPage() {
     const socket = io('/', {
       withCredentials: true,
       transports: ['websocket', 'polling'],
+      // forceNew avoids sharing a Manager across React StrictMode remounts,
+      // which otherwise tears down the live connection on the first cleanup.
+      forceNew: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
@@ -229,6 +244,7 @@ export default function MonitorPage() {
     });
 
     return () => {
+      socket.removeAllListeners();
       socket.disconnect();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
