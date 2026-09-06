@@ -50,6 +50,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
   const [sortField, setSortField] = useState<SortField>('invoiceDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [showVisualAnalytics, setShowVisualAnalytics] = useState<boolean>(true);
+  const [donutMode, setDonutMode] = useState<'realization' | 'status'>('realization');
 
   useEffect(() => {
     fetch('/api/invoices')
@@ -77,27 +78,73 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
     });
   }, [invoices, filterStatus]);
 
-  // Aggregate Metrics for KPIs
-  const { totalBilled, totalPaid, totalDue, realizationPct } = useMemo(() => {
+  // Aggregate Metrics for KPIs and Charts
+  const {
+    totalBilled,
+    totalPaid,
+    totalDue,
+    realizationPct,
+    duePct,
+    paidInvoicesTotal,
+    partialInvoicesTotal,
+    notPaidInvoicesTotal,
+    partialPaidPortion,
+    partialDuePortion,
+    statusCounts,
+  } = useMemo(() => {
     let billed = 0;
     let due = 0;
+    let paidInv = 0;
+    let partialInv = 0;
+    let notPaidInv = 0;
+    let partialPaid = 0;
+    let partialDue = 0;
+
+    const counts: Record<string, number> = { all: invoices.length, paid: 0, partial: 0, not_paid: 0, draft: 0, confirmed: 0 };
+
     for (const inv of invoices) {
-      billed += parseFloat(inv.total || '0');
-      due += parseFloat(inv.amountDue || '0');
+      const b = parseFloat(inv.total || '0');
+      const d = parseFloat(inv.amountDue || '0');
+      const p = Math.max(0, b - d);
+      billed += b;
+      due += d;
+
+      const st = inv.paymentStatus || inv.status || 'draft';
+      counts[st] = (counts[st] || 0) + 1;
+
+      if (st === 'paid') {
+        paidInv += b;
+      } else if (st === 'partial') {
+        partialInv += b;
+        partialPaid += p;
+        partialDue += d;
+      } else if (st === 'not_paid') {
+        notPaidInv += b;
+      }
     }
+
     const paid = Math.max(0, billed - due);
     const pct = billed > 0 ? ((paid / billed) * 100).toFixed(1) : '0.0';
+    const dPct = billed > 0 ? ((due / billed) * 100).toFixed(1) : '0.0';
+
     return {
       totalBilled: billed,
       totalPaid: paid,
       totalDue: due,
       realizationPct: pct,
+      duePct: dPct,
+      paidInvoicesTotal: paidInv,
+      partialInvoicesTotal: partialInv,
+      notPaidInvoicesTotal: notPaidInv,
+      partialPaidPortion: partialPaid,
+      partialDuePortion: partialDue,
+      statusCounts: counts,
     };
   }, [invoices]);
 
-  // Monthly Billing Trajectory (Bar Chart)
+  // Monthly Billing Trajectory (Bar Chart) - Stacked Collected Cash + Pending Due = Total Billed
   const monthlyData = useMemo(() => {
-    const map = new Map<string, { month: string; billed: number; due: number }>();
+    const map = new Map<string, { month: string; billed: number; collected: number; due: number; count: number }>();
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     // Process in chronological order
@@ -110,28 +157,89 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
       const d = new Date(inv.invoiceDate);
       if (isNaN(d.getTime())) continue;
       const key = `${monthNames[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
-      const existing = map.get(key) || { month: key, billed: 0, due: 0 };
-      existing.billed += parseFloat(inv.total || '0');
-      existing.due += parseFloat(inv.amountDue || '0');
+      const existing = map.get(key) || { month: key, billed: 0, collected: 0, due: 0, count: 0 };
+      const b = parseFloat(inv.total || '0');
+      const du = parseFloat(inv.amountDue || '0');
+      const coll = Math.max(0, b - du);
+      existing.billed += b;
+      existing.due += du;
+      existing.collected += coll;
+      existing.count += 1;
       map.set(key, existing);
     }
     return Array.from(map.values()).slice(-6);
   }, [invoices]);
 
-  // Payment Status Distribution (Donut Chart)
+  // Donut Chart: Cash Realization Mode (100% Synced with KPI Cards) vs Status Mode
   const statusPieData = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const inv of invoices) {
-      const st = inv.paymentStatus || inv.status || 'draft';
-      map.set(st, (map.get(st) || 0) + parseFloat(inv.total || '0'));
+    if (donutMode === 'realization') {
+      return [
+        {
+          name: 'Collected Cash',
+          rawStatus: 'paid',
+          value: totalPaid,
+          color: '#5F7052', // Olive Green matching Collected Cash card
+          pct: `${realizationPct}%`,
+          count: invoices.length,
+          subtext: 'Settled customer receipts',
+        },
+        {
+          name: 'Outstanding Receivables',
+          rawStatus: 'not_paid',
+          value: totalDue,
+          color: '#9E4A38', // Terracotta Red matching Outstanding card
+          pct: `${duePct}%`,
+          count: invoices.filter(i => parseFloat(i.amountDue || '0') > 0).length,
+          subtext: 'Pending customer clearance',
+        },
+      ];
     }
-    return Array.from(map.entries()).map(([status, val]) => ({
-      name: status === 'not_paid' ? 'Not Paid' : status === 'paid' ? 'Paid' : status === 'partial' ? 'Partial' : status.charAt(0).toUpperCase() + status.slice(1),
-      rawStatus: status,
-      value: val,
-      color: STATUS_COLORS[status] || '#77574A',
-    }));
-  }, [invoices]);
+
+    // Status Mode: Invoices grouped by settlement status
+    return [
+      {
+        name: 'Paid',
+        rawStatus: 'paid',
+        value: paidInvoicesTotal,
+        color: '#5F7052',
+        pct: totalBilled > 0 ? `${((paidInvoicesTotal / totalBilled) * 100).toFixed(1)}%` : '0%',
+        count: statusCounts.paid || 0,
+        subtext: 'Fully settled invoices',
+      },
+      {
+        name: 'Partial',
+        rawStatus: 'partial',
+        value: partialInvoicesTotal,
+        color: '#C08A3E',
+        pct: totalBilled > 0 ? `${((partialInvoicesTotal / totalBilled) * 100).toFixed(1)}%` : '0%',
+        count: statusCounts.partial || 0,
+        subtext: `₹${formatDisplayINR(partialPaidPortion)} collected · ₹${formatDisplayINR(partialDuePortion)} due`,
+      },
+      {
+        name: 'Not Paid',
+        rawStatus: 'not_paid',
+        value: notPaidInvoicesTotal,
+        color: '#9E4A38',
+        pct: totalBilled > 0 ? `${((notPaidInvoicesTotal / totalBilled) * 100).toFixed(1)}%` : '0%',
+        count: statusCounts.not_paid || 0,
+        subtext: 'Zero payment received',
+      },
+    ];
+  }, [
+    donutMode,
+    totalPaid,
+    totalDue,
+    realizationPct,
+    duePct,
+    paidInvoicesTotal,
+    partialInvoicesTotal,
+    notPaidInvoicesTotal,
+    partialPaidPortion,
+    partialDuePortion,
+    totalBilled,
+    statusCounts,
+    invoices,
+  ]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -277,12 +385,21 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-1">
             {/* Chart 1: Monthly Invoicing Trajectory */}
             <div className="bg-brown-50/40 border border-brown-200/80 rounded-[8px] p-3.5 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-1.5">
                   <BarChart3 className="w-4 h-4 text-brown-700" />
                   <span className="text-xs font-bold text-brown-900">Invoicing & Due Trajectory</span>
                 </div>
-                <span className="text-[11px] font-mono text-brown-600">Monthly Volume</span>
+                <div className="flex items-center gap-3 text-[10px] font-mono">
+                  <span className="inline-flex items-center gap-1 text-posted font-medium">
+                    <span className="w-2 h-2 rounded-xs bg-[#5F7052] inline-block" />
+                    Collected Cash
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-danger font-medium">
+                    <span className="w-2 h-2 rounded-xs bg-[#9E4A38] inline-block" />
+                    Pending Due
+                  </span>
+                </div>
               </div>
               <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -301,7 +418,10 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                       tickLine={false}
                     />
                     <RechartsTooltip
-                      formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, '']}
+                      formatter={(val: any, name: any) => [
+                        `₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                        name,
+                      ]}
                       contentStyle={{
                         background: '#FFF',
                         borderRadius: 6,
@@ -310,8 +430,8 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                         fontFamily: 'monospace',
                       }}
                     />
-                    <Bar dataKey="billed" name="Billed" fill="#5F7052" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="due" name="Pending Due" fill="#9E4A38" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="collected" name="Collected Cash" fill="#5F7052" stackId="volume" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="due" name="Pending Due" fill="#9E4A38" stackId="volume" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -319,12 +439,34 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
 
             {/* Chart 2: Payment Realization Donut */}
             <div className="bg-brown-50/40 border border-brown-200/80 rounded-[8px] p-3.5 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-1.5">
                   <PieIcon className="w-4 h-4 text-brown-700" />
-                  <span className="text-xs font-bold text-brown-900">Payment Status Allocation</span>
+                  <span className="text-xs font-bold text-brown-900">
+                    {donutMode === 'realization' ? 'Cash Realization Distribution' : 'Payment Status Allocation'}
+                  </span>
                 </div>
-                <span className="text-[11px] font-mono text-brown-600">Click to filter table</span>
+                {/* View Switcher: Realization vs Document Status */}
+                <div className="flex items-center gap-1 bg-brown-200/50 p-0.5 rounded-[6px]">
+                  <button
+                    type="button"
+                    onClick={() => setDonutMode('realization')}
+                    className={`px-2 py-0.5 text-[10px] font-semibold rounded-[4px] transition-colors ${
+                      donutMode === 'realization' ? 'bg-surface text-brown-900 shadow-xs' : 'text-brown-600 hover:text-brown-900'
+                    }`}
+                  >
+                    Cash Realization
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDonutMode('status')}
+                    className={`px-2 py-0.5 text-[10px] font-semibold rounded-[4px] transition-colors ${
+                      donutMode === 'status' ? 'bg-surface text-brown-900 shadow-xs' : 'text-brown-600 hover:text-brown-900'
+                    }`}
+                  >
+                    By Status
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center h-44">
@@ -338,16 +480,25 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                         paddingAngle={3}
                         dataKey="value"
                         onClick={(data) => {
-                          if (data?.rawStatus) setFilterStatus(data.rawStatus);
+                          if (data?.rawStatus) {
+                            setFilterStatus(prev => prev === data.rawStatus ? 'all' : data.rawStatus);
+                          }
                         }}
                         style={{ cursor: 'pointer' }}
                       >
                         {statusPieData.map((entry, idx) => (
-                          <Cell key={`status-cell-${idx}`} fill={entry.color} />
+                          <Cell
+                            key={`status-cell-${idx}`}
+                            fill={entry.color}
+                            opacity={filterStatus === 'all' || filterStatus === entry.rawStatus ? 1 : 0.4}
+                          />
                         ))}
                       </Pie>
                       <RechartsTooltip
-                        formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Total']}
+                        formatter={(val: any, name: any) => [
+                          `₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                          name,
+                        ]}
                         contentStyle={{
                           background: '#FFF',
                           borderRadius: 6,
@@ -363,40 +514,70 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                 <div className="w-1/2 flex flex-col gap-1.5 pl-2 overflow-y-auto max-h-40">
                   {statusPieData.map((item) => (
                     <button
-                      key={item.rawStatus}
+                      key={item.name}
                       type="button"
-                      onClick={() => setFilterStatus(item.rawStatus)}
-                      className={`flex items-center justify-between gap-1 text-[11px] px-2 py-1 rounded transition-colors text-left ${
-                        filterStatus === item.rawStatus ? 'bg-brown-200 font-bold' : 'hover:bg-brown-100'
+                      onClick={() => setFilterStatus(prev => prev === item.rawStatus ? 'all' : item.rawStatus)}
+                      className={`flex flex-col gap-0.5 text-[11px] px-2 py-1.5 rounded transition-colors text-left border ${
+                        filterStatus === item.rawStatus
+                          ? 'bg-brown-200/80 border-brown-400 font-bold'
+                          : 'hover:bg-brown-100/70 border-transparent'
                       }`}
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
-                        <span className="truncate text-brown-800">{item.name}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="font-mono font-semibold text-brown-900">
-                          ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </span>
-                        <span className="text-[10px] text-brown-500 font-mono hidden sm:inline">
-                          ({formatYAxisINR(item.value)})
+                      <div className="flex items-center justify-between gap-1 w-full">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="truncate text-brown-900 font-semibold">{item.name}</span>
+                        </div>
+                        <span className="font-mono font-bold text-brown-900 shrink-0">
+                          {item.pct}
                         </span>
                       </div>
+                      <div className="flex items-center justify-between text-[10px] text-brown-600 font-mono pl-4">
+                        <span>₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="text-brown-500 hidden sm:inline">({formatYAxisINR(item.value)})</span>
+                      </div>
+                      {(item as any).subtext && (
+                        <span className="text-[9px] text-brown-500 pl-4 font-normal">
+                          {(item as any).subtext}
+                        </span>
+                      )}
                     </button>
                   ))}
                   {filterStatus !== 'all' && (
                     <button
                       type="button"
                       onClick={() => setFilterStatus('all')}
-                      className="text-[10px] text-brown-600 hover:text-brown-900 underline text-left mt-0.5"
+                      className="text-[10px] font-semibold text-brown-700 hover:text-brown-900 underline text-left mt-0.5 cursor-pointer"
                     >
-                      Reset status filter
+                      Reset filter (Show all 310)
                     </button>
                   )}
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Active Filter Scope Bar */}
+      {filterStatus !== 'all' && (
+        <div className="flex items-center justify-between bg-amber-50/90 border border-amber-300 rounded-[8px] px-3.5 py-2 text-xs text-amber-950 shadow-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-semibold text-amber-900">Active Filter:</span>
+            <span className="capitalize font-mono bg-amber-200/70 border border-amber-300 text-amber-900 px-2 py-0.5 rounded text-[11px] font-bold">
+              {filterStatus === 'not_paid' ? 'Not Paid' : filterStatus}
+            </span>
+            <span className="text-amber-800">
+              • Showing <strong>{filtered.length}</strong> of {invoices.length} invoices
+              ({formatDisplayINR(filtered.reduce((acc, inv) => acc + parseFloat(inv.total || '0'), 0))} total)
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilterStatus('all')}
+            className="text-[11px] font-bold text-amber-900 hover:text-amber-950 underline cursor-pointer"
+          >
+            Clear Filter
+          </button>
         </div>
       )}
 
