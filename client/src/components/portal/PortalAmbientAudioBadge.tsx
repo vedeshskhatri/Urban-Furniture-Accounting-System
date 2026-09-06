@@ -26,6 +26,17 @@ export const PortalAmbientAudioBadge: React.FC = () => {
     <div ref={containerRef} style={{ position: 'relative' }}>
       {/* ── Main Audio Pill in Header ── */}
       <div
+        data-ambient-toggle="true"
+        onClick={toggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggle();
+          }
+        }}
+        title={isPlaying ? `Pause chill music (${currentTrack.title})` : 'Play chill background music'}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -37,21 +48,14 @@ export const PortalAmbientAudioBadge: React.FC = () => {
           boxShadow: isPlaying ? '0 2px 8px rgba(140, 115, 98, 0.12)' : 'none',
           transition: 'all 180ms ease',
           userSelect: 'none',
+          cursor: 'pointer',
         }}
       >
-        {/* Play/Pause Toggle Button */}
-        <button
-          data-ambient-toggle="true"
-          onClick={toggle}
-          title={isPlaying ? `Pause chill music (${currentTrack.title})` : 'Play chill background music'}
+        <div
           style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
             display: 'inline-flex',
             alignItems: 'center',
             gap: 6,
-            cursor: 'pointer',
             color: isPlaying ? '#3D2C22' : '#8C7362',
           }}
         >
@@ -101,11 +105,14 @@ export const PortalAmbientAudioBadge: React.FC = () => {
           >
             {isPlaying ? 'Chill Lo-Fi' : 'Lounge Audio'}
           </span>
-        </button>
+        </div>
 
         {/* Expand Options / Volume Details */}
         <button
-          onClick={() => setShowControls((prev) => !prev)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowControls((prev) => !prev);
+          }}
           title="Audio settings & track selection"
           style={{
             background: 'none',
@@ -240,8 +247,8 @@ export const PortalAmbientAudioBadge: React.FC = () => {
             <input
               type="range"
               min="0"
-              max="0.4"
-              step="0.02"
+              max="1"
+              step="0.05"
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               style={{
@@ -265,7 +272,10 @@ export const PortalAmbientAudioBadge: React.FC = () => {
           >
             <span style={{ fontSize: 10.5, color: '#8C7362' }}>Next lo-fi track</span>
             <button
-              onClick={nextTrack}
+              onClick={(e) => {
+                e.stopPropagation();
+                nextTrack();
+              }}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

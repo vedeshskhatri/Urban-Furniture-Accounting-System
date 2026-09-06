@@ -36,7 +36,7 @@ export const AMBIENT_PLAYLIST: AmbientTrack[] = [
 
 const STORAGE_KEY_ENABLED = 'urban_ambient_enabled';
 const STORAGE_KEY_VOLUME = 'urban_ambient_volume';
-const DEFAULT_VOLUME = 0.12; // 12% mellow, non-intrusive background level
+const DEFAULT_VOLUME = 0.25; // 25% clear, warm mellow background level
 
 export function isCustomerPortalRoute(): boolean {
   if (typeof window === 'undefined') return false;
@@ -156,7 +156,7 @@ class AmbientMusicController {
   }
 
   public get isPlaying(): boolean {
-    return !!(this.audio && !this.audio.paused && !this.audio.ended && this.shouldPlay);
+    return this.shouldPlay && !(this.audio && this.audio.paused && !this.audio.seeking);
   }
 
   public get isEnabled(): boolean {
@@ -213,7 +213,7 @@ class AmbientMusicController {
   }
 
   /**
-   * Plays music with smooth, clean ramp up.
+   * Plays music instantly with warm, direct volume.
    */
   public playWithFade() {
     // STRICT GUARD: Only on customer portal
@@ -231,37 +231,20 @@ class AmbientMusicController {
     localStorage.setItem(STORAGE_KEY_ENABLED, 'true');
 
     clearInterval(this.fadeTimer);
-    this.audio.volume = 0;
+    this.audio.volume = this.targetVolume;
+    this.notify();
 
     const promise = this.audio.play();
     if (promise) {
       promise
         .then(() => {
-          // If paused or navigated away while async play was resolving, immediately pause!
           if (op !== this.operationId || !this.shouldPlay || !isCustomerPortalRoute()) {
             if (this.audio) this.audio.pause();
             return;
           }
-
-          // Smooth 400ms fade-in
-          const steps = 10;
-          const stepTime = 40;
-          let step = 0;
-          this.fadeTimer = setInterval(() => {
-            step++;
-            if (!this.audio || op !== this.operationId || !this.shouldPlay || !isCustomerPortalRoute()) {
-              clearInterval(this.fadeTimer);
-              if (this.audio && (!this.shouldPlay || !isCustomerPortalRoute())) {
-                this.audio.pause();
-              }
-              return;
-            }
-            const currentVol = (this.targetVolume * step) / steps;
-            this.audio.volume = Math.min(this.targetVolume, Math.max(0, currentVol));
-            if (step >= steps) {
-              clearInterval(this.fadeTimer);
-            }
-          }, stepTime);
+          if (this.audio) {
+            this.audio.volume = this.targetVolume;
+          }
           this.notify();
         })
         .catch((err) => {
@@ -316,6 +299,7 @@ class AmbientMusicController {
   }
 
   private loadCurrentTrack(autoPlay = true) {
+    this.initAudio();
     if (!this.audio) return;
     if (!isCustomerPortalRoute()) {
       this.stopAndSilence();
