@@ -156,8 +156,11 @@ export default function BudgetListPage({ initialView }: BudgetListPageProps) {
   return (
     <div style={styles.page}>
       <div style={styles.container}>
+        {/* Wireframe Header Title: Changes based on View Mode */}
         <h1 style={styles.heading}>
-          Analytical Budgets
+          {viewMode === 'kanban'
+            ? 'Budget Report (Kanban View)'
+            : 'Budget Report (List View)'}
         </h1>
 
         {/* Outer Layout: Card Container */}

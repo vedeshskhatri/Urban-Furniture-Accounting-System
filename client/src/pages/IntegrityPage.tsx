@@ -122,16 +122,17 @@ export default function IntegrityPage() {
             style={{
               fontFamily: 'var(--font-display)',
               fontWeight: 700,
-              fontSize: 30,
-              lineHeight: '38px',
+              fontSize: 32,
+              lineHeight: '40px',
               color: 'var(--brown-900)',
               margin: '12px 0 4px',
             }}
           >
-            System Integrity Report
+            Ten live checks against the database
           </h1>
-          <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--brown-700)', margin: 0, maxWidth: 640 }}>
-            Ten live checks against the database: accounting equation, sequence integrity, stock reconciliation, and payment over-allocation.
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--brown-700)', margin: 0, maxWidth: 640 }}>
+            The accounting equation, sequence integrity, stock reconciliation, payment over-allocation. Every row below is a
+            real query — nothing is hardcoded.
           </p>
         </div>
 

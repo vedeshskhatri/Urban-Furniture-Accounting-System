@@ -201,7 +201,7 @@ export const TemplateLibraryPage: React.FC = () => {
               <span>Business Tools • Local-First Library</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold font-display text-black tracking-tight">
-              Business Template Library
+              Ready-to-Use Business Templates
             </h1>
             <p className="text-sm text-gray-600 leading-relaxed">
               Stop building business sheets from scratch. Choose a template, customize it, and start using it.
@@ -232,7 +232,7 @@ export const TemplateLibraryPage: React.FC = () => {
               }`}
             >
               <FolderCheck className="w-3.5 h-3.5" />
-              <span>My Saved Templates ({savedTemplates.length})</span>
+              <span>My Templates ({savedTemplates.length})</span>
             </button>
           </div>
         </div>

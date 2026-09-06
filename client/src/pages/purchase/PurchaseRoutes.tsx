@@ -78,14 +78,9 @@ export const VendorStatementRoute: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-bold font-display text-brown-900">Vendor Statements</h1>
-        <p className="text-sm text-brown-700">Supplier ledger activity, disbursements &amp; running balances</p>
-      </div>
-
+    <div className="w-full">
       {/* Vendor Selector Ribbon */}
-      <div className="bg-surface border border-brown-300 rounded-[10px] p-4 flex items-center justify-between shadow-sm">
+      <div className="bg-surface border border-brown-300 rounded-[10px] p-4 mb-6 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <label className="text-xs font-bold uppercase tracking-wider text-brown-700">
             Select Vendor:

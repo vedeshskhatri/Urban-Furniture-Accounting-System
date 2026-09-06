@@ -79,8 +79,8 @@ export const VendorStatementPage: React.FC<VendorStatementPageProps> = ({
             <Home className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-xl font-heading font-bold text-brown-900">Vendor Statement</h1>
-            <p className="text-xs text-brown-500">Supplier Ledger Activity &amp; Running Balance</p>
+            <h1 className="text-xl font-heading font-bold text-brown-900">Partner Statement</h1>
+            <p className="text-xs text-brown-500">Ledger Activity & Running Balance</p>
           </div>
         </div>
 

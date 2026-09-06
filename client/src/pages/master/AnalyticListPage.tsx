@@ -75,8 +75,9 @@ export const AnalyticListPage: React.FC<AnalyticListPageProps> = ({
   return (
     <div style={styles.page}>
       <div style={styles.container}>
+        {/* Title matching wireframe: Analytic Account List View / Analytic Account Kanban View */}
         <h1 style={styles.heading}>
-          Analytic Accounts
+          {viewMode === 'list' ? 'Analytic Account List View' : 'Analytic Account Kanban View'}
         </h1>
 
         {/* Outer Wireframe Card */}
