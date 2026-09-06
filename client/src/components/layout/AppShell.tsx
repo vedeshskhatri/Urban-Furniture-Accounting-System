@@ -65,6 +65,7 @@ export default function AppShell() {
       // Ignore network failure on logout
     } finally {
       localStorage.removeItem('urban_logged_in');
+      localStorage.removeItem('urban_token');
       localStorage.removeItem('urban_user');
       navigate('/login', { replace: true });
     }
@@ -81,6 +82,7 @@ export default function AppShell() {
   // Customer contacts cannot access the internal admin/ERP side of the system (only client-facing portal)
   if (currentUser?.role === 'contact') {
     localStorage.removeItem('urban_logged_in');
+    localStorage.removeItem('urban_token');
     localStorage.removeItem('urban_user');
     return <Navigate to="/login" replace state={{ from: location }} />;
   }

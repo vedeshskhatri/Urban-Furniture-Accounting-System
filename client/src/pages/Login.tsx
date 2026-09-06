@@ -60,6 +60,9 @@ export default function Login() {
         password,
       });
       localStorage.setItem('urban_logged_in', 'true');
+      if (res.data?.data?.token) {
+        localStorage.setItem('urban_token', res.data.data.token);
+      }
       if (res.data?.data?.user) {
         localStorage.setItem('urban_user', JSON.stringify(res.data.data.user));
       }
