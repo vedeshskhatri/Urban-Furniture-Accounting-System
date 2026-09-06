@@ -42,6 +42,7 @@ import {
 } from 'recharts';
 
 type ChartViewMode = 'all' | 'revenue_expense' | 'margin';
+export type DashboardTimeline = 'today' | 'month' | 'quarter' | 'year';
 
 export default function Dashboard() {
   let currentUser: { full_name?: string; login_id?: string; role?: string } | null = null;
@@ -51,6 +52,7 @@ export default function Dashboard() {
   } catch {}
 
   const [viewMode, setViewMode] = useState<ChartViewMode>('all');
+  const [timeline, setTimeline] = useState<DashboardTimeline>('today');
 
   // 1. KPI Query
   const {
@@ -58,8 +60,8 @@ export default function Dashboard() {
     isLoading: isKpiLoading,
     refetch: refetchKPI,
   } = useQuery<DashboardKPI>({
-    queryKey: ['dashboard', 'kpi'],
-    queryFn: DashboardApi.getKPI,
+    queryKey: ['dashboard', 'kpi', timeline],
+    queryFn: () => DashboardApi.getKPI(timeline),
     staleTime: 15_000,
   });
 
@@ -71,8 +73,8 @@ export default function Dashboard() {
     isLoading: isStatsLoading,
     refetch: refetchStats,
   } = useQuery<DashboardStats>({
-    queryKey: ['dashboard', 'stats'],
-    queryFn: DashboardApi.getStats,
+    queryKey: ['dashboard', 'stats', timeline],
+    queryFn: () => DashboardApi.getStats(timeline),
     staleTime: 15_000,
   });
 
@@ -93,8 +95,8 @@ export default function Dashboard() {
     isLoading: isTrendsLoading,
     refetch: refetchTrends,
   } = useQuery<MonthlyTrendItem[]>({
-    queryKey: ['dashboard', 'trends'],
-    queryFn: DashboardApi.getTrends,
+    queryKey: ['dashboard', 'trends', timeline],
+    queryFn: () => DashboardApi.getTrends(timeline),
     staleTime: 30_000,
   });
 
@@ -160,29 +162,29 @@ export default function Dashboard() {
     const payVal = parseFloat(kpiData?.payable || '0');
 
     return [
-      { name: 'Bank Accounts', value: bankVal > 0 ? bankVal : 20543248, color: '#4A3A34' },
-      { name: 'Cash on Hand', value: cashVal > 0 ? cashVal : 3601770, color: '#77574A' },
-      { name: 'Receivables (Due)', value: recvVal > 0 ? recvVal : 11009708, color: '#5F7052' },
-      { name: 'Payables (Settle)', value: payVal > 0 ? payVal : 18529734, color: '#9E4A38' },
+      { name: 'Bank Accounts', value: bankVal, color: '#4A3A34' },
+      { name: 'Cash on Hand', value: cashVal, color: '#77574A' },
+      { name: 'Receivables (Due)', value: recvVal, color: '#5F7052' },
+      { name: 'Payables (Settle)', value: payVal, color: '#9E4A38' },
     ];
   }, [kpiData]);
 
   const netWorkingCapital = useMemo(() => {
-    const bankVal = parseFloat(kpiData?.bank || '20543248');
-    const cashVal = parseFloat(kpiData?.cash || '3601770');
-    const recvVal = parseFloat(kpiData?.receivable || '11009708');
-    const payVal = parseFloat(kpiData?.payable || '18529734');
+    const bankVal = parseFloat(kpiData?.bank || '0');
+    const cashVal = parseFloat(kpiData?.cash || '0');
+    const recvVal = parseFloat(kpiData?.receivable || '0');
+    const payVal = parseFloat(kpiData?.payable || '0');
     return (bankVal + cashVal + recvVal) - payVal;
   }, [kpiData]);
 
   // Operational Velocity Data for Funnel Bar Chart
   const pipelineData = useMemo(() => {
-    const soConf = statsData?.sales?.confirmed ?? 203;
-    const soDraft = statsData?.sales?.draft ?? 1;
-    const poConf = statsData?.purchase?.confirmed ?? 132;
-    const poDraft = statsData?.purchase?.draft ?? 2;
-    const invCount = statsData?.invoicesCount ?? 303;
-    const billCount = statsData?.billsCount ?? 182;
+    const soConf = statsData?.sales?.confirmed ?? 0;
+    const soDraft = statsData?.sales?.draft ?? 0;
+    const poConf = statsData?.purchase?.confirmed ?? 0;
+    const poDraft = statsData?.purchase?.draft ?? 0;
+    const invCount = statsData?.invoicesCount ?? 0;
+    const billCount = statsData?.billsCount ?? 0;
 
     return [
       { category: 'Sales Orders', confirmed: soConf, draft: soDraft, total: soConf + soDraft },
@@ -219,7 +221,7 @@ export default function Dashboard() {
               gap: 16,
             }}
           >
-            <span>{label} 2026</span>
+            <span>{label} {timeline === 'today' ? '(Today)' : timeline === 'month' ? '' : timeline === 'quarter' ? '' : '2026'}</span>
             <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--brown-700)' }}>
               Posted Ledger
             </span>
@@ -316,7 +318,49 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {/* Timeline Filter Segmented Control */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              background: 'rgba(235, 215, 190, 0.3)',
+              padding: 3,
+              borderRadius: 8,
+              border: '1px solid rgba(208, 174, 146, 0.3)',
+              gap: 2,
+            }}
+          >
+            {[
+              { id: 'today', label: 'Today (Sep 6)' },
+              { id: 'month', label: 'This Month' },
+              { id: 'quarter', label: 'This Quarter' },
+              { id: 'year', label: 'FY 2026–27' },
+            ].map((p) => {
+              const isActive = timeline === p.id;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setTimeline(p.id as DashboardTimeline)}
+                  style={{
+                    background: isActive ? 'var(--surface)' : 'transparent',
+                    border: 'none',
+                    borderRadius: 6,
+                    padding: '5px 12px',
+                    fontSize: 12,
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
+                    cursor: 'pointer',
+                    boxShadow: isActive ? '0 1px 2px rgba(74, 58, 52, 0.08)' : 'none',
+                    transition: 'all 120ms ease',
+                  }}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
           <button
             type="button"
             onClick={handleRefreshAll}
@@ -513,12 +557,12 @@ export default function Dashboard() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--brown-900)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Operating Margin
+              {timeline === 'today' ? 'Net Profit (Today)' : timeline === 'month' ? 'Net Profit (Month)' : timeline === 'quarter' ? 'Net Profit (Qtr)' : 'Net Profit (FY)'}
             </span>
             <TrendingUp size={13} color="var(--posted)" />
           </div>
           <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, fontSize: 18, color: 'var(--brown-900)', marginTop: 4 }}>
-            {isKpiLoading ? '...' : isManager ? 'Restricted' : <Money value={kpiData?.netIncomeThisMonth || '8404422.06'} />}
+            {isKpiLoading ? '...' : isManager ? 'Restricted' : <Money value={kpiData?.netIncomeThisMonth || '0.00'} />}
           </div>
           <span style={{ fontSize: 11, color: 'var(--posted)', fontFamily: 'var(--font-body)', fontWeight: 600 }}>
             {trendTotals.avgMargin > 0 ? `+${trendTotals.avgMargin}% margin` : 'Balanced'}
@@ -558,11 +602,23 @@ export default function Dashboard() {
                   margin: 0,
                 }}
               >
-                Financial Trajectory & Profitability
+                {timeline === 'today'
+                  ? 'Intraday Sales & Margin Velocity'
+                  : timeline === 'month'
+                  ? 'Weekly Revenue & Margin Trajectory'
+                  : timeline === 'quarter'
+                  ? 'Quarterly Commercial Performance'
+                  : 'Fiscal Performance & Margin Trajectory'}
               </h2>
             </div>
             <p style={{ fontSize: 12, color: 'var(--brown-700)', margin: '3px 0 0 0', fontFamily: 'var(--font-body)' }}>
-              Monthly progression of Gross Revenue, Operating Expenses, and Net Margin from posted ledger entries
+              {timeline === 'today'
+                ? 'Hourly showroom retail billing and operational expense accumulation for September 6'
+                : timeline === 'month'
+                ? 'September 2026 weekly progression across showrooms and procurement'
+                : timeline === 'quarter'
+                ? 'Q2 showroom retail vs procurement breakdown'
+                : 'Monthly progression of Gross Revenue, Operating Expenses, and Net Margin from posted ledger entries'}
             </p>
           </div>
 

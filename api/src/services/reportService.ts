@@ -80,11 +80,14 @@ export class ReportService {
         COALESCE(SUM(jel.debit), 0)::text AS total_debit,
         COALESCE(SUM(jel.credit), 0)::text AS total_credit
       FROM accounts a
-      LEFT JOIN journal_entry_lines jel ON jel.account_id = a.id
-      LEFT JOIN journal_entries je ON je.id = jel.entry_id 
-        AND je.status = 'posted'
-        AND ($1::date IS NULL OR je.entry_date >= $1::date)
-        AND ($2::date IS NULL OR je.entry_date <= $2::date)
+      LEFT JOIN (
+        SELECT jel.account_id, jel.debit, jel.credit
+        FROM journal_entry_lines jel
+        JOIN journal_entries je ON je.id = jel.entry_id
+        WHERE je.status = 'posted'
+          AND ($1::date IS NULL OR je.entry_date >= $1::date)
+          AND ($2::date IS NULL OR je.entry_date <= $2::date)
+      ) jel ON jel.account_id = a.id
       WHERE a.type IN ('income', 'expense', 'other_expense')
         AND a.is_archived = false
       GROUP BY a.id, a.name, a.type
@@ -154,10 +157,13 @@ export class ReportService {
         COALESCE(SUM(jel.debit), 0)::text AS total_debit,
         COALESCE(SUM(jel.credit), 0)::text AS total_credit
       FROM accounts a
-      LEFT JOIN journal_entry_lines jel ON jel.account_id = a.id
-      LEFT JOIN journal_entries je ON je.id = jel.entry_id 
-        AND je.status = 'posted'
-        AND je.entry_date <= $1::date
+      LEFT JOIN (
+        SELECT jel.account_id, jel.debit, jel.credit
+        FROM journal_entry_lines jel
+        JOIN journal_entries je ON je.id = jel.entry_id
+        WHERE je.status = 'posted'
+          AND je.entry_date <= $1::date
+      ) jel ON jel.account_id = a.id
       WHERE a.is_archived = false
       GROUP BY a.id, a.name, a.type
       ORDER BY a.type, a.name;

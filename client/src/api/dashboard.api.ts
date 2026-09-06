@@ -73,8 +73,9 @@ export const DashboardApi = {
    * GET /api/dashboard/stats
    * Counts for Sales, Purchase, Budget
    */
-  getStats: async (): Promise<DashboardStats> => {
-    const res = await api.get<{ data: DashboardStats; error: any }>('/api/dashboard/stats');
+  getStats: async (period?: string): Promise<DashboardStats> => {
+    const params = period ? `?period=${encodeURIComponent(period)}` : '';
+    const res = await api.get<{ data: DashboardStats; error: any }>(`/api/dashboard/stats${params}`);
     if (res.data.error) {
       throw new Error(res.data.error.message || 'Failed to fetch dashboard stats');
     }
@@ -85,8 +86,9 @@ export const DashboardApi = {
    * GET /api/dashboard/kpi
    * Financial balances and monthly income (all strings)
    */
-  getKPI: async (): Promise<DashboardKPI> => {
-    const res = await api.get<{ data: DashboardKPI; error: any }>('/api/dashboard/kpi');
+  getKPI: async (period?: string): Promise<DashboardKPI> => {
+    const params = period ? `?period=${encodeURIComponent(period)}` : '';
+    const res = await api.get<{ data: DashboardKPI; error: any }>(`/api/dashboard/kpi${params}`);
     if (res.data.error) {
       throw new Error(res.data.error.message || 'Failed to fetch KPI data');
     }
@@ -127,9 +129,10 @@ export const DashboardApi = {
    * GET /api/dashboard/trends
    * Revenue vs Expense breakdown
    */
-  getTrends: async (): Promise<MonthlyTrendItem[]> => {
+  getTrends: async (period?: string): Promise<MonthlyTrendItem[]> => {
     try {
-      const res = await api.get<{ data: MonthlyTrendItem[]; error: any }>('/api/dashboard/trends');
+      const params = period ? `?period=${encodeURIComponent(period)}` : '';
+      const res = await api.get<{ data: MonthlyTrendItem[]; error: any }>(`/api/dashboard/trends${params}`);
       if (res.data.data && Array.isArray(res.data.data)) {
         return res.data.data;
       }
