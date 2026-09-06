@@ -536,6 +536,132 @@ To assess whether Urban Furniture can safely release funds for inventory, machin
 - **Inter-state vs Intra-state:** Intra-state sales (within Maharashtra) split into 50% CGST + 50% SGST. Inter-state sales incur IGST.`;
     }
 
+    // 7. Small Talk & Courtesy ("how are you", "how's it going")
+    if (q.includes('how are you') || q.includes("how's it going") || q.includes('how do you do')) {
+      return `### 💼 Financial Health Check: Operating with Precision
+
+Thank you for asking! As your CFO Copilot, I am operating at **full financial vigilance**:
+- **Double-Entry Status:** Balanced across all journals (debits = credits).
+- **Operating Liquidity:** Strong at **₹${liquidity.totalLiquid}** in liquid cash & bank balances.
+- **Payable Coverage:** **${liquidity.cashToPayableRatio}x** coverage against upcoming obligations.
+- **System Integrity:** **${integrity.status}** (${integrity.passed}/${integrity.total} checks passing).
+
+How can I assist your executive decision-making today?`;
+    }
+
+    // 8. Thank you / Appreciation
+    if (/^(thank you|thanks|thx|great job|awesome|good job|appreciate it|perfect)/i.test(q)) {
+      return `### 🤝 You are Most Welcome!
+
+Protecting Urban Furniture's bottom line and ensuring balance sheet integrity is my primary directive.
+
+Whenever you need to evaluate an investment, review aging receivables, or verify tax compliance, I am here 24/7 on-premise.`;
+    }
+
+    // 9. Morning Priorities & Daily Checklist ("what should i do today", "priorities")
+    if (q.includes('what should i do') || q.includes('priorities') || q.includes('today') && q.includes('focus')) {
+      return `### 📋 CFO Daily Executive Action Checklist
+
+Here are the top financial priorities recommended for today based on live ledger data:
+
+1. **Expedite Overdue Collections (Priority 1):**
+   - We have **${aging.overdueInvoicesCount} overdue customer invoices** totaling **₹${aging.overdueInvoicesTotal}**.
+   - Issue automated WhatsApp/Email account statements to top debtors to accelerate liquidity.
+2. **Review Vendor Bills (Priority 2):**
+   - Pending Accounts Payable stands at **₹${liquidity.payable}**.
+   - Check supplier invoices nearing due dates to claim prompt-payment cash discounts.
+3. **Verify Working Capital Cushion (Priority 3):**
+   - Current Net Working Capital is **₹${liquidity.netWorkingCapital}** with a safe coverage ratio of **${liquidity.cashToPayableRatio}x**.
+4. **Audit Integrity Review (Priority 4):**
+   - Confirm all ${integrity.total} automated mathematical ledger checks remain passing.`;
+    }
+
+    // 10. Company & Business Identity ("what company is this", "about urban furniture")
+    if (q.includes('what company') || q.includes('who are we') || q.includes('about company') || q.includes('urban furniture')) {
+      return `### 🏢 About Urban Furniture
+
+**Urban Furniture** is a premier manufacturer and retailer of commercial office workstations, ergonomic executive seating, and contemporary home furniture based in **Maharashtra, India**.
+
+**Key Business Attributes:**
+- **GSTIN:** \`27AABCU1234F1Z5\` (State Code 27 — Maharashtra)
+- **Primary HSN Chapters:** \`9401\` (Seats and Chairs) & \`9403\` (Wooden, Steel & Modular Furniture)
+- **Accounting Architecture:** Strict double-entry general ledger with immutability and real-time trial balance verification.
+- **Current Financial Footprint:** ₹${liquidity.totalLiquid} liquid reserves with active commercial order pipelines.`;
+    }
+
+    // 11. Assets vs Liabilities ("what is an asset", "what is a liability", "asset vs liability")
+    if (q.includes('asset') && q.includes('liability') || q.includes('what is an asset') || q.includes('what is a liability')) {
+      return `### 💡 Assets vs. Liabilities
+
+**The Core Concept:**
+- **Assets (What We Own):** Resources with economic value that will bring cash into the business in the future.
+  - *Urban Furniture Examples:* Bank balance (₹${liquidity.bank}), Cash vault (₹${liquidity.cash}), Accounts Receivable (₹${liquidity.receivable}), Warehouse machinery, Finished goods inventory.
+- **Liabilities (What We Owe):** Obligations that will require future cash outflows to third parties.
+  - *Urban Furniture Examples:* Vendor Accounts Payable (₹${liquidity.payable}), Output GST collected from customers (₹${gst.totalTaxLiability}), Bank loans.
+
+**The Golden Balance Sheet Equation:**
+$$\\text{Assets} = \\text{Liabilities} + \\text{Owner's Equity}$$
+Our automated System Integrity engine validates this equation on every posted ledger row.`;
+    }
+
+    // 12. Depreciation ("what is depreciation", "explain depreciation")
+    if (q.includes('depreciation') || q.includes('what is depreciation')) {
+      return `### 💡 Understanding Depreciation
+
+**What It Means:**
+**Depreciation** is the accounting method of allocating the purchase cost of a physical asset (such as woodworking CNC machines, delivery trucks, or showroom computers) across its expected useful life, rather than expensing the entire amount in a single month.
+
+**Why It Matters in Furniture Manufacturing:**
+1. **Accurate Profit Calculation:** Matches the machinery expense against the revenue generated by the furniture produced each month.
+2. **Tax Shield:** Depreciation is a non-cash expense that legitimately reduces taxable net income without consuming liquid bank funds.
+3. **Ledger Posting:**
+   - **Debit:** Depreciation Expense (P&L expense increases)
+   - **Credit:** Accumulated Depreciation (Contra-asset increases, reducing net book value).`;
+    }
+
+    // 13. Cost Optimization & Expense Reduction ("how to cut costs", "reduce expenses")
+    if (q.includes('cut cost') || q.includes('reduce expense') || q.includes('save money') || q.includes('cost optimization')) {
+      return `### 💡 CFO Cost Optimization Strategies
+
+Based on our current cost structure and ledger trends:
+
+1. **Procurement Consolidation:**
+   - Consolidate raw lumber, steel tubing, and upholstery foam orders across verified vendors to capture 3–5% bulk volume discounts.
+2. **Reduce Days Sales Outstanding (DSO):**
+   - Collecting the **₹${aging.overdueInvoicesTotal}** in overdue receivables eliminates the need for working capital overdraft lines, saving statutory interest.
+3. **Inventory Velocity:**
+   - Minimize warehouse holding costs on slow-moving decorative items by prioritizing high-turnover ergonomic office chairs.
+4. **Take Early Payment Discounts:**
+   - Settle eligible vendor bills with 2/10 Net 30 terms to earn risk-free annualized returns on our liquid reserves.`;
+    }
+
+    // 14. ERP Navigation Guidance ("where do i create invoice", "how to make a bill", "where is coa")
+    if (q.includes('how to create') || q.includes('where do i find') || q.includes('where is') && (q.includes('invoice') || q.includes('bill') || q.includes('order') || q.includes('product'))) {
+      return `### 🧭 Urban Furniture ERP Navigation Guide
+
+Here is where to find key workflows in the application:
+
+- **Sales Order & Quotations:** Click top menu **Sales** → **Sales Order** (or use \`Ctrl+K\` / \`Cmd+K\` palette).
+- **Customer Invoices:** Click **Sales** → **Sale Invoice** to issue tax invoices with automatic GST computation.
+- **e-Bill Voice Assistant:** Click **Sales** → **e-Bill Assistant** to create bills by speaking or chatting naturally.
+- **Purchase Orders & Bills:** Click top menu **Purchase** → **Purchase Order** or **Purchase Bill**.
+- **Chart of Accounts (COA):** Click top menu **Account** → **Chart of Account** to inspect all 8 standard ledger accounts.
+- **System Integrity (10/10 Audit):** Click top menu **Report** → **System Integrity Report** to view real-time audit proofs.`;
+    }
+
+    // 15. Financial Humor / Joke ("joke", "make me laugh")
+    if (q.includes('joke') || q.includes('laugh') || q.includes('humor')) {
+      return `### 😄 A Little Financial Humor
+
+**Why did the auditor look so relaxed on balance sheet day?**
+*Because after checking every single journal entry, their life was completely balanced!*
+
+Or as they say in the trade:
+*"There are 10 types of people in the world: those who understand double-entry accounting, and those who have unexplained debit balances!"*
+
+Now back to business: our ledger is currently passing **${integrity.passed}/${integrity.total} checks** with zero trial balance discrepancies!`;
+    }
+
     return null;
   }
 

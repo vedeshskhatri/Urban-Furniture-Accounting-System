@@ -264,6 +264,30 @@ export const CfoCopilotModal: React.FC<CfoCopilotModalProps> = ({
       query: 'Can we afford to spend ₹50,000 on new workshop equipment today without risking supplier payments?',
       focus: 'liquidity',
     },
+    {
+      label: '📋 What Should I Do Today?',
+      icon: TrendingUp,
+      query: 'What should be my top financial and operational priorities today based on our ledger data?',
+      focus: 'overview',
+    },
+    {
+      label: '💡 Asset vs. Liability',
+      icon: HelpCircle,
+      query: 'What is the difference between an asset and a liability, and what are our actual balances?',
+      focus: 'overview',
+    },
+    {
+      label: '💡 How to Cut Costs',
+      icon: AlertTriangle,
+      query: 'What cost optimization and expense reduction strategies do you recommend for our business?',
+      focus: 'overview',
+    },
+    {
+      label: '🧭 How to Create Invoices',
+      icon: FileText,
+      query: 'How do I create a customer invoice or vendor bill in this system?',
+      focus: 'overview',
+    },
   ];
 
   // Simple, elegant Markdown formatter for CFO answers
