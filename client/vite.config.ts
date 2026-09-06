@@ -42,6 +42,8 @@ export default defineConfig({
   server: {
     host: true,
     port: 5173,
+    // Dev server is reached as localhost, LAN IP, or the docker service name.
+    allowedHosts: ['localhost', 'web', '.localhost'],
     watch: {
       usePolling: true,
       interval: 100,
