@@ -158,6 +158,50 @@ export const PortalCataloguePage: React.FC = () => {
       list.sort((a, b) => parseFloat(b.sales_price) - parseFloat(a.sales_price));
     } else if (sortBy === 'name-asc') {
       list.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // Default: Curated Atelier Order — Maximizes visual diversity across categories and models
+      // Groups by base model name so consecutive items never display identical duplicate images
+      const modelBuckets = new Map<string, CatalogueProduct[]>();
+      list.forEach((p) => {
+        const baseName = (p.name || '').split(' — ')[0].trim();
+        if (!modelBuckets.has(baseName)) {
+          modelBuckets.set(baseName, []);
+        }
+        modelBuckets.get(baseName)!.push(p);
+      });
+
+      const buckets = Array.from(modelBuckets.values());
+      // Order categories nicely (Seating, Tables, Beds, Storage, Lighting, Decor)
+      const CAT_ORDER: Record<string, number> = {
+        Seating: 1,
+        Tables: 2,
+        Beds: 3,
+        Storage: 4,
+        Lighting: 5,
+        Decor: 6,
+      };
+
+      buckets.sort((a, b) => {
+        const orderA = CAT_ORDER[a[0]?.category || ''] || 99;
+        const orderB = CAT_ORDER[b[0]?.category || ''] || 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return (a[0]?.name || '').localeCompare(b[0]?.name || '');
+      });
+
+      // Round-robin interleave across distinct models so every adjacent card is a completely different furniture piece!
+      const interleaved: CatalogueProduct[] = [];
+      let maxLen = 0;
+      buckets.forEach((b) => { if (b.length > maxLen) maxLen = b.length; });
+
+      for (let round = 0; round < maxLen; round++) {
+        for (const bucket of buckets) {
+          if (round < bucket.length) {
+            interleaved.push(bucket[round]);
+          }
+        }
+      }
+
+      list = interleaved;
     }
 
     return list;

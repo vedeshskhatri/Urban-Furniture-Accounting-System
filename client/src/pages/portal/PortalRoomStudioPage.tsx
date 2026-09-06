@@ -3436,45 +3436,41 @@ export const PortalRoomStudioPage: React.FC = () => {
         )}
       </div>
 
-      {/* ── Full-Screen Room Loading Overlay ── */}
+      {/* ── Non-blocking Room Loading Indicator ── */}
       {roomLoading && (
         <div
           style={{
             position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(251, 248, 242, 0.97)',
+            top: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'blur(12px)',
+            borderRadius: 999,
+            padding: '8px 18px',
+            boxShadow: '0 4px 20px rgba(74, 58, 52, 0.12)',
+            border: '1px solid rgba(208, 174, 146, 0.4)',
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 20,
-            zIndex: 50,
+            gap: 10,
+            zIndex: 40,
+            pointerEvents: 'none',
           }}
         >
-          {/* Animated ring */}
           <div
             style={{
-              width: 56,
-              height: 56,
+              width: 14,
+              height: 14,
               borderRadius: '50%',
-              border: '3px solid rgba(138, 75, 56, 0.15)',
+              border: '2px solid rgba(138, 75, 56, 0.2)',
               borderTopColor: '#8A4B38',
-              animation: 'spin 0.9s linear infinite',
+              animation: 'spin 0.8s linear infinite',
             }}
           />
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--brown-900)', marginBottom: 6 }}>
-              Preparing the Atelier
-            </div>
-            <div style={{ fontSize: 12.5, color: 'var(--brown-700)', fontFamily: 'var(--font-display)' }}>
-              Loading your 3D showroom — this may take a moment on first visit
-            </div>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--brown-500)', fontFamily: 'var(--font-mono)' }}>
-            room_blank.compressed.glb
-          </div>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--brown-900)', fontFamily: 'var(--font-display)' }}>
+            Loading 3D Room Architecture (Studio Interactive)
+          </span>
         </div>
       )}
 
