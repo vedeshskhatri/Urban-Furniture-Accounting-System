@@ -27,6 +27,7 @@ import {
 import { formatINR } from '../../lib/money';
 import api from '../../lib/axios';
 import { playWoodClick } from '../../lib/soundEffects';
+import { resolveProductImage, resolveProductModel } from '../../lib/productMedia';
 
 export interface CatalogueProduct {
   id: number;
@@ -108,7 +109,12 @@ export const PortalCataloguePage: React.FC = () => {
     api.get('/api/portal/catalogue')
       .then((res) => {
         if (res.data?.data) {
-          setProducts(res.data.data);
+          const enriched = res.data.data.map((p: CatalogueProduct) => ({
+            ...p,
+            image_url: resolveProductImage(p),
+            model_url: p.model_url || resolveProductModel(p),
+          }));
+          setProducts(enriched);
         }
       })
       .catch((err) => {
@@ -703,7 +709,7 @@ export const PortalCataloguePage: React.FC = () => {
                   }}
                 >
                   <img
-                    src={product.image_url || '/images/products/aspen-lounge-sofa.jpg'}
+                    src={resolveProductImage(product)}
                     alt={product.name}
                     loading="lazy"
                     style={{
@@ -1153,7 +1159,7 @@ export const PortalCataloguePage: React.FC = () => {
               }}
             >
               <img
-                src={quickViewProduct.image_url || '/images/products/aspen-lounge-sofa.jpg'}
+                src={resolveProductImage(quickViewProduct)}
                 alt={quickViewProduct.name}
                 style={{
                   width: '100%',

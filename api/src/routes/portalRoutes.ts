@@ -7,6 +7,7 @@ import { requireAuth, requireInternalUser, requirePortalContact, AuthenticatedRe
 import { sendSuccess, sendError } from '../utils/response';
 import { pool } from '../db/pool';
 import { scopeFor } from '../services/scope';
+import { resolveProductImage, resolveProductModel, autoEnrichDatabaseProducts } from '../services/productMediaService';
 
 export const portalRouter = Router();
 
@@ -384,7 +385,18 @@ portalRouter.get('/catalogue', async (_req: Request, res: Response) => {
       ORDER BY category ASC, name ASC, id ASC
     `;
     const result = await pool.query(query);
-    return sendSuccess(res, result.rows);
+
+    // Guarantee every product returns authentic image & 3D model regardless of DB seed state
+    const enrichedProducts = result.rows.map((row) => ({
+      ...row,
+      image_url: resolveProductImage(row),
+      model_url: row.model_url || resolveProductModel(row),
+    }));
+
+    // Trigger non-blocking database self-healing so PostgreSQL is permanently updated
+    autoEnrichDatabaseProducts().catch(() => {});
+
+    return sendSuccess(res, enrichedProducts);
   } catch (err: any) {
     return sendError(res, 'FETCH_FAILED', err.message || 'Failed to fetch catalogue', 500);
   }

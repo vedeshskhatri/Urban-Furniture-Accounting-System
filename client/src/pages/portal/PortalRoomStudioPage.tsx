@@ -44,6 +44,7 @@ import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
 import { playWoodClick, playChimeSuccess, toggleAmbientSoundscape } from '../../lib/soundEffects';
 import { useAmbientMusic } from '../../lib/ambientMusic';
+import { resolveProductImage, resolveProductModel } from '../../lib/productMedia';
 
 interface ShowroomModel {
   id: string;
@@ -927,12 +928,11 @@ export const PortalRoomStudioPage: React.FC = () => {
 
   // 1. Fetch available models from API & Catalogue products (supplements static fallback)
   useEffect(() => {
-    fetch('/api/portal/models')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
-          // Normalize URLs to uppercase /Models/ for consistency
-          const normalized = json.data.map((m: ShowroomModel) => ({
+    api.get('/api/portal/models')
+      .then((res) => {
+        const list = res.data?.data;
+        if (list && Array.isArray(list) && list.length > 0) {
+          const normalized = list.map((m: ShowroomModel) => ({
             ...m,
             url: m.url.replace(/^\/models\//i, '/Models/'),
           }));
@@ -944,7 +944,12 @@ export const PortalRoomStudioPage: React.FC = () => {
     api.get('/api/portal/catalogue')
       .then((res) => {
         if (res.data?.data) {
-          setCatalogueProducts(res.data.data);
+          const enriched = res.data.data.map((p: any) => ({
+            ...p,
+            image_url: resolveProductImage(p),
+            model_url: p.model_url || resolveProductModel(p),
+          }));
+          setCatalogueProducts(enriched);
         }
       })
       .catch((err) => console.warn('Failed to load catalogue products:', err));

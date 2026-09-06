@@ -24,6 +24,7 @@ import {
 import { usePortalAuth } from './PortalAuthGuard';
 import { formatINR } from '../../lib/money';
 import api from '../../lib/axios';
+import { resolveProductImage, resolveProductModel } from '../../lib/productMedia';
 
 interface InvoiceSummary {
   totalDue: string;
@@ -124,9 +125,13 @@ export const PortalDashboardPage: React.FC = () => {
     api.get('/api/portal/catalogue')
       .then((res) => {
         if (res.data?.data && Array.isArray(res.data.data)) {
-          // Pick top curated items across categories with working images
-          const curated = res.data.data.slice(0, 8);
-          setFeaturedProducts(curated);
+          // Enrich products with authentic imagery and 3D models
+          const enriched = res.data.data.map((p: any) => ({
+            ...p,
+            image_url: resolveProductImage(p),
+            model_url: p.model_url || resolveProductModel(p),
+          }));
+          setFeaturedProducts(enriched.slice(0, 8));
         }
       })
       .catch(() => {});
@@ -867,7 +872,7 @@ export const PortalDashboardPage: React.FC = () => {
               {/* Image Preview with 3D Pill */}
               <div style={{ position: 'relative', height: 180, overflow: 'hidden', backgroundColor: '#F6F2EC' }}>
                 <img
-                  src={p.image_url || '/images/products/aspen-lounge-sofa.jpg'}
+                  src={resolveProductImage(p)}
                   alt={p.name}
                   style={{
                     width: '100%',
