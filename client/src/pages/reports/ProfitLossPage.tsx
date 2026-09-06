@@ -760,7 +760,7 @@ export default function ProfitLossPage() {
               margin: '4px 0 2px 0',
             }}
           >
-            Statement of Profit & Loss
+            Profit and Loss
           </h1>
           <p
             style={{

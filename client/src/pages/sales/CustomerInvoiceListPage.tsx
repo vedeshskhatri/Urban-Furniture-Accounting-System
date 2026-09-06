@@ -42,6 +42,16 @@ const STATUS_COLORS: Record<string, string> = {
   confirmed: '#77574A', // Walnut
 };
 
+function formatDisplayINR(num: number): string {
+  if (Math.abs(num) >= 10000000) {
+    return `${(num / 10000000).toFixed(2)} Cr`;
+  }
+  if (Math.abs(num) >= 100000) {
+    return `${(num / 100000).toFixed(2)} L`;
+  }
+  return num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+
 export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = ({ onSelectInvoice, onNewInvoice }) => {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<CustomerInvoiceDTO[]>([]);
@@ -301,7 +311,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
       {/* Top Header & Actions Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-display text-brown-900">Customer Invoices</h1>
+          <h1 className="text-2xl font-bold font-display text-brown-900">Sale Invoice</h1>
           <p className="text-sm text-brown-700">Official receivables recognized on the double-entry ledger</p>
         </div>
         <div className="flex items-center space-x-2.5 flex-wrap">
@@ -522,6 +532,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                           ? 'bg-brown-200/80 border-brown-400 font-bold'
                           : 'hover:bg-brown-100/70 border-transparent'
                       }`}
+                    >
                       <div className="flex items-center justify-between gap-1 w-full">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />

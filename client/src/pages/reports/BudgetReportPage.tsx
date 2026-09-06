@@ -252,8 +252,19 @@ export default function BudgetReportPage() {
               margin: '4px 0 2px 0',
             }}
           >
-            {report?.budgetName || 'Analytical Budget Performance Report'}
+            Budget Report
           </h1>
+          <p
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 13,
+              fontWeight: 600,
+              color: 'var(--brown-800)',
+              margin: '2px 0 4px 0',
+            }}
+          >
+            {report?.budgetName || 'Analytical Budget Performance'}
+          </p>
           <p
             style={{
               fontFamily: 'var(--font-body)',

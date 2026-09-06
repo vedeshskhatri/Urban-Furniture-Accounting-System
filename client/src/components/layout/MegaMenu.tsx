@@ -24,7 +24,6 @@ const MEGA_MENU_COLUMNS: ColumnData[] = [
       { label: 'Sales order', to: '/sales/orders', tab: 'Sales', view: 'so-list' },
       { label: 'Sale Invoice', to: '/sales/invoices', tab: 'Sales', view: 'inv-list' },
       { label: 'Receipt', to: '/sales/payments', tab: 'Sales', view: 'register-payment' },
-      { label: 'e-Bill Assistant (Voice/Chat)', to: '/sales/voice-bill', tab: 'Sales', view: 'voice-bill' },
     ],
   },
   {
@@ -53,18 +52,6 @@ const MEGA_MENU_COLUMNS: ColumnData[] = [
       { label: 'Balancesheet', to: '/report/balance-sheet', tab: 'Report', view: 'report-balancesheet' },
       { label: 'Profit and Loss', to: '/report/profit-loss', tab: 'Report', view: 'report-pnl' },
       { label: 'Budget Report', to: '/report/budget', tab: 'Report', view: 'report-budget' },
-      { label: 'Business Analytics Engine', to: '/analytics', tab: 'Report', view: 'analytics' },
-      { label: 'System Integrity Report (10/10)', to: '/integrity', tab: 'Report', view: 'integrity' },
-      { label: 'Live Correctness Monitor (Ticker)', to: '/monitor', tab: 'Report', view: 'monitor' },
-      { label: 'Audit Log & Chatter Feed', to: '/audit', tab: 'Report', view: 'audit' },
-    ],
-  },
-  {
-    title: 'Tools',
-    items: [
-      { label: 'Template Library', to: '/tools/templates', tab: 'Tools', view: 'templates' },
-      { label: 'My Saved Sheets', to: '/tools/templates?tab=saved', tab: 'Tools', view: 'saved-templates' },
-      { label: 'Template Settings', to: '/tools/templates/manage', tab: 'Tools', view: 'manage-templates' },
     ],
   },
 ];
@@ -243,16 +230,16 @@ const styles = {
     borderRadius: 24,
     border: '1.5px solid #5C453A',
     boxShadow: '0 16px 40px rgba(74, 58, 52, 0.16)',
-    padding: '24px 28px 28px 28px',
+    padding: '24px 32px 28px 32px',
     width: '100%',
-    maxWidth: 960,
+    maxWidth: 860,
     position: 'relative' as const,
   } as React.CSSProperties,
 
   headerRow: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
-    gap: 16,
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 20,
     paddingBottom: 14,
   } as React.CSSProperties,
 
@@ -273,8 +260,8 @@ const styles = {
 
   contentGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
-    gap: 16,
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 20,
   } as React.CSSProperties,
 
   columnList: {

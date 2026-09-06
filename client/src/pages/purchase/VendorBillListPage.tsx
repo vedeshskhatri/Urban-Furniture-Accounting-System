@@ -342,7 +342,7 @@ export const VendorBillListPage: React.FC<VendorBillListPageProps> = ({ onSelect
       )}
 
       <ListView
-        title="Vendor Bills"
+        title="Purchase Bill"
         subtitle="Invoices received from vendors impacting accounts payable & stock"
         columns={columns}
         data={bills}

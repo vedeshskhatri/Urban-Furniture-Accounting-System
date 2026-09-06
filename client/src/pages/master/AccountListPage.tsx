@@ -81,7 +81,7 @@ export const AccountListPage: React.FC<AccountListPageProps> = ({
       <div style={styles.container}>
         {/* Wireframe Title: Chart of Accounts (List View) */}
         <div style={styles.titleWrapper}>
-          <h1 style={styles.heading}>Chart of Accounts (List View)</h1>
+          <h1 style={styles.heading}>Chart of Account</h1>
           <span style={styles.subtext}>All this accounts are to be pre configured</span>
         </div>
 

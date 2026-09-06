@@ -76,7 +76,7 @@ export const POListPage: React.FC<POListPageProps> = ({ onSelectPO, onNewPO }) =
 
   return (
     <ListView
-      title="Purchase Orders"
+      title="Purchase Order"
       subtitle="Commercial orders placed with material and goods suppliers"
       columns={columns}
       data={displayedPOs}

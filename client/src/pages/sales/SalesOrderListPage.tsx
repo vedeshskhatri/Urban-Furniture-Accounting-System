@@ -68,7 +68,7 @@ export const SalesOrderListPage: React.FC<SalesOrderListPageProps> = ({ onSelect
 
   return (
     <ListView
-      title="Sales Orders"
+      title="Sales order"
       subtitle="Commercial intent orders before customer billing"
       columns={columns}
       data={tableData}

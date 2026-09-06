@@ -215,7 +215,7 @@ export const RegisterPaymentPage: React.FC = () => {
       <div className="flex items-center justify-between py-3 mb-6 border-b border-brown-300">
         <div>
           <h1 className="text-2xl font-bold font-display text-brown-900">
-            Register Customer Payment
+            Receipt
           </h1>
           <p className="text-xs text-brown-700">
             Inward cash/bank receipt settling outstanding receivables

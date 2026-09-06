@@ -750,7 +750,7 @@ export default function BalanceSheetPage() {
               margin: '4px 0 2px 0',
             }}
           >
-            Balance Sheet
+            Balancesheet
           </h1>
           <p
             style={{
