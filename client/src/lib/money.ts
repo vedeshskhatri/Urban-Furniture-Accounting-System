@@ -5,11 +5,11 @@ import Decimal from 'decimal.js';
  * Uses hand-rolled grouping — Intl.NumberFormat('en-IN') silently falls back
  * to Western grouping inside Docker's small-icu Node build.
  *
- * Input must always be a string, e.g. "200000.50"
+ * Input can be string, number, or Decimal, e.g. "200000.50"
  * Output: "₹2,00,000.50"
  */
-export function formatINR(value: string): string {
-  const d = new Decimal(value);
+export function formatINR(value: string | number | Decimal): string {
+  const d = value instanceof Decimal ? value : new Decimal(String(value ?? '0'));
   const neg = d.isNegative();
   const [int, dec] = d.abs().toFixed(2).split('.');
   const last3 = int.slice(-3);
@@ -18,6 +18,22 @@ export function formatINR(value: string): string {
     ? rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3
     : last3;
   return `${neg ? '-' : ''}₹${grouped}.${dec}`;
+}
+
+/**
+ * Format a numeric value in Indian number grouping without currency symbol.
+ * e.g. 69438883.42 -> "6,94,38,883.42"
+ */
+export function formatIndianNumber(value: string | number | Decimal, decimals: number = 2): string {
+  const d = value instanceof Decimal ? value : new Decimal(String(value ?? '0'));
+  const neg = d.isNegative();
+  const [int, dec] = d.abs().toFixed(decimals).split('.');
+  const last3 = int.slice(-3);
+  const rest = int.slice(0, -3);
+  const grouped = rest
+    ? rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3
+    : last3;
+  return `${neg ? '-' : ''}${grouped}${decimals > 0 ? '.' + dec : ''}`;
 }
 
 /** Parse a string to Decimal safely. Never call parseFloat. */

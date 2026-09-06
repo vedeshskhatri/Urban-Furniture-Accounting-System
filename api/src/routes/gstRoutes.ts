@@ -86,12 +86,31 @@ gstRouter.get('/gstr-3b', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/gst/gstr-2b
+ * Auto-drafted inward supplies / Input Tax Credit ledger from vendor bills
+ */
+gstRouter.get('/gstr-2b', async (req: Request, res: Response) => {
+  try {
+    const year = req.query.year ? parseInt(req.query.year as string, 10) : undefined;
+    const month = req.query.month ? parseInt(req.query.month as string, 10) : undefined;
+
+    const summary = await GstReturnService.getGstr2BSummary({ year, month });
+    return sendSuccess(res, summary);
+  } catch (err: any) {
+    console.error('Error computing GSTR-2B summary:', err);
+    return sendError(res, 'GSTR2B_COMPUTATION_ERROR', err.message, 500);
+  }
+});
+
+/**
  * GET /api/gst/eway-bills
  * Retrieve all E-Way Bill shipments exceeding the ₹50,000 threshold
  */
 gstRouter.get('/eway-bills', async (req: Request, res: Response) => {
   try {
-    const bills = await GstReturnService.listEWayBills();
+    const year = req.query.year ? parseInt(req.query.year as string, 10) : undefined;
+    const month = req.query.month ? parseInt(req.query.month as string, 10) : undefined;
+    const bills = await GstReturnService.listEWayBills({ year, month });
     return sendSuccess(res, bills);
   } catch (err: any) {
     console.error('Error retrieving E-Way bills:', err);
