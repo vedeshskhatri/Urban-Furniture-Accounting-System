@@ -974,8 +974,8 @@ export default function Dashboard() {
                     data={liquidityChartData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={62}
-                    outerRadius={88}
+                    innerRadius={70}
+                    outerRadius={94}
                     paddingAngle={3}
                     dataKey="value"
                   >
@@ -995,12 +995,22 @@ export default function Dashboard() {
                   transform: 'translate(-50%, -50%)',
                   textAlign: 'center',
                   pointerEvents: 'none',
+                  maxWidth: 126,
                 }}
               >
-                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--brown-700)', fontWeight: 600 }}>
+                <div style={{ fontSize: 9.5, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--brown-700)', fontWeight: 600, marginBottom: 1 }}>
                   Net Capital
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, color: 'var(--brown-900)' }}>
+                <div
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontWeight: 700,
+                    fontSize: 12,
+                    color: 'var(--brown-900)',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
                   {formatINR(netWorkingCapital.toFixed(2))}
                 </div>
               </div>

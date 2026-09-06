@@ -20,8 +20,16 @@ export interface AuditQueryParams {
   action?: string;
   from?: string;
   to?: string;
+  search?: string;
   limit?: number;
   offset?: number;
+}
+
+export interface AuditStats {
+  total: number;
+  today: number;
+  security: number;
+  commercial: number;
 }
 
 export const AuditApi = {
@@ -36,11 +44,22 @@ export const AuditApi = {
     return res.data?.data ?? { rows: [], total: 0 };
   },
 
-  facets: async (): Promise<{ tables: string[]; actions: string[]; users: Array<{ id: number; name: string }> }> => {
-    const res = await api.get<{ data: { tables: string[]; actions: string[]; users: Array<{ id: number; name: string }> }; error: unknown }>(
-      '/api/audit/facets'
-    );
-    return res.data?.data ?? { tables: [], actions: [], users: [] };
+  facets: async (): Promise<{
+    tables: string[];
+    actions: string[];
+    users: Array<{ id: number; name: string }>;
+    stats: AuditStats;
+  }> => {
+    const res = await api.get<{
+      data: {
+        tables: string[];
+        actions: string[];
+        users: Array<{ id: number; name: string }>;
+        stats: AuditStats;
+      };
+      error: unknown;
+    }>('/api/audit/facets');
+    return res.data?.data ?? { tables: [], actions: [], users: [], stats: { total: 0, today: 0, security: 0, commercial: 0 } };
   },
 
   recordTimeline: async (table: string, recordId: number): Promise<AuditRow[]> => {
