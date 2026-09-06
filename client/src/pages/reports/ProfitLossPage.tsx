@@ -67,6 +67,8 @@ export default function ProfitLossPage() {
   } = useQuery<ProfitLossReport>({
     queryKey: ['profit-loss', fromDate, toDate],
     queryFn: () => ReportsApi.getProfitAndLoss(fromDate, toDate),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const handlePrint = () => {

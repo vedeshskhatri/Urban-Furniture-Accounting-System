@@ -67,6 +67,8 @@ export default function BalanceSheetPage() {
   } = useQuery<BalanceSheetReport>({
     queryKey: ['balance-sheet', asOfDate],
     queryFn: () => ReportsApi.getBalanceSheet(asOfDate),
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const handlePrint = () => {
