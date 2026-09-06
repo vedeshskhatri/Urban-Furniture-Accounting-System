@@ -8,7 +8,10 @@
 [![Frontend](https://img.shields.io/badge/React-18%20%7C%20TailwindCSS-38bdf8.svg)]()
 [![Backend](https://img.shields.io/badge/Node.js-Express%20REST-green.svg)]()
 [![Accounting](https://img.shields.io/badge/Double--Entry-Strict%20Enforcement-gold.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-purple.svg)]()
+[![3D Graphics](https://img.shields.io/badge/Three.js-WebGL%203D%20Studio-orange.svg)]()
+[![AI Copilot](https://img.shields.io/badge/AI-Ollama%20CFO%20%26%20Voice--to--Bill-purple.svg)]()
+[![GST Compliance](https://img.shields.io/badge/GST-E--Invoice%20%7C%20E--Way%20%7C%20Returns-red.svg)]()
+[![License](https://img.shields.io/badge/license-MIT-blueviolet.svg)]()
 
 ---
 
@@ -28,55 +31,61 @@ flowchart LR
         direction LR
 
         subgraph ActorsCluster [Users and Clients]
-            Users[Users and Clients<br/>Staff: Admin, Accountant, Sales<br/>Customer Portal Users]
+            Users[Staff Users: Admin, Accountant, Sales, Warehouse<br/>Client Portal Users: Customers & Interior Designers]
         end
 
-        subgraph GatewayCluster [Frontend Client Tier]
-            Gateway[React 18 Web App<br/>Vite Server :5173 / :80<br/>TailwindCSS and AppShell]
+        subgraph GatewayCluster [Frontend Client Tier - Port 5173 / 80]
+            Gateway[React 18 Single Page App<br/>TailwindCSS & Showroom Design Tokens<br/>Dual Portal: Admin ERP & Client Portal<br/>3D Room Studio Three.js & R3F]
         end
 
-        subgraph AppCluster [Application Core - Docker]
-            WebApp[Express REST API Server<br/>Node.js 20 - Port 5002<br/>Double-Entry Posting Engine<br/>Pre-Commitment Budgets and RBAC]
+        subgraph AppCluster [Application Core - Docker Port 5002]
+            WebApp[Express REST API Server Node.js 20<br/>Double-Entry Posting Engine<br/>Pre-Commitment Budget Engine<br/>Data Scoping & RBAC Gateway]
+            AICFO[AI CFO Copilot Engine<br/>Local Ollama qwen2.5:7b Context<br/>Real-Time Ledger Anomaly Analyzer]
+            VoiceBill[Voice-to-Bill Transcription<br/>Whisper Audio & NLP Entity Parser<br/>Conversational Sales Billing]
+            GSTEngine[Indian GST Compliance Engine<br/>64-Char SHA-256 IRN & NIC QR<br/>E-Way Bill & GSTR-1/3B/2B Ledgers]
         end
 
         subgraph PaymentCluster [Payment Gateway]
-            Razorpay[Razorpay Payment Gateway<br/>Online UPI and Cards Modal<br/>HMAC-SHA256 Signatures]
+            Razorpay[Razorpay Payment Gateway<br/>Online UPI, Cards & NetBanking Modal<br/>HMAC-SHA256 Signatures]
         end
 
-        subgraph StorageCluster [Storage Layer - Docker]
+        subgraph StorageCluster [Storage Layer - Docker Port 5432]
             direction TB
-            PostgresDB[PostgreSQL 16 DB - Port 5432<br/>General Ledger: journal_entries and lines<br/>Commercial: PO, SO, Bills, Invoices<br/>Analytic Budgets and Audit Log<br/>Trigger: check_entry_balanced]
-            DocStorage[Document Storage<br/>Invoice PDFs and Payment Vouchers]
+            PostgresDB[(PostgreSQL 16 DB<br/>General Ledger: journal_entries & lines<br/>Commercial: PO, SO, Bills, Invoices<br/>Analytic Budgets, Stock Moves & Audit<br/>Trigger: check_entry_balanced)]
+            IndexedDB[(Client-Side IndexedDB<br/>Custom .glb 3D Furniture Models<br/>Persisted Room Layout Coordinates)]
         end
 
-        subgraph WorkerCluster [PDF and Email Delivery Engine]
+        subgraph DeliveryCluster [PDF and Email Delivery Pipeline]
             direction TB
-            PdfEngine[Chromium Puppeteer<br/>Deterministic A4 PDF Receipts]
-            EmailService[Resend Email API<br/>api.resend.com/emails<br/>Dispatches PDF to Client Gmail]
+            PdfEngine[Puppeteer Chromium<br/>Deterministic A4 Signed PDF Receipts<br/>B2B Tax Invoices with NIC QR Seal]
+            EmailService[Resend Transactional Email API<br/>Dispatches PDF to Client Inbox]
         end
 
         subgraph ObservabilityCluster [Audit and Invariant Verification]
             direction LR
-            Verifier[Zero-Delta Verifier<br/>GET /api/verify<br/>Strict Total Dr = Total Cr = 0.00]
-            AuditTrail[Immutable Audit Trail<br/>audit_log Table<br/>User, Timestamp, Diff]
-            HealthProbes[Health Probes<br/>GET /api/health<br/>Docker Container Readiness]
+            Verifier[Zero-Delta Verifier<br/>GET /api/verify<br/>Total Dr ≡ Total Cr = 0.00]
+            AuditChatter[Enterprise Chatter & Audit Trail<br/>Document Mutation Diff Stream<br/>Team Collaboration Notes]
+            HealthProbes[Health Probes<br/>GET /api/health<br/>Container Readiness]
         end
 
-        Users <-->|http2 / HTTPS| Gateway
-        Gateway <-->|http/1.1 REST| WebApp
+        Users <-->|HTTP/2 / HTTPS| Gateway
+        Gateway <-->|JSON REST over HTTP| WebApp
+        Gateway <-->|Offline Fast Caching| IndexedDB
 
-        Razorpay -->|Order and Signature Verification| WebApp
+        WebApp <--> AICFO
+        WebApp <--> VoiceBill
+        WebApp <--> GSTEngine
 
-        WebApp <-->|pg / SQL Wire| PostgresDB
-        WebApp <-->|File I/O| DocStorage
+        Razorpay -->|Order Token & HMAC Verification| WebApp
 
-        WebApp -->|Render Event| PdfEngine
-        PdfEngine -->|Base64 Attachment| EmailService
-        EmailService -.->|Email Receipt| Users
+        WebApp <-->|pg / SQL Connection Pool| PostgresDB
+        WebApp -->|Render Document Event| PdfEngine
+        PdfEngine -->|A4 PDF Binary Stream| EmailService
+        EmailService -.->|Email Receipt Delivery| Users
 
-        WebApp -.->|Audit Check| Verifier
-        WebApp -.->|Mutation Audit| AuditTrail
-        WebApp -.->|Container Status| HealthProbes
+        WebApp -.->|Invariant Check| Verifier
+        WebApp -.->|Activity Stream| AuditChatter
+        WebApp -.->|Readiness Check| HealthProbes
     end
 ```
 
@@ -86,21 +95,22 @@ flowchart LR
 
 | Subsystem | Key Components | Protocols & Ports | Role in Urban Furniture ERP |
 | :--- | :--- | :--- | :--- |
-| **Actors / Users** | Staff (Admin, Accountant, Sales, Warehouse) & Customer Portal Clients | Browser / HTTPS | Operational ERP management and external customer self-service invoice settlement. |
-| **Frontend Client** | React 18, Vite Bundler, TailwindCSS, AppShell | `HTTP/2` (`:5173`, `:80`) | Responsive user interface, double-entry modals, budget warning banners. |
+| **Actors / Users** | Staff (Admin, Accountant, Sales, Warehouse) & Customer Portal Clients | Browser / HTTPS | Operational ERP enterprise management and external customer self-service showroom & billing. |
+| **Frontend Client** | React 18, Vite Bundler, TailwindCSS, Three.js 3D Studio, IndexedDB | `HTTP/2` (`:5173`, `:80`) | Responsive user interface, interactive 3D spatial room configurator, double-entry modals, budget warning banners. |
 | **Core Web App & API** | Node.js 20, Express 5, TypeScript, Zod, Decimal.js | `HTTP/1.1 REST` (`:5000` / `:5002`) | Commercial workflows, double-entry posting engine, pre-commitment budget checks, and data scoping. |
+| **AI CFO Copilot** | Local Ollama (`qwen2.5:7b`), Snapshot Aggregator, Heuristic Analyzer | Internal REST (`/api/cfo-copilot`) | Real-time financial advisory, runway forecasting, overdue debt risk analysis, and executive decision checklists. |
+| **Conversational Voice Billing** | Whisper Speech Transcription, NLP Entity Parser, Draft Session Grid | Internal REST (`/api/voice-bill`) | Voice-to-Invoice generation, spoken product SKU & customer matching, conversational billing. |
+| **Indian GST Compliance** | SHA-256 IRN Hasher, NIC SVG QR Seal, E-Way Bill Tracker, Return Engine | Internal REST (`/api/gst`) | Official B2B e-invoicing, printable digital verification QR codes, E-Way bills, and GSTR-1, GSTR-3B, GSTR-2B filing ledgers. |
 | **Payment Gateway** | Razorpay Payment Gateway API & Test Sandbox | HTTPS REST / Webhooks | Online checkout, card/UPI tokenization, and deterministic HMAC-SHA256 signature verification. |
-| **Storage Subsystem** | PostgreSQL 16 Alpine, Local Document Storage | Postgres Wire (`:5432`), Docker Volumes | Transactional ACID ledger, immutable audit trail, gapless numbering sequences, and PDF documents. |
+| **Storage Subsystem** | PostgreSQL 16 Alpine, Local Browser IndexedDB | Postgres Wire (`:5432`), IndexedDB | Transactional ACID ledger, immutable audit trail, gapless numbering sequences, and cached 3D `.glb` assets. |
 | **Email & PDF Pipeline** | Headless Chromium (Puppeteer) + Resend API (`api.resend.com`) | Native REST | Deterministic A4 payment receipt PDF generation and direct delivery to client Gmail. |
-| **Observability** | Zero-Delta Invariant Verifier, Audit Trail, Health Probes | `/api/verify`, `/api/health` | Live verification of $\sum \text{Debit} \equiv \sum \text{Credit} = 0.00$ down to the paisa, container health checks. |
-
+| **Observability & Chatter** | Zero-Delta Invariant Verifier, Enterprise Chatter Drawer, Health Probes | `/api/verify`, `/api/health`, `/api/audit` | Live verification of $\sum 	ext{Debit} \equiv \sum 	ext{Credit} = 0.00$ down to the paisa, team audit timeline. |
 
 ---
 
 ## Table of Contents
 
 0. [System Architecture](#%EF%B8%8F-system-architecture)
-
 1. [Project Overview](#1-project-overview)
 2. [Problem Statement](#2-problem-statement)
 3. [The Solution: Urban Furniture ERP](#3-the-solution-urban-furniture-erp)
@@ -126,21 +136,30 @@ flowchart LR
 23. [Accounts Payable (A/P) Management](#23-accounts-payable-ap-management)
 24. [Profit & Loss (P&L) Financial Statement](#24-profit--loss-pl-financial-statement)
 25. [Balance Sheet Financial Statement](#25-balance-sheet-financial-statement)
-26. [Database Schema & Data Architecture](#26-database-schema--data-architecture)
-27. [Entity Relationship (ER) Diagram](#27-entity-relationship-er-diagram)
-28. [RESTful API Architecture](#28-restful-api-architecture)
-29. [Authoritative Validation Architecture](#29-authoritative-validation-architecture)
-30. [Security, Privacy & Isolation Architecture](#30-security-privacy--isolation-architecture)
-31. [UI/UX Design Philosophy & Visual Tokens](#31-uiux-design-philosophy--visual-tokens)
-32. [Screen-by-Screen ERP Specification](#32-screen-by-screen-erp-specification)
-33. [End-to-End Enterprise Scenario](#33-end-to-end-enterprise-scenario)
-34. [Visual Workflow Diagram Gallery](#34-visual-workflow-diagram-gallery)
-35. [Live Hackathon Judging & Demo Walkthrough](#35-live-hackathon-judging--demo-walkthrough)
-36. [Architectural Differentiators](#36-architectural-differentiators)
-37. [Future Roadmap](#37-future-roadmap)
-38. [Project Directory Topology](#38-project-directory-topology)
-39. [Core Development Principles](#39-core-development-principles)
-40. [Installation, Setup & Verification](#40-installation-setup--verification)
+26. [AI CFO Copilot & Financial Anomaly Analyzer](#26-ai-cfo-copilot--financial-anomaly-analyzer)
+27. [Conversational AI Voice-to-Bill Billing Engine](#27-conversational-ai-voice-to-bill-billing-engine)
+28. [Indian GST & Tax Compliance Engine](#28-indian-gst--tax-compliance-engine)
+29. [Interactive 3D Room Studio & Space Configurator](#29-interactive-3d-room-studio--space-configurator)
+30. [Client Customer Portal, Razorpay Gateway & PDF Receipts](#30-client-customer-portal-razorpay-gateway--pdf-receipts)
+31. [Accounts Receivable (A/R) Aging & Overdue Settlement Hub](#31-accounts-receivable-ar-aging--overdue-settlement-hub)
+32. [Enterprise Document Chatter & Audit Activity Stream](#32-enterprise-document-chatter--audit-activity-stream)
+33. [Vector Print & PDF Document Architecture](#33-vector-print--pdf-document-architecture)
+34. [Database Schema & Data Architecture](#34-database-schema--data-architecture)
+35. [Entity Relationship (ER) Diagram](#35-entity-relationship-er-diagram)
+36. [RESTful API Architecture](#36-restful-api-architecture)
+37. [Authoritative Validation Architecture](#37-authoritative-validation-architecture)
+38. [Security, Privacy & Isolation Architecture](#38-security-privacy--isolation-architecture)
+39. [UI/UX Design Philosophy & Visual Tokens](#39-uiux-design-philosophy--visual-tokens)
+40. [Screen-by-Screen ERP Specification](#40-screen-by-screen-erp-specification)
+41. [End-to-End Enterprise Scenario](#41-end-to-end-enterprise-scenario)
+42. [Visual Workflow Diagram Gallery](#42-visual-workflow-diagram-gallery)
+43. [Live Hackathon Judging & Demo Walkthrough](#43-live-hackathon-judging--demo-walkthrough)
+44. [Architectural Differentiators](#44-architectural-differentiators)
+45. [Future Roadmap](#45-future-roadmap)
+46. [Project Directory Topology](#46-project-directory-topology)
+47. [Core Development Principles](#47-core-development-principles)
+48. [Installation, Setup & Verification](#48-installation-setup--verification)
+49. [Conclusion](#49-conclusion)
 
 ---
 
@@ -281,13 +300,25 @@ Urban Furniture ERP is engineered with granular data scoping (`scopeFor(user, re
 
 ## 5. Key Product Capabilities
 
-* **Strict Double-Entry Ledger Core**: Zero unbalanced entries permitted; mathematical validation checked in software and enforced by deferred PostgreSQL triggers.
-* **Commercial Orders Separate from Accounting**: Purchase and Sales Orders represent commercial intent and do **not** write journal entries. Only confirmed Bills and Invoices post to the General Ledger.
-* **Installment & Milestone Payment Engine**: High-ticket furniture invoices support progressive settlements across Bank and Cash without mutating original invoice totals.
-* **Pre-Commitment Budget Enforcement**: Purchase orders validate departmental analytic account balances before confirmation, presenting non-blocking warning banners at 80% and blocking overruns.
-* **Live Material Inventory Synchronization**: Stock on hand is driven by discrete `stock_moves` tables tied to physical fulfillment rather than manual edits.
-* **Showroom-Grade Aesthetic**: Warm walnut and cream palette reflecting natural woods, leather, and tactile showroom craftsmanship.
-* **Strict External API Policy (Razorpay Only)**: Operates without external CDNs, cloud AI services, or third-party web scrapers. The **Razorpay Payment Gateway API** is the sole external API integrated for secure online customer payment checkout.
+Urban Furniture ERP couples enterprise accounting rigor with next-generation spatial computing and artificial intelligence:
+
+### A. Admin Portal Innovations
+* **Strict Double-Entry General Ledger**: Mathematical invariant $\sum 	ext{Debit} \equiv \sum 	ext{Credit} = 0.00$ enforced at the software layer and guarded by PostgreSQL triggers. No unbalanced entry can be committed.
+* **AI CFO Copilot & Financial Anomaly Analyzer**: Real-time executive financial advisor powered by local Ollama (`qwen2.5:7b`) with deterministic heuristics fallback. Answers questions on liquidity runway, working capital health, top overdue accounts, budget burn rates, and executive decision checklists.
+* **Conversational Voice-to-Bill Billing Engine**: Speak or type natural language invoices (e.g., *"Sell 2 Teak Dining Tables and 6 Walnut Chairs to Neha Desai with a 10% discount"*). Transcribed via Whisper, parsed into structured items, catalog-matched, and confirmed with automatic double-entry posting.
+* **Complete Indian GST Compliance Suite**: Built-in 64-character SHA-256 IRN generation for B2B e-invoicing, printable digital NIC QR verification seal, automated E-Way Bill generation for consignments $\ge 	ext{₹}50,000$, and tax return filing ledgers (GSTR-1, GSTR-3B, GSTR-2B inward ITC reconciliation).
+* **Accounts Receivable Aging & Overdue Settlement Hub**: Real-time overdue alert banner with expandable bills schedule, 1-click `[Settle Due]` actions, aging bucket schedules (Current, 1-30, 31-60, 61-90, 90+ days), and `Decimal.js` FIFO payment allocations.
+* **Pre-Commitment Analytic Budget Enforcement**: Evaluates department budgets before Purchase Orders can be confirmed, presenting non-blocking warning banners at 80% and blocking overruns.
+* **Enterprise Document Chatter & Audit Diff Stream**: Slide-out collaboration drawer on commercial documents tracking timestamps, role-badged internal notes, and field-level mutation diffs with CSV export.
+* **Professional Vector Print & PDF Reporting Engine**: Tailored `@media print` stylesheets and PDF export for B2B Tax Invoices, Purchase Orders, Vendor Bills, Customer Statements, and General Ledger reports.
+
+### B. Client Customer Portal Innovations
+* **Interactive 3D Room Studio & Space Configurator**: Real-time 3D spatial room planner powered by Three.js & React Three Fiber across 4 room archetypes (Executive Office, Luxury Living Room, Modern Bedroom, Modular Kitchen).
+* **Custom `.glb` 3D Model Import with IndexedDB Persistence**: Upload custom 3D furniture models from disk. Uploaded models and custom room coordinates are cached in browser IndexedDB, persisting across visits with zero cloud latency.
+* **360-Degree Orbital 3D Product Viewer**: Dedicated interactive 3D inspection screen for catalog products with studio lighting, wireframe mode, and dimension inspection.
+* **Curated Showroom Product Catalogue**: High-resolution furniture catalog with real-time stock levels, finish swatches, and dimension specs.
+* **Integrated Razorpay Digital Payment Gateway**: Seamless client checkout modal supporting UPI (Google Pay, PhonePe, Paytm), Credit/Debit Cards, and NetBanking with HMAC-SHA256 signature verification.
+* **Autogenerated PDF Payment Receipts & Resend Email Delivery**: Deterministic A4 vector PDF payment vouchers generated via Puppeteer, available for 1-click download and automatically dispatched to the customer's email via Resend API (`api.resend.com`).
 
 ---
 
@@ -298,8 +329,9 @@ Urban Furniture ERP runs as a single, multi-container Docker Compose application
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                             CLIENT LAYER                                 │
-│  React 18  ·  TypeScript Strict  ·  Tailwind CSS v3  ·  Vite Bundler     │
-│  Self-Hosted Typography (@fontsource Montserrat, DM Sans, IBM Plex Mono) │
+│  React 18.3  ·  TypeScript 5.7  ·  Tailwind CSS 3.4  ·  Vite 6.1 Bundler │
+│  Three.js 0.185  ·  React Three Fiber  ·  Lucide Icons  ·  IndexedDB     │
+│  Self-Hosted Fonts (@fontsource Montserrat, DM Sans, IBM Plex Mono)      │
 └──────────────────────────────────────────────────────────────────────────┘
                                      │
                            REST API (JSON over HTTP)
@@ -307,11 +339,12 @@ Urban Furniture ERP runs as a single, multi-container Docker Compose application
                                      │
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                             SERVER LAYER                                 │
-│  Node.js v20  ·  Express.js 5  ·  TypeScript Strict  ·  Zod Schemas      │
-│  Argon2id Password Hashing  ·  JWT Session Tokens  ·  Decimal.js Math    │
+│  Node.js v20  ·  Express.js 5  ·  TypeScript Strict  ·  Zod 3.23 Schemas │
+│  Argon2id Cryptography  ·  JWT Stateless Tokens  ·  Decimal.js Math      │
+│  Puppeteer 25 Headless Chromium  ·  Resend Email API  ·  Local Ollama    │
 └──────────────────────────────────────────────────────────────────────────┘
                                      │
-                          Parameterized SQL via pg
+                          Parameterized SQL via pg 8.23
                                      │
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                            DATABASE LAYER                                │
@@ -325,16 +358,21 @@ Urban Furniture ERP runs as a single, multi-container Docker Compose application
 | Layer | Technology | Version | Purpose in Urban Furniture ERP |
 |---|---|---|---|
 | **Frontend Framework** | React | `18.3.1` | Component-driven, responsive user interface |
-| **Language** | TypeScript | `5.9.3` | End-to-end type safety across client and server |
+| **Language** | TypeScript | `5.7.3` / `5.9.3` | End-to-end type safety across client and server |
 | **Styling** | Tailwind CSS | `3.4.17` | Utility-first design token implementation (`Design.md`) |
-| **Build Tooling** | Vite | `6.4.3` | Hot-module replacement and minified bundling |
+| **3D Graphics Engine** | Three.js & Draco WASM | `0.185.1` | High-performance WebGL 3D Room Studio and orbital product inspection |
+| **Build Tooling** | Vite | `6.1.0` | Hot-module replacement and minified production bundling |
 | **Backend Runtime** | Node.js | `20.x` | High-throughput asynchronous server runtime |
 | **API Framework** | Express.js | `5.2.1` | REST route orchestration, parsing, and middleware |
 | **Database Engine** | PostgreSQL | `16-alpine`| ACID-compliant transactional relational storage |
-| **Schema Validation** | Zod | `4.5.4` | Shared schemas for runtime payload validation |
+| **Schema Validation** | Zod | `3.23.8` / `4.5.4`| Shared schemas for runtime payload validation |
 | **Precision Math** | Decimal.js | `10.6.0` | IEEE 754 floating point error prevention |
 | **Password Security** | Argon2id | `0.45.1` | Memory-hard cryptographic credential hashing |
-| **Tokens** | JSON Web Tokens| `9.0.3` | Stateless authentication stored in `httpOnly` cookies |
+| **Document Rendering** | Puppeteer Headless | `25.10.0` | Deterministic A4 vector PDF receipt and invoice generation |
+| **QR Code Engine** | QRCode (Vector SVG) | `1.5.4` | Official NIC cryptographic GST verification seals |
+| **Notification Pipeline**| Resend Email REST | `api.resend.com` | Automated transactional dispatch of payment receipts to client inbox |
+| **Local AI Integration**| Local Ollama & Whisper | `qwen2.5:7b` | Offline CFO Copilot financial advisory & voice speech transcription |
+| **Payment Processing** | Razorpay Node SDK | `v2.9` | Online UPI, Card & NetBanking customer checkout modal |
 | **Containerization** | Docker Compose | `v2` | Single-command deployment of DB, API, and Web |
 
 ---
@@ -817,7 +855,399 @@ $$\text{Assets} \equiv \text{Liabilities} + \text{Equity}$$
 
 ---
 
-## 26. Database Schema & Data Architecture
+## 26. AI CFO Copilot & Financial Anomaly Analyzer
+
+Urban Furniture ERP features an embedded **AI CFO Copilot** designed to provide executive-level financial intelligence, instant ledger diagnostics, and strategic advisory directly from the PostgreSQL General Ledger.
+
+```mermaid
+flowchart TD
+    subgraph DataEngine [PostgreSQL Ledger Aggregator]
+        GL[(General Ledger Lines)] --> SNAP[Snapshot Aggregator]
+        AGING[A/R & A/P Aging] --> SNAP
+        BUDGET[Analytic Budgets] --> SNAP
+        GST[GST Liability Ledger] --> SNAP
+    end
+
+    subgraph ContextEngine [Context Grounding & Prompt Builder]
+        SNAP --> CONTEXT[Structured Financial Context JSON<br/>- Liquidity & Cash-to-Payable<br/>- Net Working Capital<br/>- Overdue Invoices & Days Past Due<br/>- Budget Overrun Risk<br/>- Zero-Delta Invariant Status]
+    end
+
+    subgraph LLMExecution [Dual Execution Pipeline]
+        CONTEXT --> CHECK{Ollama Service Available?}
+        CHECK -->|Yes| OLLAMA[Local Ollama qwen2.5:7b<br/>Temperature: 0.2]
+        CHECK -->|No / Timeout| HEURISTIC[Deterministic CFO Rule Engine<br/>Exact Formulaic Diagnostics]
+    end
+
+    subgraph OutputView [Executive Frontend Drawer]
+        OLLAMA --> UI[CFO Copilot Modal / Drawer<br/>- Conversational Financial Advice<br/>- Anomaly Highlighting<br/>- Executive Checklist<br/>- Direct Navigation Deep-Links]
+        HEURISTIC --> UI
+    end
+```
+
+### Core Capabilities of the CFO Copilot
+
+1. **Real-Time Financial Snapshot Aggregation (`GET /api/cfo-copilot/snapshot`)**:
+   * **Liquidity Analysis**: Calculates Cash on Hand, Bank balances, Total Liquid Funds, Current Payables, Current Receivables, and the critical **Cash-to-Payable Ratio** ($	ext{Cash} / 	ext{A/P}$).
+   * **Net Working Capital**: Live computation of $(	ext{Liquid Assets} + 	ext{Receivables}) - 	ext{Payables}$.
+   * **P&L Velocity**: Aggregates revenue, operational expenses, and net profit for the current month.
+   * **Overdue Debt Exposure**: Counts overdue invoices and bills, categorizing them by aging buckets and identifying top delinquent debtors.
+   * **Budget Burn Rate**: Tracks department analytic budget utilization, highlighting cost centers that have crossed 80% soft warning or 100% hard limit.
+   * **Zero-Delta Ledger Health**: Inspects the General Ledger invariant to ensure zero imbalance exists.
+
+2. **Conversational Advisory Queries (`POST /api/cfo-copilot/query`)**:
+   * Executives can ask natural language questions such as:
+     * *"What is our current cash runway and liquidity health?"*
+     * *"Which customer invoices are overdue and pose the highest collection risk?"*
+     * *"Are any timber procurement budgets at risk of overrun?"*
+     * *"What is our net GST liability for this filing period?"*
+   * Grounded in exact ledger figures; never hallucinates balances or transactions.
+
+3. **Executive Action Checklist**:
+   * Generates prioritized, actionable recommendations (e.g., *"Follow up with Neha Desai on invoice INV/2026/0014 (18 days overdue, ₹42,000)"*, *"Timber Procurement budget at 88% capacity; consider budget revision"*).
+   * Includes one-click deep links that navigate staff directly to the relevant screen in the ERP.
+
+---
+
+## 27. Conversational AI Voice-to-Bill Billing Engine
+
+To eliminate tedious manual line-item entry during busy showroom hours, Urban Furniture ERP introduces an **AI Voice-to-Bill** billing system (`/sales/voice-bill`).
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor SalesAgent as Sales Representative
+    participant Mic as Web Audio API
+    participant API as Express Voice-Bill API
+    participant Whisper as Whisper Transcription
+    participant NLP as Entity & Catalog Parser
+    participant DB as PostgreSQL Catalog
+    participant Posting as Posting Service
+
+    SalesAgent->>Mic: Spoken Order: "Sell 2 Teak Dining Tables and 6 Walnut Chairs to Neha Desai with 10% discount"
+    Mic->>API: Audio Stream / Base64 Payload
+    API->>Whisper: Speech-to-Text Transcription
+    Whisper-->>API: Transcribed Text String
+    API->>NLP: Extract: Quantities, Product Names, Customer, Discounts
+    NLP->>DB: Fuzzy SKU Match & Contact ID Lookup
+    DB-->>NLP: Matched Products & Active Price List
+    NLP-->>API: Structured Draft Session State
+    API-->>SalesAgent: Real-Time Editable Grid on Screen
+    SalesAgent->>API: Click [Confirm & Create Invoice]
+    API->>Posting: Validate & Create Customer Invoice
+    Posting->>DB: Balanced Double-Entry Journal Posted
+    API-->>SalesAgent: Confirmed Invoice Inv/2026/XXXX Generated
+```
+
+### Key Technical Highlights of Voice Billing
+
+1. **Dual Voice & Conversational Text Mode**:
+   * Staff can dictate orders via microphone using the Web Audio API or type conversational prompts into the chat box.
+2. **Audio Transcription Pipeline**:
+   * Audio payloads are transcribed using local Whisper models without sending customer or pricing data to external cloud services.
+3. **Fuzzy Entity Resolution**:
+   * Resolves informal product names (e.g., *"Teak Dining Table"*) against the `products` table using token similarity, resolving the exact SKU, unit sales price, and default revenue account.
+   * Identifies the customer contact from the `contacts` table.
+4. **Interactive Draft Session**:
+   * Orders are held in an in-memory draft session where staff can adjust quantities, modify unit prices, toggle discounts, or add/remove line items in an interactive table before finalizing.
+5. **One-Click Invoice Confirmation**:
+   * With a single click on `[Confirm & Create Invoice]`, the system calls `CustomerInvoiceService.create()` and `PostingService.postDocument()`, committing an immutable, balanced entry to the General Ledger.
+
+---
+
+## 28. Indian GST & Tax Compliance Engine
+
+Urban Furniture ERP features a complete, self-contained Indian Goods & Services Tax (GST) compliance suite built directly into the ERP core (`/report/gst`).
+
+```mermaid
+flowchart LR
+    subgraph Documents [Commercial Documents]
+        INV[Confirmed Customer Invoices]
+        BILL[Confirmed Vendor Bills]
+    end
+
+    subgraph ComplianceEngine [GST Compliance Service Layer]
+        IRNGen[SHA-256 IRN Hasher<br/>Supplier GSTIN + Inv No + FY]
+        QRGen[Official NIC Vector SVG QR<br/>Embedded Digital Seal]
+        EWayGen[E-Way Bill Processor<br/>Auto-trigger on >= ₹50,000]
+        GSTR1Gen[GSTR-1 Aggregator<br/>Table 4, 5/7, 12 HSN, 13 Docs]
+        GSTR3BGen[GSTR-3B Aggregator<br/>Outward Tax, Reverse Charge, ITC Offset]
+        GSTR2BGen[GSTR-2B Inward ITC Ledger<br/>Supplier Inward Reconciliation]
+    end
+
+    subgraph Outputs [Filing & Verification Views]
+        IRNGen --> EInvView[B2B E-Invoice Printout]
+        QRGen --> EInvView
+        EWayGen --> EWayView[E-Way Bill Manifest & Expiry Tracker]
+        GSTR1Gen --> GSTR1View[GSTR-1 Return Filing View]
+        GSTR3BGen --> GSTR3BView[GSTR-3B Net Tax Payable View]
+        GSTR2BGen --> GSTR2BView[GSTR-2B Input Tax Credit Ledger]
+    end
+
+    INV --> IRNGen
+    INV --> QRGen
+    INV --> EWayGen
+    INV --> GSTR1Gen
+    INV --> GSTR3BGen
+    BILL --> GSTR2BGen
+```
+
+### Comprehensive GST Modules
+
+#### 1. B2B E-Invoicing & Cryptographic IRN
+* Computes an authoritative 64-character hexadecimal **Invoice Reference Number (IRN)** using SHA-256:
+  $$	ext{IRN} = 	ext{SHA-256}(	ext{SupplierGSTIN} + 	ext{InvoiceNumber} + 	ext{FiscalYear} + 	ext{DocType})$$
+* Generates an official, offline-computed **NIC Vector SVG QR Code** embedded directly on the invoice. The QR code encodes:
+  * Seller GSTIN & Buyer GSTIN
+  * Invoice Number & Date
+  * Total Invoice Value & Total Tax Amount
+  * HSN Code of primary line item
+  * Digital signature token verifying document authenticity.
+
+#### 2. E-Way Bill Generation & Consignment Tracking
+* **Automatic Threshold Detection**: Commercial invoices with taxable totals $\ge 	ext{₹}50,000$ automatically flag the requirement for an E-Way Bill.
+* **Consignment Metadata**: Captures Transporter ID, Transporter Name, Distance in kilometers, Vehicle Registration Number, and Transport Mode (Road/Rail/Air/Ship).
+* **Validity Period Calculator**: Computes e-way bill validity based on statutory distance formulas (1 day per 200 km for normal cargo).
+* **Period Filtering**: Filter e-way bills by Fiscal Year and Month for seamless audit reporting.
+
+#### 3. GSTR-1 Outward Supplies Return
+Aggregates outward furniture sales into official statutory tables:
+* **Table 4**: Taxable outward supplies to registered persons (B2B).
+* **Table 5 & 7**: Taxable outward supplies to unregistered persons (B2C Large & Small).
+* **Table 12**: HSN-wise summary of outward supplies showing quantity, total value, taxable value, CGST, SGST, and IGST.
+* **Table 13**: Document issued register (Serial numbers of invoices issued, cancelled, and net active).
+
+#### 4. GSTR-3B Monthly Return & Net Tax Payable
+* Summarizes total outward taxable value and output tax liability.
+* Incorporates eligible **Input Tax Credit (ITC)** from confirmed vendor bills.
+* Dynamically computes **Net Tax Payable** after deducting eligible ITC:
+  $$	ext{Net Tax Payable} = 	ext{Output GST Liability} - 	ext{Eligible Input Tax Credit}$$
+
+#### 5. GSTR-2B Inward ITC Ledger
+* Reconciles inward supplier bills to calculate total available Input Tax Credit.
+* Categorizes ITC by supplier GSTIN, invoice date, and raw material category (e.g., Timber, Hardware, Upholstery).
+
+---
+
+## 29. Interactive 3D Room Studio & Space Configurator
+
+The **3D Room Studio** (`/portal/studio`) is a showroom-grade WebGL spatial configurator designed for homeowners and commercial interior designers to furnish rooms in real-time 3D space.
+
+```mermaid
+graph TD
+    subgraph ThreeJS_Scene [Three.js / React Three Fiber Scene]
+        CANVAS[WebGL Canvas Renderer]
+        LIGHTS[Ambient & Directional Studio Lighting]
+        ROOM[Room Archetype Boundary Meshes<br/>Floor, Walls, Baseboards]
+        FURNITURE[Interactive 3D Furniture Meshes<br/>Draco Compressed GLB Models]
+        CONTROLS[OrbitControls & DragControls<br/>X, Y, Z Coordinate Tracking & Rotation]
+    end
+
+    subgraph StateAndStorage [Local Persistence Tier]
+        IDB[(Browser IndexedDB<br/>Persisted GLB Models & Custom Layouts)]
+        STYLES[Room Style Presets<br/>Executive Office, Luxury Living, Modern Bedroom]
+        CUSTOM_UPLOAD[Custom .glb File Picker]
+    end
+
+    subgraph CommerceIntegration [ERP Commerce Bridge]
+        CART[1-Click Quotation / Cart Addition]
+        PRICING[Live Itemized Furniture Price Calculation]
+    end
+
+    CUSTOM_UPLOAD -->|Store Blob| IDB
+    IDB -->|Load Model| FURNITURE
+    STYLES -->|Restore Layout| ROOM
+    STYLES -->|Restore Coordinates| FURNITURE
+
+    FURNITURE --> CONTROLS
+    CONTROLS --> CANVAS
+    ROOM --> CANVAS
+    LIGHTS --> CANVAS
+
+    FURNITURE --> PRICING
+    PRICING --> CART
+```
+
+### Key Technical Features of the 3D Studio
+
+1. **4 Realistic Room Archetypes**:
+   * **Executive Office**: Corporate boardroom and private executive suite layouts.
+   * **Luxury Living Room**: Spacious open-concept living area with hardwood floors.
+   * **Modern Bedroom**: Bedroom suites with bed frames, nightstands, and dressers.
+   * **Modular Kitchen & Dining**: Dining tables, ergonomic seating, and credenzas.
+2. **Interactive 3D Furniture Placement**:
+   * Furniture items can be dragged across the floor plane with real-time $(X, Y, Z)$ spatial coordinate feedback.
+   * Dedicated rotation handles allow $360^\circ$ yaw adjustment to align furniture against walls or room centerpieces.
+3. **Custom `.glb` Model Import**:
+   * Users can upload custom 3D model files (`.glb`) directly from their local filesystem.
+   * The model is parsed via Three.js `GLTFLoader` with Draco mesh decompression and immediately positioned within the active scene.
+4. **Zero-Latency IndexedDB Persistence**:
+   * Uploaded `.glb` models and room layouts are automatically stored in the browser's **IndexedDB**.
+   * When the customer navigates away or returns in a new session, their customized room layout and imported models restore in `0ms` without re-uploading or cloud server dependency.
+5. **"Save to Room Styles" Preset Gallery**:
+   * Users can save multiple custom room configurations with descriptive names and auto-generated canvas snapshot thumbnails.
+   * Clicking a saved style instantly restores furniture positions, orientations, and finish swatches.
+6. **Material & Texture Customization**:
+   * Interactive swatches allow live switching of wood finishes (Teak Wood, Rich Walnut, Natural White Oak) and upholstery materials (Boucle Fabric, Genuine Brown Leather, Carrera Marble).
+7. **One-Click Quotation & Cart Addition**:
+   * Users can click `[Add Room Items to Cart]`, which aggregates every furniture piece placed in the 3D scene, retrieves live master data pricing, and creates a commercial quotation.
+8. **360-Degree Orbital Product Viewer (`/portal/viewer/:id`)**:
+   * Dedicated standalone product viewer featuring orbital camera controls, studio shadows, wireframe mode, and dimension annotations.
+
+---
+
+## 30. Client Customer Portal, Razorpay Gateway & PDF Receipts
+
+The **Customer Portal** (`/portal`) provides furniture clients with a secure, self-service digital experience for reviewing orders, inspecting B2B tax invoices, making online payments, and downloading receipts.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as Customer (Neha Desai)
+    participant Portal as Customer Portal UI
+    participant API as Express Portal API
+    participant Razorpay as Razorpay Gateway
+    participant PDF as Puppeteer Engine
+    participant Resend as Resend Email API
+    participant DB as PostgreSQL Ledger
+
+    Client->>Portal: Login with client credentials (clientuf)
+    Portal->>API: POST /api/portal/login
+    API-->>Portal: Scoped Session Cookie (WHERE customer_id = user.contact_id)
+    Client->>Portal: Inspect Open Invoice Inv/2026/0014 (₹42,000)
+    Client->>Portal: Click [Pay Now via Razorpay]
+    Portal->>API: POST /api/portal/payments/create-order
+    API->>Razorpay: Create Payment Order (Amount in Paise)
+    Razorpay-->>API: order_id & Transaction Token
+    API-->>Portal: Return Razorpay Order Configuration
+    Portal->>Client: Open Razorpay Checkout Modal (UPI, Cards, NetBanking)
+    Client->>Razorpay: Authorize Payment (₹42,000 via UPI)
+    Razorpay-->>Portal: Success Payload (payment_id, order_id, signature)
+    Portal->>API: POST /api/portal/payments/verify
+    API->>API: Verify HMAC-SHA256 Signature
+    API->>DB: Record Payment & Create Balanced Journal Entry
+    API->>PDF: Generate Signed A4 Payment Voucher PDF
+    PDF-->>API: Binary PDF Buffer
+    API->>Resend: POST api.resend.com/emails with PDF Attachment
+    Resend-->>Client: Deliver Receipt to Client Gmail Inbox
+    API-->>Portal: Payment Verified & Instant Download URL
+    Portal-->>Client: Show Payment Success Badge & [Download Receipt PDF]
+```
+
+### Technical Highlights of Customer Portal & Payments
+
+1. **Strict Data Isolation (`scopeFor(user, resource)`)**:
+   * Customer sessions are strictly scoped to their `contact_id`. Attempting to access an invoice, bill, or journal entry belonging to another customer returns an HTTP `403 Forbidden` error.
+2. **Razorpay Checkout Modal**:
+   * Embeds the official Razorpay checkout modal supporting UPI QR, Google Pay, PhonePe, credit/debit cards, and major Indian net banking portals.
+   * Supports both full settlement and partial installment payments.
+3. **Deterministic HMAC-SHA256 Verification**:
+   * The backend validates the cryptographic signature returned by Razorpay:
+     $$	ext{Signature} \equiv 	ext{HMAC-SHA256}(	ext{order\_id} + "|" + 	ext{payment\_id}, 	ext{RAZORPAY\_SECRET})$$
+   * Prevents fraudulent payment injections before any journal entry is posted.
+4. **Deterministic A4 PDF Payment Vouchers**:
+   * Uses Puppeteer to render a high-fidelity, printable A4 payment receipt complete with company details, GSTIN, payment method, allocated invoice numbers, transaction ID, and digital signature seal.
+5. **Automated Transactional Email Delivery (Resend API)**:
+   * When an online payment is confirmed, the system immediately dispatches an email via the Resend API (`api.resend.com`) with the signed receipt attached as a PDF directly to the client's email address.
+
+---
+
+## 31. Accounts Receivable (A/R) Aging & Overdue Settlement Hub
+
+Managing customer credit terms and overdue bills is central to furniture manufacturing cash flow. Urban Furniture ERP provides a dedicated **Accounts Receivable Hub** (`/sales/receivables`).
+
+```mermaid
+flowchart TD
+    INV[(Open Customer Invoices)] --> AGING[Aging Classification Engine]
+    AGING --> B0[Current: 0-30 Days Past Due]
+    AGING --> B1[Bucket 1: 31-60 Days Past Due]
+    AGING --> B2[Bucket 2: 61-90 Days Past Due]
+    AGING --> B3[Bucket 3: 90+ Days Past Due]
+
+    AGING --> ALERT{Any Overdue Invoices?}
+    ALERT -->|Yes| BANNER[Collapsible Overdue Alert Banner<br/>Total Overdue Amount & Invoice Count]
+    BANNER --> OVERDUE_GRID[Overdue Invoices Table<br/>Customer, Invoice Date, Due Date, Days Past Due]
+    OVERDUE_GRID --> SETTLE_BTN[1-Click Settle Due Button]
+
+    SETTLE_BTN --> REG_PAY[Register Payment Screen<br/>Auto-populates Customer & Due Amount]
+    REG_PAY --> FIFO[Decimal.js Strict FIFO Allocation<br/>Oldest Overdue Invoices Settled First]
+    FIFO --> POST_PAY[Post Payment to General Ledger]
+    POST_PAY --> RETURN[Auto-Return to Receivables Hub]
+```
+
+### Highlights of the Receivables Engine
+
+1. **Collapsible Overdue Alert Banner**:
+   * Automatically detects and tallies all customer invoices past their `due_date`.
+   * Displays an alert banner with the total overdue sum and an expandable interactive table listing invoice numbers, customer names, due dates, and exact days past due.
+2. **Multi-Bucket Aging Schedule**:
+   * Classifies outstanding balances into standard accounting aging buckets: **Current (0-30 days)**, **31-60 days**, **61-90 days**, and **90+ days**.
+   * Provides quick filtering and customer-by-customer balance drilldowns.
+3. **Seamless Navigation & One-Click Return**:
+   * Includes a prominent `[← Back to Bills to be Settled (Customer Summary)]` button so accountants can seamlessly transition between detailed aging schedules and customer summary cards.
+4. **Exact Decimal FIFO Settlement**:
+   * Utilizes `Decimal.js` across payment allocation calculations, eliminating floating-point pennies drift.
+   * Features a `[Settle All Open Invoices]` action that sorts open invoices by `dueDate ASC` and allocates payments strictly against the oldest overdue invoices first.
+5. **Instant Cache Invalidation**:
+   * Upon payment confirmation, the client cache is immediately refreshed, updating receivables totals, customer balances, and aging charts with zero stale data.
+
+---
+
+## 32. Enterprise Document Chatter & Audit Activity Stream
+
+Urban Furniture ERP includes an enterprise **Chatter & Activity Stream** drawer embedded across all primary transaction documents (Sales Orders, Invoices, Purchase Orders, Vendor Bills).
+
+```mermaid
+flowchart LR
+    DOC[Document: Invoice / Bill / Order] --> CHATTER_TRIGGER[Click Chatter Icon / Activity Tab]
+    CHATTER_TRIGGER --> DRAWER[Slide-Out Activity Drawer]
+
+    subgraph DrawerFeatures [Chatter Capabilities]
+        TIMELINE[Chronological Audit Timeline<br/>Status Transitions & Confirmations]
+        DIFFS[Field-Level Mutation Diffs<br/>Before and After Value Inspection]
+        NOTES[Team Collaboration Notes<br/>Internal Staff Comments]
+        BADGES[Role Badges<br/>Admin, Accountant, Sales]
+        EXPORT[1-Click CSV Export of Audit Trail]
+    end
+
+    DRAWER --> TIMELINE
+    DRAWER --> DIFFS
+    DRAWER --> NOTES
+    DRAWER --> BADGES
+    DRAWER --> EXPORT
+```
+
+### Technical Highlights of Document Chatter
+
+1. **Immutable Mutation Tracking**:
+   * Every document update, confirmation, or status change automatically writes an audit record to the `audit_log` table with user ID, timestamp, and action metadata.
+2. **Field-Level Diff Inspection**:
+   * Displays exact before-and-after diffs for modified fields (e.g., status changes from `draft` to `confirmed`, or price adjustments).
+3. **Internal Team Collaboration Notes**:
+   * Staff can post internal commentary directly on documents (e.g., *"Customer requested delivery delay until Friday"*, *"Approved by Senior Accountant"*).
+   * Author comments are visually branded with role badges (`Admin`, `Accountant`, `Sales`).
+4. **Searchable Audit Feed & CSV Export**:
+   * The enterprise audit trail supports full-text search, action filtering (Creation, Modification, Confirmation, Deletion), and one-click export to CSV for external auditors.
+
+---
+
+## 33. Vector Print & PDF Document Architecture
+
+All commercial and financial documents in Urban Furniture ERP are equipped with professional vector print stylesheets (`@media print`) and PDF export engines adhering to `docs/Design.md`.
+
+### Printable Documents
+
+| Document | Key Print Elements | Standard Compliance |
+|---|---|---|
+| **B2B Tax Invoice** | Company Header, GSTIN, Customer GSTIN, HSN Summary, Tax Breakdown (CGST/SGST/IGST), **NIC Vector QR Seal**, Bank Details | Official Indian GST E-Invoice Standard |
+| **Purchase Order** | Vendor Address, Delivery Address, Itemized Specifications, Analytic Account Tags, Terms & Conditions | Commercial Procurement Standard |
+| **Vendor Bill** | Supplier Bill Reference, Matched PO Number, Payment Terms, Due Date, Tax Lines | Accounts Payable Audit Standard |
+| **Payment Receipt** | Receipt Number, Payment Method, Transaction Reference, Invoices Settled, Signature Seal | General Ledger Cash Voucher Standard |
+| **Customer Statement** | Account Summary, Opening Balance, Invoices Issued, Payments Received, Aging Analysis | Client Account Reconciliation |
+| **P&L & Balance Sheet** | Categorized General Ledger Balances, Metric Summaries, Date Ranges | GAAP / Ind AS Financial Reporting |
+
+---
+
+## 34. Database Schema & Data Architecture
 
 The platform's relational foundation is organized into seven operational clusters in PostgreSQL:
 
@@ -849,7 +1279,7 @@ The platform's relational foundation is organized into seven operational cluster
 
 ---
 
-## 27. Entity Relationship (ER) Diagram
+## 35. Entity Relationship (ER) Diagram
 
 ```mermaid
 erDiagram
@@ -899,7 +1329,7 @@ erDiagram
 
 ---
 
-## 28. RESTful API Architecture
+## 36. RESTful API Architecture
 
 All endpoints adhere strictly to a standardized response envelope:
 
@@ -936,10 +1366,25 @@ All endpoints adhere strictly to a standardized response envelope:
 | `/api/reports/profit-loss` | `GET` | Aggregate period-specific P&L statement | Accountant/Admin |
 | `/api/reports/balance-sheet` | `GET` | Compute live balance sheet statement | Accountant/Admin |
 | `/api/verify` | `GET` | Audit check: $\sum \text{Debits} - \sum \text{Credits} \equiv 0$ | Accountant/Admin |
+| `/api/cfo-copilot/snapshot` | `GET` | Aggregates real-time financial ledger snapshot | Internal Staff |
+| `/api/cfo-copilot/query` | `POST` | Executes AI CFO copilot query with local Ollama | Internal Staff |
+| `/api/voice-bill/message` | `POST` | Processes natural language sales order prompt | Internal Staff |
+| `/api/voice-bill/confirm` | `POST` | Finalizes voice session draft into Customer Invoice | Internal Staff |
+| `/api/gst/invoice/:id` | `GET` | Computes B2B e-Invoice metadata, IRN hash & QR | Internal Staff |
+| `/api/gst/invoice/:id/qr-svg`| `GET`| Renders official vector SVG QR seal | Internal Staff |
+| `/api/gst/gstr-1` | `GET` | Aggregates GSTR-1 outward return summary | Internal Staff |
+| `/api/gst/gstr-3b` | `GET` | Aggregates GSTR-3B monthly return and net tax | Internal Staff |
+| `/api/gst/gstr-2b` | `GET` | Reconciles inward bills into eligible ITC ledger | Internal Staff |
+| `/api/gst/eway-bills` | `GET` | Lists consignments exceeding ₹50,000 threshold | Internal Staff |
+| `/api/portal/payments/create-order`| `POST`| Creates Razorpay checkout order | Portal Contact |
+| `/api/portal/payments/verify`| `POST`| Verifies Razorpay HMAC signature & posts payment | Portal Contact |
+| `/api/receivables` | `GET` | Returns A/R aging schedule and overdue invoices | Internal Staff |
+| `/api/audit/timeline` | `GET` | Fetches document mutation history and chatter | Internal Staff |
+
 
 ---
 
-## 29. Authoritative Validation Architecture
+## 37. Authoritative Validation Architecture
 
 Validation follows a strict two-tier pattern:
 
@@ -979,7 +1424,7 @@ Validation follows a strict two-tier pattern:
 
 ---
 
-## 30. Security, Privacy & Isolation Architecture
+## 38. Security, Privacy & Isolation Architecture
 
 * **Stateless JWT in HttpOnly Cookies**: Session tokens are signed via cryptographic secrets and transmitted inside `HttpOnly`, `SameSite=Lax` cookies, neutralizing Cross-Site Scripting (XSS) token exfiltration.
 * **Argon2id Password Hashing**: Passwords are hashed with memory-hard Argon2id parameters (`m=65536, t=3, p=4`), offering protection against GPU-based rainbow table attacks.
@@ -989,7 +1434,7 @@ Validation follows a strict two-tier pattern:
 
 ---
 
-## 31. UI/UX Design Philosophy & Visual Tokens
+## 39. UI/UX Design Philosophy & Visual Tokens
 
 Urban Furniture ERP features a tailored design system inspired by bespoke furniture showrooms:
 
@@ -1043,7 +1488,7 @@ graph TD
 
 ---
 
-## 32. Screen-by-Screen ERP Specification
+## 40. Screen-by-Screen ERP Specification
 
 | Screen / View | Primary Purpose | Primary Inputs | System Outputs / Side Effects | Connected Modules |
 |---|---|---|---|---|
@@ -1063,11 +1508,19 @@ graph TD
 | **Budget View** | Cost center allocations | Analytic account, committed amounts | Tracks planned vs actual expenditure | Analytics, PO Confirm |
 | **Profit & Loss** | Operating performance | Fiscal year dropdown, Print CTA | Computes Net Income = Revenue - Expenses | General Ledger |
 | **Balance Sheet** | Statement of position | Fiscal year dropdown, Print CTA | Displays Assets $\equiv$ Liabilities + Equity | General Ledger |
-| **Customer Portal**| Client self-service | Invoice inspection, payment entry | Real-time invoice settlement from client side | Invoicing, Payments |
+| **Voice-to-Bill Studio** | `/sales/voice-bill` | Natural language conversational sales invoice generation with Whisper transcription. | Sales, Admin |
+| **GST Return Centre** | `/report/gst` | GSTR-1, GSTR-3B, GSTR-2B filing ledgers and E-Way Bill consignment tracking. | Accountant, Admin |
+| **Receivables & Aging Hub** | `/sales/receivables` | Overdue invoice alerts, aging bucket tables, and one-click FIFO payment settlement. | Accountant, Admin |
+| **Customer Portal Home** | `/portal` | Scoped client dashboard showing outstanding dues, recent orders, and invoice links. | Customer Contact |
+| **3D Room Studio** | `/portal/studio` | Interactive 3D room configurator with .glb model upload, drag-and-drop, and cart add. | Customer Contact, Public |
+| **3D Product Viewer** | `/portal/viewer/:id` | 360-degree orbital 3D model inspector with lighting controls and dimensions. | Customer Contact, Public |
+| **Showroom Catalogue** | `/portal/catalogue` | Curated product catalog with finish swatches, specifications, and real-time stock. | Customer Contact, Public |
+| **Portal Invoice Detail** | `/portal/invoices/:id` | Invoice inspection with Razorpay online checkout and instant signed PDF receipt download. | Customer Contact |
+
 
 ---
 
-## 33. End-to-End Enterprise Scenario
+## 41. End-to-End Enterprise Scenario
 
 ### Scenario: Raw Material Procurement and Custom Dining Table Sale
 
@@ -1113,7 +1566,7 @@ graph TD
 
 ---
 
-## 34. Visual Workflow Diagram Gallery
+## 42. Visual Workflow Diagram Gallery
 
 ### Diagram 1: Complete Payment Installment Lifecycle
 ```mermaid
@@ -1161,29 +1614,26 @@ flowchart TD
 
 ---
 
-## 35. Live Hackathon Judging & Demo Walkthrough
+## 43. Live Hackathon Judging & Demo Walkthrough
 
 Judges can verify the platform end-to-end in **under 5 minutes** following this structured sequence:
 
 | Step | Action to Perform | What to Inspect on Screen | Technical Verification Point |
 |---|---|---|---|
-| **1** | Open `http://localhost:5173` | The two distinct portal chooser boxes (Admin vs Customer) | Route `/` cleanly redirects to `/login` |
-| **2** | Click **Admin Portal** and enter `adminuf` / `Admin@12345` | Dashboard loads with live status counts | HttpOnly JWT session cookie set |
-| **3** | Navigate to **Purchase $\to$ Orders $\to$ New** | Create PO for ₹30,000 against *Timber Procurement* | Line item calculations: $\text{Qty} \times \text{Price}$ |
-| **4** | Click **Confirm** on PO | System validates budget; confirms order | Commercial intent recorded (no journal entry) |
-| **5** | Click **Create Bill** | Bill is created with lines imported from PO | Foreign key `po_id` linked; no re-entry |
-| **6** | Click **Confirm** on Bill | Status shifts to `confirmed`; JE number is linked | Balanced journal entry written to `journal_entries` |
-| **7** | Click **Pay Bill** | Enter partial payment of ₹10,000 via Bank | Status transitions to `Partial`; remaining ₹20,000 |
-| **8** | Navigate to **Sales $\to$ Orders $\to$ New** | Create SO for customer *Neha Desai* for ₹50,000 | Contact and product masters populated |
-| **9** | Click **Confirm** $\to$ **Create Invoice** | Invoice generated; click **Confirm** | Revenue recognized: Dr Debtors / Cr Sales Income |
-| **10**| Open `http://localhost:5173/report/profit-loss` | Net Profit updates to reflect ₹50k sales and ₹30k costs | Report computed live from `journal_entry_lines` |
-| **11**| Open `http://localhost:5173/report/balance-sheet` | Assets cleanly equal Liabilities + Equity | Balanced to the paisa: $\Delta = 0.00$ |
-| **12**| Open **Customer Portal** at `http://localhost:5173/login?portal=customer` | Log in as `clientuf` / `Client@12345` | Displays only Neha Desai's invoices |
-| **13**| Click **Pay Now** inside Customer Portal | Record self-service balance settlement | Ledger settled live from the client portal |
+| **1** | Open `http://localhost:5173` | Portal chooser (Admin ERP vs Customer Portal) | Route `/` cleanly redirects to `/login` |
+| **2** | Click **Admin Portal** and enter `adminuf` / `Admin@12345` | Dashboard loads with live status counts & working capital | HttpOnly JWT session cookie set; working capital dynamically computed |
+| **3** | Click the **AI CFO Copilot** icon in top navigation | Ask: *"What is our liquidity runway and overdue debt risk?"* | Live snapshot context queried from Postgres; response generated via Ollama |
+| **4** | Navigate to **Sales $	o$ Voice Billing** (`/sales/voice-bill`) | Speak or type: *"Sell 2 Teak Dining Tables to Neha Desai with 10% discount"* | NLP resolves product SKU, customer contact ID, discount; click **Confirm** to generate invoice |
+| **5** | Navigate to **Reports $	o$ GST Returns** (`/report/gst`) | Inspect GSTR-1, GSTR-3B and E-Way Bills | B2B e-invoice with 64-char SHA-256 IRN and printable NIC QR seal rendered |
+| **6** | Navigate to **Sales $	o$ Receivables** (`/sales/receivables`) | Inspect the **Overdue Invoices Alert Banner** | Expand overdue invoices; click **[Settle Due]** to test FIFO `Decimal.js` allocation |
+| **7** | Open **Customer Portal** at `http://localhost:5173/portal` | Log in as `clientuf` / `Client@12345` | Tenant-scoped dashboard displays only Neha Desai's records |
+| **8** | Open **3D Room Studio** (`/portal/studio`) | Drag furniture into scene; test custom `.glb` upload | Three.js WebGL canvas renders room; coordinates persist to IndexedDB |
+| **9** | Open Customer Invoice and click **Pay Now** | Test Razorpay Checkout modal | HMAC-SHA256 signature verified; instant signed PDF receipt downloaded & emailed via Resend |
+| **10**| Open `http://localhost:5173/report/profit-loss` & `balance-sheet` | Review P&L and Balance Sheet statements | Total Debit $\equiv$ Total Credit; zero discrepancy $\Delta = 0.00$ |
 
 ---
 
-## 36. Architectural Differentiators
+## 44. Architectural Differentiators
 
 1. **Inviolable Trigger Guard**: Ledger balance is protected by PostgreSQL triggers. Even direct SQL scripts cannot post an unbalanced journal entry.
 2. **Zero Commercial Contamination**: Purchase and sales orders remain commercial documents, preventing false revenue recognition before fulfillment.
@@ -1194,7 +1644,7 @@ Judges can verify the platform end-to-end in **under 5 minutes** following this 
 
 ---
 
-## 37. Future Roadmap
+## 45. Future Roadmap
 
 The following enhancements represent potential roadmap extensions, intentionally separated from current functionality:
 
@@ -1206,7 +1656,7 @@ The following enhancements represent potential roadmap extensions, intentionally
 
 ---
 
-## 38. Project Directory Topology
+## 46. Project Directory Topology
 
 ```
 urban-furniture/
@@ -1253,7 +1703,7 @@ urban-furniture/
 
 ---
 
-## 39. Core Development Principles
+## 47. Core Development Principles
 
 1. **Database Authority**: `db/schema.sql` is the sole source of truth for tables, columns, and types.
 2. **Backend Financial Authority**: The frontend is treated as untrusted presentation; calculations are verified by the backend.
@@ -1264,7 +1714,7 @@ urban-furniture/
 
 ---
 
-## 40. Installation, Setup & Verification
+## 48. Installation, Setup & Verification
 
 ### Prerequisites
 * **Docker Engine** `v24+` & **Docker Compose** `v2+`
@@ -1361,7 +1811,7 @@ curl -s http://localhost:5002/api/verify | jq .
 
 ---
 
-## 41. Conclusion
+## 49. Conclusion
 
 **Urban Furniture ERP** balances accounting rigor with an approachable, showroom-ready user experience. By enforcing double-entry invariants at the database layer, decoupling commercial orders from financial entries, and supporting staged installment workflows, it addresses the core operational challenges faced by furniture businesses.
 
