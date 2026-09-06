@@ -134,13 +134,11 @@ export const PortalLayout: React.FC = () => {
           {/* Center: Navigation Headings */}
           <nav
             style={{
-              position: 'absolute',
-              left: '48%',
-              transform: 'translateX(-50%)',
               display: 'flex',
               alignItems: 'center',
               height: '100%',
               gap: 4,
+              flexShrink: 0,
               zIndex: 2,
             }}
           >
