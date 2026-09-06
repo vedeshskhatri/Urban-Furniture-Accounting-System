@@ -48,6 +48,10 @@ export interface SalesOrderDTO {
   total: string;
   totalAmount: string;
   lines: SalesOrderLineDTO[];
+  invoiceId?: number | null;
+  invoiceNumber?: string | null;
+  invoiceStatus?: string | null;
+  isInvoiced?: boolean;
   createdAt: string;
 }
 
@@ -135,6 +139,111 @@ export class SalesOrderService {
         `INSERT INTO audit_log (table_name, record_id, action, user_id, after_data)
          VALUES ('sales_orders', $1, 'create', $2, $3)`,
         [soId, userId || null, JSON.stringify({ number: soNumber, total: grandTotalDec.toFixed(2) })]
+      );
+
+      return (await SalesOrderService.getSalesOrderById(soId, tx))!;
+    });
+  }
+
+  /**
+   * Update an existing Sales Order.
+   * Allowed while in draft, OR while confirmed as long as NO customer invoice has been generated yet.
+   * If an invoice is already created, editing is blocked permanently.
+   */
+  static async updateSalesOrder(soId: number, input: CreateSalesOrderInput, userId?: number): Promise<SalesOrderDTO> {
+    return await withTransaction(async (tx: PoolClient) => {
+      const soRes = await tx.query<{ id: number; number: string; status: string; customer_id: number }>(
+        `SELECT id, number, status, customer_id FROM sales_orders WHERE id = $1 FOR UPDATE`,
+        [soId]
+      );
+      if (soRes.rows.length === 0) {
+        throw new Error(`Sales Order #${soId} not found`);
+      }
+      const so = soRes.rows[0];
+
+      // Block edit permanently if customer invoice already generated for this SO
+      const invRes = await tx.query<{ id: number; number: string }>(
+        `SELECT id, number FROM customer_invoices WHERE so_id = $1 LIMIT 1`,
+        [soId]
+      );
+      if (invRes.rows.length > 0) {
+        throw new Error(`Cannot edit Sales Order ${so.number}: Customer Invoice ${invRes.rows[0].number} has already been created`);
+      }
+
+      // Compute exact decimal totals
+      let subtotalDec = new Decimal(0);
+      let taxTotalDec = new Decimal(0);
+
+      const computedLines = input.lines.map((line, idx) => {
+        const qtyDec = new Decimal(line.qty || 0);
+        const priceDec = new Decimal(line.unitPrice || 0);
+        const taxRateDec = new Decimal(line.taxRate || 0);
+
+        const lineSubtotal = qtyDec.times(priceDec);
+        const lineTax = lineSubtotal.times(taxRateDec.dividedBy(100));
+        const lineTotal = lineSubtotal.plus(lineTax);
+
+        subtotalDec = subtotalDec.plus(lineSubtotal);
+        taxTotalDec = taxTotalDec.plus(lineTax);
+
+        return {
+          lineNo: idx + 1,
+          productId: line.productId,
+          analyticAccountId: line.analyticAccountId || null,
+          qty: qtyDec.toFixed(2),
+          unitPrice: priceDec.toFixed(2),
+          taxRate: taxRateDec.toFixed(2),
+          subtotal: lineSubtotal.toFixed(2),
+          taxAmount: lineTax.toFixed(2),
+          total: lineTotal.toFixed(2),
+        };
+      });
+
+      const grandTotalDec = subtotalDec.plus(taxTotalDec);
+      const orderDate = input.orderDate || new Date().toISOString().split('T')[0];
+
+      // Update sales_orders record
+      await tx.query(
+        `UPDATE sales_orders
+         SET customer_id = $1, order_date = $2, subtotal = $3, tax_total = $4, total = $5
+         WHERE id = $6`,
+        [
+          input.customerId,
+          orderDate,
+          subtotalDec.toFixed(2),
+          taxTotalDec.toFixed(2),
+          grandTotalDec.toFixed(2),
+          soId,
+        ]
+      );
+
+      // Replace lines
+      await tx.query(`DELETE FROM sales_order_lines WHERE so_id = $1`, [soId]);
+      for (const line of computedLines) {
+        await tx.query(
+          `INSERT INTO sales_order_lines
+             (so_id, line_no, product_id, analytic_account_id, qty, unit_price, tax_rate, subtotal, tax_amount, total)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            soId,
+            line.lineNo,
+            line.productId,
+            line.analyticAccountId,
+            line.qty,
+            line.unitPrice,
+            line.taxRate,
+            line.subtotal,
+            line.taxAmount,
+            line.total,
+          ]
+        );
+      }
+
+      // Audit log
+      await tx.query(
+        `INSERT INTO audit_log (table_name, record_id, action, user_id, after_data)
+         VALUES ('sales_orders', $1, 'update', $2, $3)`,
+        [soId, userId || null, JSON.stringify({ number: so.number, total: grandTotalDec.toFixed(2) })]
       );
 
       return (await SalesOrderService.getSalesOrderById(soId, tx))!;
@@ -328,6 +437,13 @@ export class SalesOrderService {
     const taxTotal = String(so.tax_total ?? '0.00');
     const total = String(so.total ?? '0.00');
 
+    // Check if an invoice has already been created for this sales order
+    const invRes = await clientOrPool.query<{ id: number; number: string; status: string }>(
+      `SELECT id, number, status FROM customer_invoices WHERE so_id = $1 LIMIT 1`,
+      [soId]
+    );
+    const linkedInvoice = invRes.rows[0] || null;
+
     return {
       id: so.id,
       number: so.number,
@@ -356,6 +472,10 @@ export class SalesOrderService {
         taxAmount: String(r.tax_amount),
         total: String(r.total),
       })),
+      invoiceId: linkedInvoice ? linkedInvoice.id : null,
+      invoiceNumber: linkedInvoice ? linkedInvoice.number : null,
+      invoiceStatus: linkedInvoice ? linkedInvoice.status : null,
+      isInvoiced: Boolean(linkedInvoice),
       createdAt: so.created_at ? new Date(so.created_at).toISOString() : '',
     };
   }

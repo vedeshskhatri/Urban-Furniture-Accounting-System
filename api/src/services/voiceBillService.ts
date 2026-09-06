@@ -404,10 +404,10 @@ export class VoiceBillService {
     gstin: string | null;
   }>> {
     const res = await pool.query(`
-      SELECT id, name, mobile, email, city, state, gstin
+      SELECT DISTINCT ON (name) id, name, mobile, email, city, state, gstin
       FROM contacts
       WHERE type IN ('customer', 'both') AND is_archived = false
-      ORDER BY name ASC
+      ORDER BY name ASC, id ASC
       LIMIT 100;
     `);
     return res.rows;

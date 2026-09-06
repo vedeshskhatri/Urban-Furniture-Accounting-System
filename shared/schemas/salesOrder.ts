@@ -44,6 +44,10 @@ export interface SalesOrderDTO {
   taxAmount: string;
   totalAmount: string;
   lines: SalesOrderLineDTO[];
+  invoiceId?: number | null;
+  invoiceNumber?: string | null;
+  invoiceStatus?: string | null;
+  isInvoiced?: boolean;
   createdAt: string;
   updatedAt: string;
 }

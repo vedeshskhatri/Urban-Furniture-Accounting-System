@@ -154,9 +154,13 @@ contacts, cid = [], 0
 for f in FIRMS:                                   # vendors
     cid += 1; c = random.choice(CITIES)
     contacts.append({"id": cid, "name": f, "type": "vendor", "city": c})
+used_names = set(FIRMS)
 for i in range(34):                               # customers
     cid += 1; c = random.choice(CITIES)
     nm = f"{random.choice(FIRST)} {random.choice(LAST)}"
+    while nm in used_names:
+        nm = f"{random.choice(FIRST)} {random.choice(LAST)}"
+    used_names.add(nm)
     contacts.append({"id": cid, "name": nm, "type": "customer", "city": c})
 vendors   = [c for c in contacts if c["type"] == "vendor"]
 customers = [c for c in contacts if c["type"] == "customer"]

@@ -60,7 +60,18 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
   useEffect(() => {
     fetch('/api/contacts?type=customer')
       .then(res => res.json())
-      .then(json => json.data && setContacts(json.data))
+      .then(json => {
+        if (json.data) {
+          const seen = new Set<string>();
+          const unique = json.data.filter((c: any) => {
+            const key = `${(c.name || '').toLowerCase().trim()}::${(c.email || '').toLowerCase().trim()}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setContacts(unique);
+        }
+      })
       .catch(() => {});
 
     fetch('/api/products')

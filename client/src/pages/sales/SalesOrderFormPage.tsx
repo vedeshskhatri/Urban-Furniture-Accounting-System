@@ -34,7 +34,16 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
     fetch('/api/contacts?type=customer')
       .then(res => res.json())
       .then(json => {
-        if (json.data) setContacts(json.data);
+        if (json.data) {
+          const seen = new Set<string>();
+          const unique = json.data.filter((c: any) => {
+            const key = `${(c.name || '').toLowerCase().trim()}::${(c.email || '').toLowerCase().trim()}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
+          setContacts(unique);
+        }
       })
       .catch(() => {});
 
@@ -135,6 +144,43 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
     }
   };
 
+  const handleUpdateOrder = async () => {
+    if (!order?.id) return;
+    if (!customerId) {
+      setError('Please select a customer.');
+      return;
+    }
+    if (lines.length === 0 || lines.some(l => !l.productId || Number(l.qty) <= 0)) {
+      setError('Please provide valid products and quantities for all lines.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/sales-orders/${order.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerId,
+          orderDate,
+          lines,
+        }),
+      });
+      const json = await res.json();
+      if (json.data) {
+        setOrder(json.data);
+        setInfoMsg(`Sales Order ${json.data.number} updated successfully.`);
+      } else {
+        setError(json.error?.message || 'Failed to update Sales Order');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleConfirm = async () => {
     if (!order?.id) {
       await handleSaveDraft();
@@ -183,8 +229,10 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
     }
   };
 
+  const isInvoiced = Boolean(order?.isInvoiced || order?.invoiceId);
   const isConfirmed = order?.status === 'confirmed';
   const isDraft = !order || order.status === 'draft';
+  const isLocked = isInvoiced;
 
   return (
     <div className="max-w-5xl mx-auto pb-16">
@@ -194,11 +242,18 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
         onNew={() => {
           navigate('/sales/orders/new');
         }}
+        onSaveDraft={!order ? handleSaveDraft : undefined}
+        onSave={order && !isLocked ? handleUpdateOrder : undefined}
         onConfirm={isDraft ? handleConfirm : undefined}
-        onCreateInvoice={isConfirmed ? handleCreateInvoice : undefined}
-        canConfirm={lines.length > 0}
-        canCreateInvoice={isConfirmed}
+        onCreateInvoice={isConfirmed && !isInvoiced ? handleCreateInvoice : undefined}
+        onViewInvoice={order?.invoiceId ? () => navigate(`/sales/invoices/${order.invoiceId}`) : undefined}
+        canConfirm={lines.length > 0 && customerId > 0}
+        canCreateInvoice={isConfirmed && !isInvoiced}
+        canSave={lines.length > 0 && customerId > 0}
+        isDraft={isDraft}
         isConfirmed={isConfirmed}
+        isInvoiced={isInvoiced}
+        invoiceNumber={order?.invoiceNumber}
         isLoading={loading}
       />
 
@@ -208,6 +263,38 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
         {infoMsg && (
           <div className="p-4 bg-posted-bg border border-posted/30 text-posted rounded-md mb-4 text-sm font-medium">
             ✓ {infoMsg}
+          </div>
+        )}
+
+        {/* State Notice Banners */}
+        {isInvoiced && (
+          <div className="p-4 bg-brown-100 border border-brown-300 text-brown-900 rounded-[10px] mb-4 text-sm font-medium flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base">🔒</span>
+              <span>
+                <strong>Permanently Locked:</strong> Customer Invoice <strong>{order?.invoiceNumber}</strong> has already been generated. This Sales Order is permanently locked against further edits.
+              </span>
+            </div>
+            {order?.invoiceId && (
+              <button
+                type="button"
+                onClick={() => navigate(`/sales/invoices/${order.invoiceId}`)}
+                className="px-3.5 py-1.5 bg-brown-900 text-cream text-xs font-semibold rounded-[6px] hover:bg-brown-800 transition-colors cursor-pointer shadow-sm flex-shrink-0"
+              >
+                Open Invoice →
+              </button>
+            )}
+          </div>
+        )}
+
+        {isConfirmed && !isInvoiced && (
+          <div className="p-3.5 bg-amber-50 border border-amber-300/80 text-amber-900 rounded-[10px] mb-4 text-xs font-medium flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">📝</span>
+              <span>
+                <strong>Sales Order Confirmed:</strong> You can still edit products, quantities, prices, or customer details and click <strong>"Save Changes"</strong> before the invoice is created. Once <strong>"Create Invoice"</strong> is clicked, this order will be permanently locked.
+              </span>
+            </div>
           </div>
         )}
 
@@ -230,10 +317,12 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
                 Customer Name *
               </label>
               <select
-                disabled={isConfirmed}
+                disabled={isLocked}
                 value={customerId}
                 onChange={e => setCustomerId(Number(e.target.value))}
-                className="w-full bg-surface border border-brown-300 rounded-[6px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                className={`w-full bg-surface border border-brown-300 rounded-[6px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm ${
+                  isLocked ? 'opacity-60 cursor-not-allowed bg-brown-50' : ''
+                }`}
               >
                 <option value={0} disabled>Select Customer...</option>
                 {contacts.map(c => (
@@ -251,10 +340,12 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
               </label>
               <input
                 type="date"
-                disabled={isConfirmed}
+                disabled={isLocked}
                 value={orderDate}
                 onChange={e => setOrderDate(e.target.value)}
-                className="w-full bg-surface border border-brown-300 rounded-[6px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm"
+                className={`w-full bg-surface border border-brown-300 rounded-[6px] px-3 py-2 text-brown-900 focus:ring-2 focus:ring-brown-700 outline-none text-sm ${
+                  isLocked ? 'opacity-60 cursor-not-allowed bg-brown-50' : ''
+                }`}
               />
             </div>
           </div>
@@ -268,7 +359,7 @@ export const SalesOrderFormPage: React.FC<SalesOrderFormPageProps> = ({ orderId:
             products={products}
             analytics={analytics}
             onChange={setLines}
-            disabled={isConfirmed}
+            disabled={isLocked}
           />
         </div>
       </div>

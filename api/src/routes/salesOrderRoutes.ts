@@ -69,6 +69,30 @@ salesOrderRouter.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// 3b. PUT /api/sales-orders/:id - Update sales order (allowed if draft or confirmed without invoice)
+salesOrderRouter.put('/:id', async (req: Request, res: Response) => {
+  try {
+    const soId = parseInt(String(req.params.id), 10);
+    if (isNaN(soId)) {
+      return sendError(res, 'INVALID_ID', 'Sales order ID must be a number', 400);
+    }
+
+    const parse = CreateSalesOrderSchema.safeParse(req.body);
+    if (!parse.success) {
+      const fields: Record<string, string> = {};
+      parse.error.issues.forEach(err => {
+        fields[err.path.join('.')] = err.message;
+      });
+      return sendError(res, 'VALIDATION_ERROR', 'Invalid Sales Order data', 400, 'blocking', fields);
+    }
+
+    const updated = await SalesOrderService.updateSalesOrder(soId, parse.data, (req as any).user?.id);
+    return sendSuccess(res, updated);
+  } catch (err: any) {
+    return sendError(res, 'UPDATE_ERROR', err.message, 400);
+  }
+});
+
 // 4. POST /api/sales-orders/:id/confirm
 // INVARIANT: ABSOLUTELY NO JOURNAL ENTRY ON SO CONFIRM
 salesOrderRouter.post('/:id/confirm', async (req: Request, res: Response) => {
