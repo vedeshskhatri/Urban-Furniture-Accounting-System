@@ -240,6 +240,30 @@ export const CfoCopilotModal: React.FC<CfoCopilotModalProps> = ({
       query: 'Summarize our current GST taxable turnover and tax liabilities for monthly filing.',
       focus: 'gst',
     },
+    {
+      label: '💡 What is Working Capital?',
+      icon: HelpCircle,
+      query: 'What is working capital, how is it calculated, and what is Urban Furniture\'s position right now?',
+      focus: 'liquidity',
+    },
+    {
+      label: '💡 Cash vs. Profit',
+      icon: PieChart,
+      query: 'Explain the difference between accounting profit and actual cash flow in our system.',
+      focus: 'overview',
+    },
+    {
+      label: '💡 How Double-Entry Works',
+      icon: Building2,
+      query: 'How does double-entry bookkeeping and debits/credits work in our furniture business?',
+      focus: 'overview',
+    },
+    {
+      label: '💡 Can We Spend ₹50,000?',
+      icon: DollarSign,
+      query: 'Can we afford to spend ₹50,000 on new workshop equipment today without risking supplier payments?',
+      focus: 'liquidity',
+    },
   ];
 
   // Simple, elegant Markdown formatter for CFO answers

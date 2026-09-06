@@ -37,10 +37,29 @@ async function main() {
     console.log('Execution Time:', `${res.executionTimeMs}ms`);
     console.log('\n--- Advice Content ---');
     console.log(res.advice);
-    console.log('----------------------\n');
+    // 4. Test Basic Question: Working Capital
+    console.log('--- Step 4: Test Basic Question (Working Capital) ---');
+    const basicRes = await CfoCopilotService.queryCfoCopilot({
+      message: 'What is working capital and why is it important for Urban Furniture?',
+      focus: 'liquidity',
+    });
+    console.log('Basic Question Source:', basicRes.source);
+    console.log('Basic Question Model:', basicRes.modelUsed);
+    console.log('Basic Question Response (preview):', basicRes.advice.slice(0, 200) + '...\n');
+    console.log('✅ PASS: Basic educational question answered.\n');
+
+    // 5. Test Affordability Question
+    console.log('--- Step 5: Test Basic Affordability Decision ---');
+    const affordRes = await CfoCopilotService.queryCfoCopilot({
+      message: 'Can we afford to purchase ₹50,000 of new stock today?',
+      focus: 'liquidity',
+    });
+    console.log('Affordability Source:', affordRes.source);
+    console.log('Affordability Response (preview):', affordRes.advice.slice(0, 200) + '...\n');
+    console.log('✅ PASS: Basic affordability question answered.\n');
 
     console.log('====================================================');
-    console.log('✅ ALL CFO COPILOT VERIFICATIONS PASSED');
+    console.log('✅ ALL CFO COPILOT & BASIC QUESTIONS VERIFIED');
     console.log('====================================================');
   } catch (err: any) {
     console.error('❌ Verification failed:', err);
