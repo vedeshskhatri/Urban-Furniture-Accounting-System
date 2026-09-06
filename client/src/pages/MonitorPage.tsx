@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import Decimal from 'decimal.js';
 import { ShieldCheck, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
+import { formatINR } from '../lib/money';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -49,8 +50,7 @@ function now(): string {
 }
 
 function fmtMoney(val: string): string {
-  const d = new Decimal(val || '0');
-  return '₹ ' + d.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return formatINR(val || '0');
 }
 
 /** Triggers the CSS flash animation by toggling a class on a ref. */

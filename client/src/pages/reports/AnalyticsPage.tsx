@@ -29,6 +29,7 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { formatINR, formatIndianNumber } from '../../lib/money';
 import {
   Package,
   Layers,
@@ -65,14 +66,12 @@ import {
 
 function fmtMoney(val: string | number | null | undefined): string {
   if (val === null || val === undefined || val === '') return '₹0.00';
-  const d = new Decimal(String(val) || '0');
-  return '₹' + d.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return formatINR(val);
 }
 
 function fmtQty(val: string | number | null | undefined): string {
   if (val === null || val === undefined || val === '') return '0.00';
-  const d = new Decimal(String(val) || '0');
-  return d.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return formatIndianNumber(val);
 }
 
 /* ── Style Tokens (from docs/Design.md) ────────────────────────────────── */

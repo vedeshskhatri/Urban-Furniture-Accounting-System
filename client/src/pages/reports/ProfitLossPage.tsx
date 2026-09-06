@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import { ReportsApi, ProfitLossReport } from '../../api/reports.api';
 import Money from '../../components/ui/Money';
-import { formatYAxisINR } from '../../lib/money';
+import { formatINR, formatYAxisINR } from '../../lib/money';
 import LedgerDrilldownModal from './LedgerDrilldownModal';
 import {
   Printer,
@@ -438,7 +438,7 @@ export default function ProfitLossPage() {
                 Total Revenue
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--posted)' }}>
-                ₹{totalIncomeDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                {formatINR(totalIncomeDec)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>Invoiced gross turnover</span>
             </div>
@@ -448,7 +448,7 @@ export default function ProfitLossPage() {
                 Operating Expenses
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: '#9E4A38' }}>
-                ₹{totalExpenseDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                {formatINR(totalExpenseDec)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>Total posted overheads</span>
             </div>
@@ -465,7 +465,7 @@ export default function ProfitLossPage() {
                   color: netProfitDec.gte(0) ? 'var(--posted)' : '#9E4A38',
                 }}
               >
-                ₹{netProfitDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                {formatINR(netProfitDec)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>
                 {netProfitDec.gte(0) ? 'Profitable operation' : 'Operating loss period'}

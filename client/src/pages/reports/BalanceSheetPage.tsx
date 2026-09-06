@@ -15,7 +15,7 @@ import {
 } from 'recharts';
 import { ReportsApi, BalanceSheetReport } from '../../api/reports.api';
 import Money from '../../components/ui/Money';
-import { formatYAxisINR } from '../../lib/money';
+import { formatINR, formatYAxisINR } from '../../lib/money';
 import LedgerDrilldownModal from './LedgerDrilldownModal';
 import {
   Printer,
@@ -434,7 +434,7 @@ export default function BalanceSheetPage() {
                 Total Assets (A)
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--posted)' }}>
-                ₹{totalAssetsDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                {formatINR(totalAssetsDec)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>All economic resources owned</span>
             </div>
@@ -444,7 +444,7 @@ export default function BalanceSheetPage() {
                 Total Liabilities (B)
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: '#9E4A38' }}>
-                ₹{totalLiabDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                {formatINR(totalLiabDec)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>External vendor claims</span>
             </div>
@@ -454,7 +454,7 @@ export default function BalanceSheetPage() {
                 Net Worth / Equity (C)
               </span>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 700, color: 'var(--brown-900)' }}>
-                ₹{totalEquityDec.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                {formatINR(totalEquityDec)}
               </span>
               <span style={{ fontSize: 11, color: 'var(--brown-600)' }}>Capital + Retained earnings</span>
             </div>
