@@ -2614,347 +2614,347 @@ export const PortalRoomStudioPage: React.FC = () => {
         </div>
 
         {/* Right: Room Styles & Tools */}
-        <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 7 }}>
-          {/* Architectural Room Styles Showcase Trigger */}
-          <button
-            onClick={() => {
-              playWoodClick(0.95);
-              setIsRoomStylesModalOpen(true);
-            }}
-            title="Browse Curated Architectural Room Styles"
+        <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Room Styles & Save Unified Atelier Control */}
+          <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
               backgroundColor: '#1F1714',
-              color: '#FAF7F2',
-              padding: '6px 13px',
               borderRadius: 8,
-              border: 'none',
+              padding: 2,
               boxShadow: '0 2px 10px rgba(31, 23, 20, 0.2)',
-              fontSize: 12,
-              fontWeight: 600,
-              fontFamily: 'var(--font-display)',
-              cursor: 'pointer',
-              transition: 'all 140ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 14px rgba(31, 23, 20, 0.26)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 2px 10px rgba(31, 23, 20, 0.2)';
             }}
           >
-            <Sparkles size={13} color="#E8C39E" />
-            <span>Room Styles</span>
-            <span
-              style={{
-                fontSize: 9.5,
-                fontFamily: 'var(--font-mono)',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                padding: '1px 5px',
-                borderRadius: 4,
-                fontWeight: 700,
+            <button
+              onClick={() => {
+                playWoodClick(0.95);
+                setIsRoomStylesModalOpen(true);
               }}
+              title="Browse Curated & Saved Room Styles"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                backgroundColor: 'transparent',
+                color: '#FAF7F2',
+                padding: '5px 11px',
+                borderRadius: 6,
+                border: 'none',
+                fontSize: 12,
+                fontWeight: 600,
+                fontFamily: 'var(--font-display)',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             >
-              {allRoomStyles.length}
-            </span>
-          </button>
-
-          {/* Direct Trigger: Save to Room Styles */}
-          <button
-            onClick={() => {
-              playWoodClick(0.95);
-              if (placedItems.length === 0) {
-                setSaveSuccessToast('Place at least 1 furniture piece first to save as a Room Style');
-                setTimeout(() => setSaveSuccessToast(null), 3200);
-                return;
-              }
-              if (!saveStyleName) {
-                setSaveStyleName(`Custom Studio Layout (${placedItems.length} pcs)`);
-              }
-              if (!saveStyleTagline) {
-                setSaveStyleTagline(`${placedItems.length} handcrafted pieces with bespoke orientation & finishes`);
-              }
-              setIsSaveStyleModalOpen(true);
-            }}
-            title="Save current furniture arrangement, orientations & finishes into reusable Room Styles"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              backgroundColor: '#8A4B38',
-              color: '#FAF7F2',
-              padding: '6px 13px',
-              borderRadius: 8,
-              border: 'none',
-              boxShadow: '0 2px 10px rgba(138, 75, 56, 0.3)',
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: 'var(--font-display)',
-              cursor: 'pointer',
-              transition: 'all 140ms ease',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 14px rgba(138, 75, 56, 0.45)';
-              e.currentTarget.style.backgroundColor = '#9E5642';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 2px 10px rgba(138, 75, 56, 0.3)';
-              e.currentTarget.style.backgroundColor = '#8A4B38';
-            }}
-          >
-            <BookmarkPlus size={13} color="#FAF7F2" />
-            <span>Save to Room Styles</span>
-            {placedItems.length > 0 && (
+              <Sparkles size={13} color="#E8C39E" />
+              <span>Room Styles</span>
               <span
                 style={{
                   fontSize: 9.5,
                   fontFamily: 'var(--font-mono)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   padding: '1px 5px',
                   borderRadius: 4,
                   fontWeight: 700,
                 }}
               >
-                {placedItems.length}
+                {allRoomStyles.length}
               </span>
-            )}
-          </button>
+            </button>
 
-          {/* Import Custom .glb Model */}
-          <button
-            onClick={() => { playWoodClick(0.9); importFileInputRef.current?.click(); }}
-            title="Import a custom .glb 3D furniture model from your computer"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              backgroundColor: 'rgba(253, 250, 246, 0.94)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              padding: '6px 11px',
-              borderRadius: 8,
-              border: '1px solid rgba(208, 174, 146, 0.45)',
-              boxShadow: '0 2px 8px rgba(44, 34, 30, 0.05)',
-              fontSize: 11.5,
-              fontWeight: 600,
-              fontFamily: 'var(--font-display)',
-              color: '#1F1714',
-              cursor: 'pointer',
-              transition: 'all 120ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(253, 250, 246, 0.94)';
-            }}
-          >
-            <Upload size={13} color="#5C4A3E" />
-            <span>Import</span>
-          </button>
+            <div style={{ width: 1, height: 14, backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '0 1px' }} />
 
-          {/* Export Architectural Blueprint */}
-          <button
-            onClick={handleExportSnapshot}
-            title="Export high-resolution architectural room blueprint"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 5,
-              backgroundColor: 'rgba(253, 250, 246, 0.94)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              padding: '6px 11px',
-              borderRadius: 8,
-              border: '1px solid rgba(208, 174, 146, 0.45)',
-              boxShadow: '0 2px 8px rgba(44, 34, 30, 0.05)',
-              fontSize: 11.5,
-              fontWeight: 600,
-              fontFamily: 'var(--font-display)',
-              color: '#1F1714',
-              cursor: 'pointer',
-              transition: 'all 120ms ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(253, 250, 246, 0.94)';
-            }}
-          >
-            <Camera size={13} color="#5C4A3E" />
-            <span>Export Plan</span>
-          </button>
-
-          {/* Ambience & Lighting */}
-          <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setActiveMenu(activeMenu === 'lighting' ? null : 'lighting')}
+              onClick={() => {
+                playWoodClick(0.95);
+                if (placedItems.length === 0) {
+                  setSaveSuccessToast('Place at least 1 furniture piece first to save as a Room Style');
+                  setTimeout(() => setSaveSuccessToast(null), 3200);
+                  return;
+                }
+                if (!saveStyleName) {
+                  setSaveStyleName(`Custom Studio Layout (${placedItems.length} pcs)`);
+                }
+                if (!saveStyleTagline) {
+                  setSaveStyleTagline(`${placedItems.length} handcrafted pieces with bespoke orientation & finishes`);
+                }
+                setIsSaveStyleModalOpen(true);
+              }}
+              title="Save current furniture arrangement, orientations & finishes into reusable Room Styles"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: 6,
-                backgroundColor: 'rgba(253, 250, 246, 0.94)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                padding: '6px 12px',
-                borderRadius: 8,
-                border: '1px solid rgba(208, 174, 146, 0.45)',
-                boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
-                fontSize: 12,
+                gap: 5,
+                backgroundColor: placedItems.length > 0 ? '#8A4B38' : 'transparent',
+                color: '#FAF7F2',
+                padding: '5px 10px',
+                borderRadius: 6,
+                border: 'none',
+                fontSize: 11.5,
                 fontWeight: 600,
                 fontFamily: 'var(--font-display)',
-                color: 'var(--brown-900)',
                 cursor: 'pointer',
+                transition: 'all 120ms ease',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#9E5642')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = placedItems.length > 0 ? '#8A4B38' : 'transparent')}
             >
-              <Lightbulb size={14} color="var(--brown-700)" />
-              Lighting
-              <ChevronDown size={13} />
+              <BookmarkPlus size={12} color="#FAF7F2" />
+              <span>Save</span>
+            </button>
+          </div>
+
+          {/* Studio Tools Cluster: Import, Export, Lighting */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(253, 250, 246, 0.94)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              padding: 2,
+              borderRadius: 8,
+              border: '1px solid rgba(208, 174, 146, 0.45)',
+              boxShadow: '0 2px 10px rgba(44, 34, 30, 0.06)',
+            }}
+          >
+            {/* Import Custom .glb Model */}
+            <button
+              onClick={() => { playWoodClick(0.9); importFileInputRef.current?.click(); }}
+              title="Import a custom .glb 3D furniture model from your computer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                backgroundColor: 'transparent',
+                border: 'none',
+                padding: '5px 10px',
+                borderRadius: 6,
+                fontSize: 11.5,
+                fontWeight: 600,
+                fontFamily: 'var(--font-display)',
+                color: '#1F1714',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.22)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              <Upload size={12.5} color="#5C4A3E" />
+              <span>Import</span>
             </button>
 
-            {activeMenu === 'lighting' && (
-              <div
+            <div style={{ width: 1, height: 14, backgroundColor: 'rgba(208, 174, 146, 0.45)', margin: '0 1px' }} />
+
+            {/* Export Architectural Blueprint */}
+            <button
+              onClick={handleExportSnapshot}
+              title="Export high-resolution architectural room blueprint"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                backgroundColor: 'transparent',
+                border: 'none',
+                padding: '5px 10px',
+                borderRadius: 6,
+                fontSize: 11.5,
+                fontWeight: 600,
+                fontFamily: 'var(--font-display)',
+                color: '#1F1714',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.22)')}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+            >
+              <Camera size={12.5} color="#5C4A3E" />
+              <span>Export</span>
+            </button>
+
+            <div style={{ width: 1, height: 14, backgroundColor: 'rgba(208, 174, 146, 0.45)', margin: '0 1px' }} />
+
+            {/* Ambience & Lighting */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setActiveMenu(activeMenu === 'lighting' ? null : 'lighting')}
                 style={{
-                  position: 'absolute',
-                  top: '115%',
-                  right: 0,
-                  width: 230,
-                  backgroundColor: 'var(--surface)',
-                  borderRadius: 8,
-                  border: '1px solid var(--brown-300)',
-                  boxShadow: '0 8px 24px rgba(44, 34, 30, 0.12)',
-                  padding: 12,
-                  zIndex: 50,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 12,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  backgroundColor: activeMenu === 'lighting' ? 'rgba(208, 174, 146, 0.25)' : 'transparent',
+                  border: 'none',
+                  padding: '5px 10px',
+                  borderRadius: 6,
+                  fontSize: 11.5,
+                  fontWeight: 600,
+                  fontFamily: 'var(--font-display)',
+                  color: 'var(--brown-900)',
+                  cursor: 'pointer',
+                  transition: 'all 120ms ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.22)')}
+                onMouseLeave={(e) => {
+                  if (activeMenu !== 'lighting') e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                <div>
-                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--brown-600)', marginBottom: 6 }}>
-                    Time of Day
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
-                    <button
-                      onClick={() => setAmbience('morning')}
-                      style={{
-                        ...styles.presetPill,
-                        borderRadius: 6,
-                        backgroundColor: ambience === 'morning' ? 'var(--brown-900)' : 'var(--brown-50)',
-                        color: ambience === 'morning' ? 'var(--cream)' : 'var(--brown-900)',
-                      }}
-                    >
-                      Morning
-                    </button>
-                    <button
-                      onClick={() => setAmbience('studio')}
-                      style={{
-                        ...styles.presetPill,
-                        borderRadius: 6,
-                        backgroundColor: ambience === 'studio' ? 'var(--brown-900)' : 'var(--brown-50)',
-                        color: ambience === 'studio' ? 'var(--cream)' : 'var(--brown-900)',
-                      }}
-                    >
-                      Studio
-                    </button>
-                    <button
-                      onClick={() => setAmbience('dusk')}
-                      style={{
-                        ...styles.presetPill,
-                        borderRadius: 6,
-                        backgroundColor: ambience === 'dusk' ? 'var(--brown-900)' : 'var(--brown-50)',
-                        color: ambience === 'dusk' ? 'var(--cream)' : 'var(--brown-900)',
-                      }}
-                    >
-                      Dusk
-                    </button>
-                  </div>
-                </div>
+                <Lightbulb size={12.5} color="var(--brown-700)" />
+                <span>Lighting</span>
+                <ChevronDown size={12} />
+              </button>
 
-                <div>
-                  <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--brown-600)', marginBottom: 6 }}>
-                    Direct Fixtures
+              {activeMenu === 'lighting' && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '115%',
+                    right: 0,
+                    width: 230,
+                    backgroundColor: 'var(--surface)',
+                    borderRadius: 8,
+                    border: '1px solid var(--brown-300)',
+                    boxShadow: '0 8px 24px rgba(44, 34, 30, 0.12)',
+                    padding: 12,
+                    zIndex: 50,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--brown-600)', marginBottom: 6 }}>
+                      Time of Day
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
+                      <button
+                        onClick={() => setAmbience('morning')}
+                        style={{
+                          ...styles.presetPill,
+                          borderRadius: 6,
+                          backgroundColor: ambience === 'morning' ? 'var(--brown-900)' : 'var(--brown-50)',
+                          color: ambience === 'morning' ? 'var(--cream)' : 'var(--brown-900)',
+                        }}
+                      >
+                        Morning
+                      </button>
+                      <button
+                        onClick={() => setAmbience('studio')}
+                        style={{
+                          ...styles.presetPill,
+                          borderRadius: 6,
+                          backgroundColor: ambience === 'studio' ? 'var(--brown-900)' : 'var(--brown-50)',
+                          color: ambience === 'studio' ? 'var(--cream)' : 'var(--brown-900)',
+                        }}
+                      >
+                        Studio
+                      </button>
+                      <button
+                        onClick={() => setAmbience('dusk')}
+                        style={{
+                          ...styles.presetPill,
+                          borderRadius: 6,
+                          backgroundColor: ambience === 'dusk' ? 'var(--brown-900)' : 'var(--brown-50)',
+                          color: ambience === 'dusk' ? 'var(--cream)' : 'var(--brown-900)',
+                        }}
+                      >
+                        Dusk
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button
-                      onClick={() => setCeilingLightOn((v) => !v)}
-                      style={{
-                        flex: 1,
-                        padding: '6px 8px',
-                        borderRadius: 6,
-                        border: '1px solid rgba(208, 174, 146, 0.5)',
-                        backgroundColor: ceilingLightOn ? 'var(--brown-900)' : 'transparent',
-                        color: ceilingLightOn ? 'var(--cream)' : 'var(--brown-800)',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Sun size={12} />
-                      Ceiling
-                    </button>
-                    <button
-                      onClick={() => setStandingLampOn((v) => !v)}
-                      style={{
-                        flex: 1,
-                        padding: '6px 8px',
-                        borderRadius: 6,
-                        border: '1px solid rgba(208, 174, 146, 0.5)',
-                        backgroundColor: standingLampOn ? 'var(--brown-900)' : 'transparent',
-                        color: standingLampOn ? 'var(--cream)' : 'var(--brown-800)',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Lightbulb size={12} />
-                      Floor Lamp
-                    </button>
+
+                  <div>
+                    <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--brown-600)', marginBottom: 6 }}>
+                      Direct Fixtures
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button
+                        onClick={() => setCeilingLightOn((v) => !v)}
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          border: '1px solid rgba(208, 174, 146, 0.5)',
+                          backgroundColor: ceilingLightOn ? 'var(--brown-900)' : 'transparent',
+                          color: ceilingLightOn ? 'var(--cream)' : 'var(--brown-800)',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <Sun size={12} />
+                        Ceiling
+                      </button>
+                      <button
+                        onClick={() => setStandingLampOn((v) => !v)}
+                        style={{
+                          flex: 1,
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          border: '1px solid rgba(208, 174, 146, 0.5)',
+                          backgroundColor: standingLampOn ? 'var(--brown-900)' : 'transparent',
+                          color: standingLampOn ? 'var(--cream)' : 'var(--brown-800)',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        <Lightbulb size={12} />
+                        Floor Lamp
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* 1-Click Formal Quotation Generator */}
           <button
             onClick={handleRequestRoomQuote}
             disabled={placedItems.length === 0 || quoteSubmitting}
+            title={placedItems.length > 0 ? 'Request quotation for placed pieces' : 'Place furniture to request a quote'}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              backgroundColor: placedItems.length > 0 ? 'var(--brown-900)' : 'rgba(255, 255, 255, 0.7)',
-              color: placedItems.length > 0 ? 'var(--cream)' : 'var(--brown-400)',
-              border: 'none',
-              padding: '7px 14px',
+              backgroundColor: placedItems.length > 0 ? '#1F1714' : 'rgba(255, 255, 255, 0.7)',
+              color: placedItems.length > 0 ? '#FAF7F2' : 'var(--brown-400)',
+              border: placedItems.length > 0 ? 'none' : '1px solid rgba(208, 174, 146, 0.35)',
+              padding: '6px 14px',
               borderRadius: 8,
-              boxShadow: placedItems.length > 0 ? '0 4px 14px rgba(74, 58, 52, 0.2)' : 'none',
+              boxShadow: placedItems.length > 0 ? '0 2px 10px rgba(31, 23, 20, 0.2)' : 'none',
               fontSize: 12,
               fontWeight: 700,
               fontFamily: 'var(--font-display)',
               cursor: placedItems.length > 0 ? (quoteSubmitting ? 'wait' : 'pointer') : 'not-allowed',
-              transition: 'all 150ms ease',
+              transition: 'all 140ms ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              if (placedItems.length > 0) {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(31, 23, 20, 0.28)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = placedItems.length > 0 ? '0 2px 10px rgba(31, 23, 20, 0.2)' : 'none';
             }}
           >
-            <FileCheck2 size={14} />
-            {quoteSubmitting ? 'Drafting...' : `Request Quote (${placedItems.length})`}
+            <FileCheck2 size={13.5} />
+            <span>{quoteSubmitting ? 'Drafting...' : `Request Quote (${placedItems.length})`}</span>
           </button>
 
         </div>
