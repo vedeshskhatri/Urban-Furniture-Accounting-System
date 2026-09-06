@@ -15,10 +15,19 @@ import {
   Search,
 } from 'lucide-react';
 import { GlobalCommandPalette } from '../../components/common/GlobalCommandPalette';
+import { PortalAmbientAudioBadge } from '../../components/portal/PortalAmbientAudioBadge';
+import { ambientMusic } from '../../lib/ambientMusic';
 
 export const PortalLayout: React.FC = () => {
   const { user, logout } = usePortalAuth();
   const navigate = useNavigate();
+
+  // Silence any playing ambient music whenever user leaves the Customer Portal
+  React.useEffect(() => {
+    return () => {
+      ambientMusic.stopAndSilence();
+    };
+  }, []);
 
   /* True when internal staff member has authenticated on the main app */
   const isInternalStaff = localStorage.getItem('urban_logged_in') === 'true';
@@ -237,6 +246,9 @@ export const PortalLayout: React.FC = () => {
 
           {/* Right: Actions & User Session */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            {/* Steady Lounge Ambient Music Audio Controller */}
+            <PortalAmbientAudioBadge />
+
             {/* Quick Spotlight Search Trigger */}
             <button
               onClick={() => {
@@ -452,18 +464,14 @@ export const PortalLayout: React.FC = () => {
             color: 'var(--brown-600)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <span style={{ fontWeight: 600, color: 'var(--brown-900)' }}>Urban Furniture Showroom</span>
-            <span>&bull;</span>
-            <span>Handcrafted Solid Wood &amp; Architectural Interiors</span>
-            <span>&bull;</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--posted)' }}>
-              <ShieldCheck size={13} /> Secure Verified Portal Surface
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontWeight: 600, color: 'var(--brown-900)' }}>Urban Furniture Atelier</span>
+            <span>&middot;</span>
+            <span>Handcrafted solid wood furniture</span>
           </div>
 
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--brown-500)' }}>
-            Double-Entry Ledger &bull; Razorpay Instant Gateway &bull; 2026 Edition
+            Showroom Portal
           </div>
         </div>
       </footer>

@@ -193,89 +193,89 @@ export default function AppShell() {
             }}
           />
 
-          {/* Right Header Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, zIndex: 2 }}>
-            <NavLink
-              to="/dashboard"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                fontSize: 12,
-                fontWeight: 600,
-                color: location.pathname === '/dashboard' ? 'var(--brown-900)' : 'var(--brown-700)',
-                background: location.pathname === '/dashboard' ? 'rgba(235, 215, 190, 0.35)' : 'transparent',
-                borderRadius: 8,
-                textDecoration: 'none',
-              }}
-            >
-              <LayoutDashboard size={14} />
-              <span>Dashboard</span>
-            </NavLink>
-
+          {/* Right Header Controls: Clean, Uncluttered User Session */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, zIndex: 2 }}>
             {currentUser && (
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 10px',
-                  background: 'rgba(235, 215, 190, 0.25)',
+                  gap: 8,
+                  padding: '3px 6px 3px 10px',
+                  background: 'rgba(235, 215, 190, 0.22)',
+                  border: '1px solid rgba(208, 174, 146, 0.3)',
                   borderRadius: 8,
-                  fontSize: 12,
-                  color: 'var(--brown-900)',
-                  fontWeight: 600,
                 }}
               >
-                <User size={13} color="var(--brown-700)" />
-                <span>{currentUser.login_id || currentUser.full_name}</span>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: 'var(--brown-900)',
+                    fontFamily: 'var(--font-display)',
+                  }}
+                >
+                  {currentUser.login_id || currentUser.full_name}
+                </span>
+
                 {currentUser.role && (
                   <span
                     style={{
-                      fontSize: 10,
+                      fontSize: 9.5,
                       textTransform: 'uppercase',
-                      padding: '1px 6px',
-                      borderRadius: 999,
-                      backgroundColor:
-                        currentUser.role === 'admin'
-                          ? 'var(--brown-900)'
-                          : currentUser.role === 'manager'
-                          ? '#b45309'
-                          : 'var(--posted)',
-                      color: 'var(--cream)',
+                      padding: '1px 5px',
+                      borderRadius: 4,
+                      backgroundColor: 'rgba(74, 58, 52, 0.12)',
+                      color: 'var(--brown-800)',
                       fontWeight: 700,
                       letterSpacing: '0.04em',
+                      fontFamily: 'var(--font-mono)',
                     }}
                   >
                     {currentUser.role}
                   </span>
                 )}
+
+                <div
+                  style={{
+                    width: 1,
+                    height: 14,
+                    backgroundColor: 'rgba(208, 174, 146, 0.4)',
+                    margin: '0 2px',
+                  }}
+                />
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 24,
+                    height: 24,
+                    padding: 0,
+                    color: 'var(--brown-600)',
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    transition: 'all 120ms ease',
+                  }}
+                  title="Sign Out"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(158, 74, 56, 0.12)';
+                    e.currentTarget.style.color = 'var(--danger)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--brown-600)';
+                  }}
+                >
+                  <LogOut size={13} />
+                </button>
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={handleLogout}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '5px 11px',
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--brown-800)',
-                background: 'transparent',
-                border: '1px solid var(--brown-400)',
-                borderRadius: 8,
-                cursor: 'pointer',
-                transition: 'all 120ms ease',
-              }}
-              title="Sign Out"
-            >
-              <LogOut size={13} />
-              <span>Sign Out</span>
-            </button>
           </div>
         </div>
       </header>

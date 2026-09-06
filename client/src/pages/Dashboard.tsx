@@ -317,24 +317,6 @@ export default function Dashboard() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
-              fontFamily: 'var(--font-body)',
-              color: 'var(--brown-700)',
-              background: 'rgba(255, 255, 255, 0.6)',
-              padding: '6px 12px',
-              borderRadius: 8,
-              border: '1px solid rgba(208, 174, 146, 0.25)',
-            }}
-          >
-            <Calendar size={13} style={{ color: 'var(--brown-700)' }} />
-            <span>Active Financial Ledger</span>
-          </div>
-
           <button
             type="button"
             onClick={handleRefreshAll}

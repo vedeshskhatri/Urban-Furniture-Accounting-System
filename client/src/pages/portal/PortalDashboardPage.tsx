@@ -179,36 +179,18 @@ export const PortalDashboardPage: React.FC = () => {
           }}
         >
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <div style={{ marginBottom: 12 }}>
               <span
                 style={{
                   fontSize: 11,
-                  fontFamily: 'var(--font-display)',
-                  fontWeight: 800,
-                  letterSpacing: '0.12em',
+                  fontFamily: 'var(--font-mono)',
+                  fontWeight: 600,
+                  letterSpacing: '0.14em',
                   textTransform: 'uppercase',
-                  color: 'var(--brown-300)',
+                  color: 'rgba(235, 215, 190, 0.75)',
                 }}
               >
-                URBAN ARCHITECTURE 2026
-              </span>
-              <span style={{ color: 'rgba(208, 174, 146, 0.4)' }}>•</span>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: '#A3D9A5',
-                  backgroundColor: 'rgba(95, 112, 82, 0.35)',
-                  padding: '3px 10px',
-                  borderRadius: 999,
-                  border: '1px solid rgba(163, 217, 165, 0.3)',
-                }}
-              >
-                <Sparkles size={11} />
-                Real-Time 3D Engine
+                Atelier Showroom &middot; 3D Studio
               </span>
             </div>
 
@@ -232,10 +214,10 @@ export const PortalDashboardPage: React.FC = () => {
                 lineHeight: 1.6,
                 color: 'rgba(235, 215, 190, 0.85)',
                 margin: 0,
-                maxWidth: 480,
+                maxWidth: 440,
               }}
             >
-              Experience our curated showroom of solid teak, walnut, and linen furniture. Design room layouts interactively in 3D and inspect your official accounting ledger in real-time.
+              Curated solid teak, walnut, and linen furniture. Design rooms in 3D and review orders with ease.
             </p>
           </div>
 
@@ -324,28 +306,21 @@ export const PortalDashboardPage: React.FC = () => {
             }}
           />
 
-          {/* Floating Pill Overlay */}
+          {/* Architectural Space Label */}
           <div
             style={{
               position: 'absolute',
-              bottom: 24,
-              right: 24,
+              bottom: 20,
+              right: 20,
               backgroundColor: 'rgba(255, 255, 255, 0.92)',
-              backdropFilter: 'blur(12px)',
-              padding: '8px 16px',
-              borderRadius: 999,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.2)',
+              backdropFilter: 'blur(16px)',
+              padding: '6px 14px',
+              borderRadius: 8,
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
             }}
           >
-            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--posted)' }} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--brown-900)', fontFamily: 'var(--font-display)' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#2C221E', fontFamily: 'var(--font-display)' }}>
               {currentRoom.title}
-            </span>
-            <span style={{ fontSize: 11, color: 'var(--brown-600)', fontFamily: 'var(--font-mono)' }}>
-              ({currentRoom.piecesCount} 3D Pieces)
             </span>
           </div>
         </div>

@@ -213,48 +213,18 @@ export const PortalCataloguePage: React.FC = () => {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ marginBottom: 6 }}>
             <span
               style={{
-                fontSize: 10,
-                fontWeight: 800,
+                fontSize: 11,
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                letterSpacing: '0.14em',
+                letterSpacing: '0.12em',
                 color: 'var(--brown-600)',
                 fontFamily: 'var(--font-mono)',
               }}
             >
-              ATELIER COLLECTION
-            </span>
-            <span style={{ color: 'var(--brown-300)' }}>&bull;</span>
-            <span
-              style={{
-                fontSize: 10,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--posted)',
-                backgroundColor: 'var(--posted-bg)',
-                padding: '2px 8px',
-                borderRadius: 4,
-                fontWeight: 700,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-              }}
-            >
-              {products.length} CURATED PIECES
-            </span>
-            <span style={{ color: 'var(--brown-300)' }}>&bull;</span>
-            <span
-              style={{
-                fontSize: 10,
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--brown-700)',
-                backgroundColor: 'rgba(208, 174, 146, 0.2)',
-                padding: '2px 8px',
-                borderRadius: 4,
-                fontWeight: 600,
-              }}
-            >
-              {totalWith3D} 3D COMPATIBLE
+              Atelier Collection &middot; {products.length} Pieces
             </span>
           </div>
 
@@ -276,11 +246,11 @@ export const PortalCataloguePage: React.FC = () => {
               margin: 0,
               fontSize: 14,
               color: 'var(--brown-700)',
-              maxWidth: 680,
+              maxWidth: 580,
               lineHeight: 1.5,
             }}
           >
-            Handcrafted solid white oak, Indonesian teak, and walnut furniture. Explore architectural specifications or arrange pieces directly in the interactive 3D Room Studio.
+            Handcrafted solid wood furniture designed for architectural living.
           </p>
         </div>
 

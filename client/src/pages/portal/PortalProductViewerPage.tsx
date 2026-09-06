@@ -603,7 +603,7 @@ export const PortalProductViewerPage: React.FC = () => {
             {/* Price section */}
             <div style={{ padding: '16px 0', borderTop: '1px solid rgba(208, 174, 146, 0.25)', borderBottom: '1px solid rgba(208, 174, 146, 0.25)', marginBottom: 20 }}>
               <div style={{ fontSize: 11, color: 'var(--brown-500)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-                Certified Double-Entry Price
+                Price
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 28, fontWeight: 800, color: 'var(--brown-900)', fontVariantNumeric: 'tabular-nums' }}>
@@ -615,8 +615,8 @@ export const PortalProductViewerPage: React.FC = () => {
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: 12, color: 'var(--brown-700)', marginTop: 4 }}>
-                Includes GST at {product.tax_rate}% · Sequential ledger invoice generated on order
+              <div style={{ fontSize: 12, color: 'var(--brown-600)', marginTop: 4 }}>
+                Includes GST at {product.tax_rate}%
               </div>
             </div>
 

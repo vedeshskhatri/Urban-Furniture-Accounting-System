@@ -43,6 +43,7 @@ import {
 import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
 import { playWoodClick, playChimeSuccess, toggleAmbientSoundscape } from '../../lib/soundEffects';
+import { useAmbientMusic } from '../../lib/ambientMusic';
 
 interface ShowroomModel {
   id: string;
@@ -652,7 +653,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [quoteSubmitting, setQuoteSubmitting] = useState<boolean>(false);
   const [quoteSuccess, setQuoteSuccess] = useState<any | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const [ambientSoundActive, setAmbientSoundActive] = useState<boolean>(false);
+  const { isPlaying: ambientSoundActive, toggle: toggleAmbientMusic } = useAmbientMusic();
 
   // 1. Fetch available models from API & Catalogue products
   useEffect(() => {
@@ -1202,8 +1203,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   };
 
   const handleToggleAudio = () => {
-    const newState = toggleAmbientSoundscape();
-    setAmbientSoundActive(newState);
+    toggleAmbientMusic();
     playWoodClick(1.0);
   };
 
@@ -2314,7 +2314,7 @@ export const PortalRoomStudioPage: React.FC = () => {
           {/* Ambient Japandi Audio Toggle */}
           <button
             onClick={handleToggleAudio}
-            title={ambientSoundActive ? 'Mute ambient soundscape' : 'Play Japandi ambient garden breeze'}
+            title={ambientSoundActive ? 'Mute chill lo-fi background music' : 'Play chill lo-fi background music'}
             style={{
               width: 32,
               height: 32,

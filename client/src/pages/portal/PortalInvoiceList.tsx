@@ -192,80 +192,37 @@ export const PortalInvoiceList: React.FC = () => {
         }}
       >
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ marginBottom: 6 }}>
             <span
               style={{
                 fontSize: 11,
-                fontWeight: 800,
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                letterSpacing: '0.1em',
+                letterSpacing: '0.12em',
                 color: 'var(--brown-600)',
-                fontFamily: 'var(--font-display)',
+                fontFamily: 'var(--font-mono)',
               }}
             >
-              CLIENT ACCOUNTING LEDGER
-            </span>
-            <span style={{ color: 'var(--brown-300)' }}>•</span>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                fontSize: 11,
-                fontWeight: 700,
-                color: 'var(--posted)',
-                backgroundColor: 'var(--posted-bg)',
-                padding: '2px 9px',
-                borderRadius: 999,
-              }}
-            >
-              <ShieldCheck size={11} />
-              Double-Entry Synced
+              Account Statement
             </span>
           </div>
 
           <h1
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 34,
+              fontSize: 32,
               fontWeight: 800,
               color: 'var(--brown-900)',
-              letterSpacing: '-0.03em',
-              margin: '0 0 8px',
+              letterSpacing: '-0.02em',
+              margin: '0 0 6px',
             }}
           >
             Invoices &amp; Settlements
           </h1>
 
-          <p style={{ margin: 0, fontSize: 15, color: 'var(--brown-700)', maxWidth: 640, lineHeight: 1.5 }}>
-            Inspect official invoices billed to your account, download signed PDFs, and settle outstanding balances instantly via Razorpay.
+          <p style={{ margin: 0, fontSize: 14, color: 'var(--brown-700)', maxWidth: 580, lineHeight: 1.5 }}>
+            Review official invoices, download statements, and settle balances.
           </p>
-        </div>
-
-        {/* Status Pill Badge */}
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            backgroundColor: 'var(--surface)',
-            padding: '8px 16px',
-            borderRadius: 999,
-            border: '1px solid rgba(208, 174, 146, 0.45)',
-            boxShadow: '0 2px 8px rgba(74, 58, 52, 0.05)',
-          }}
-        >
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: parseFloat(amountOutstanding) > 0 ? 'var(--danger)' : 'var(--posted)',
-            }}
-          />
-          <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--brown-900)' }}>
-            {parseFloat(amountOutstanding) > 0 ? `${dueInvoicesCount} Pending Invoices` : 'Account Fully Settled'}
-          </span>
         </div>
       </div>
 
@@ -353,7 +310,7 @@ export const PortalInvoiceList: React.FC = () => {
             overflow: 'hidden',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--brown-600)' }}>
               Outstanding Balance
             </span>
@@ -371,21 +328,14 @@ export const PortalInvoiceList: React.FC = () => {
           <div
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 30,
+              fontSize: 28,
               fontWeight: 800,
               color: parseFloat(amountOutstanding) > 0 ? 'var(--danger)' : 'var(--posted)',
               fontVariantNumeric: 'tabular-nums',
-              marginBottom: 8,
             }}
           >
             {formatINR(amountOutstanding)}
           </div>
-
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--brown-600)' }}>
-            {parseFloat(amountOutstanding) > 0
-              ? 'Instant online clearance via Razorpay UPI / Netbanking'
-              : 'All billed orders have been settled in the general ledger'}
-          </p>
         </div>
 
         {/* Total Settled / Paid */}
@@ -398,24 +348,25 @@ export const PortalInvoiceList: React.FC = () => {
             boxShadow: '0 4px 16px rgba(74, 58, 52, 0.05)',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--brown-600)', marginBottom: 10 }}>
-            Total Settled Payments
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--brown-600)' }}>
+              Total Settled
+            </span>
+            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--posted)' }}>
+              Cleared
+            </span>
           </div>
           <div
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 30,
+              fontSize: 28,
               fontWeight: 800,
               color: 'var(--posted)',
               fontVariantNumeric: 'tabular-nums',
-              marginBottom: 8,
             }}
           >
             {formatINR(amountPaidTotal)}
           </div>
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--brown-600)' }}>
-            Cleared and posted to double-entry ledger accounts
-          </p>
         </div>
 
         {/* Total Invoiced Volume */}
@@ -428,24 +379,25 @@ export const PortalInvoiceList: React.FC = () => {
             boxShadow: '0 4px 16px rgba(74, 58, 52, 0.05)',
           }}
         >
-          <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--brown-600)', marginBottom: 10 }}>
-            Total Invoiced Volume
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--brown-600)' }}>
+              Total Invoiced
+            </span>
+            <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--brown-500)' }}>
+              {totalCount} {totalCount === 1 ? 'bill' : 'bills'}
+            </span>
           </div>
           <div
             style={{
               fontFamily: 'var(--font-mono)',
-              fontSize: 30,
+              fontSize: 28,
               fontWeight: 800,
               color: 'var(--brown-900)',
               fontVariantNumeric: 'tabular-nums',
-              marginBottom: 8,
             }}
           >
             {formatINR(amountInvoicedTotal)}
           </div>
-          <p style={{ margin: 0, fontSize: 12, color: 'var(--brown-600)' }}>
-            Across {totalCount} total invoice {totalCount === 1 ? 'record' : 'records'}
-          </p>
         </div>
       </div>
 
