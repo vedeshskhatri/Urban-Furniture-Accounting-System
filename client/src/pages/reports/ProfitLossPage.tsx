@@ -38,6 +38,16 @@ const EXPENSE_PALETTE = [
   '#8C6D58',
 ];
 
+const INCOME_PALETTE = [
+  '#5F7052', // Olive
+  '#4A3A34', // Walnut
+  '#C08A3E', // Amber
+  '#77574A', // Walnut mid
+  '#A8836C', // Sand brown
+  '#9E4A38', // Terracotta
+  '#D0AE92',
+];
+
 function formatDisplayINR(num: number): string {
   if (Math.abs(num) >= 10000000) {
     return `₹${(num / 10000000).toFixed(2)} Cr`;
@@ -57,6 +67,7 @@ export default function ProfitLossPage() {
     name: string;
   } | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<'both' | 'charts' | 'statement'>('both');
+  const [pnlCompositionMode, setPnlCompositionMode] = useState<'expenses' | 'income'>('expenses');
 
   const {
     data: report,
@@ -119,6 +130,23 @@ export default function ProfitLossPage() {
       }))
       .sort((a, b) => b.value - a.value);
   }, [report]);
+
+  // Income / Revenue distribution donut data (Mirroring the Income section of the statement)
+  const incomeDonutData = useMemo(() => {
+    if (!report?.income) return [];
+    return report.income
+      .filter((i) => new Decimal(i.total || '0').gt(0))
+      .map((i, idx) => ({
+        id: i.accountId,
+        name: i.accountName,
+        value: new Decimal(i.total || '0').toNumber(),
+        color: INCOME_PALETTE[idx % INCOME_PALETTE.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [report]);
+
+  const activePnlData = pnlCompositionMode === 'expenses' ? expenseDonutData : incomeDonutData;
+  const activePnlTotal = pnlCompositionMode === 'expenses' ? totalExpenseDec.toNumber() : totalIncomeDec.toNumber();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1080, margin: '0 auto', width: '100%' }}>
@@ -532,7 +560,7 @@ export default function ProfitLossPage() {
               </div>
             </div>
 
-            {/* Chart 2: Operating Expense Allocation Donut */}
+            {/* Chart 2: Operating Expense & Income Allocation Donut */}
             <div
               style={{
                 background: 'rgba(235, 215, 190, 0.1)',
@@ -544,27 +572,72 @@ export default function ProfitLossPage() {
                 gap: 12,
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <PieIcon size={16} style={{ color: 'var(--brown-700)' }} />
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown-900)' }}>
-                    Expense Allocation by Category
+                    {pnlCompositionMode === 'expenses' ? 'Expense Allocation by Category' : 'Revenue Streams by Category'}
                   </span>
                 </div>
-                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)' }}>
-                  Click slice to inspect ledger
-                </span>
+
+                {/* Segmented Switcher for Expenses vs Income */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'rgba(235, 215, 190, 0.35)',
+                    padding: 2,
+                    borderRadius: 6,
+                    border: '1px solid rgba(208, 174, 146, 0.3)',
+                    gap: 2,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setPnlCompositionMode('expenses')}
+                    style={{
+                      background: pnlCompositionMode === 'expenses' ? 'var(--surface)' : 'transparent',
+                      border: 'none',
+                      borderRadius: 5,
+                      padding: '3px 8px',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: pnlCompositionMode === 'expenses' ? 'var(--brown-900)' : 'var(--brown-600)',
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    Expenses ({expenseDonutData.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPnlCompositionMode('income')}
+                    style={{
+                      background: pnlCompositionMode === 'income' ? 'var(--surface)' : 'transparent',
+                      border: 'none',
+                      borderRadius: 5,
+                      padding: '3px 8px',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: pnlCompositionMode === 'income' ? 'var(--brown-900)' : 'var(--brown-600)',
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    Revenue Streams ({incomeDonutData.length})
+                  </button>
+                </div>
               </div>
 
-              {expenseDonutData.length > 0 ? (
+              {activePnlData.length > 0 ? (
                 <div style={{ display: 'flex', alignItems: 'center', height: 230 }}>
-                  <div style={{ width: '55%', height: '100%' }}>
+                  <div style={{ width: '48%', height: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={expenseDonutData}
-                          innerRadius={55}
-                          outerRadius={80}
+                          data={activePnlData}
+                          innerRadius={52}
+                          outerRadius={78}
                           paddingAngle={3}
                           dataKey="value"
                           onClick={(data) => {
@@ -572,12 +645,12 @@ export default function ProfitLossPage() {
                           }}
                           style={{ cursor: 'pointer' }}
                         >
-                          {expenseDonutData.map((entry, idx) => (
-                            <Cell key={`pie-cell-${idx}`} fill={entry.color} />
+                          {activePnlData.map((entry, idx) => (
+                            <Cell key={`pnl-comp-${idx}`} fill={entry.color} />
                           ))}
                         </Pie>
                         <RechartsTooltip
-                          formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Total Expense']}
+                          formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Amount']}
                           contentStyle={{
                             background: '#FFF',
                             borderRadius: 8,
@@ -590,50 +663,62 @@ export default function ProfitLossPage() {
                     </ResponsiveContainer>
                   </div>
 
-                  {/* Slices Legend */}
+                  {/* Slices Legend with EXACT Indian currency matching the statement below */}
                   <div
                     style={{
-                      width: '45%',
+                      width: '52%',
                       maxHeight: 210,
                       overflowY: 'auto',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 6,
-                      paddingLeft: 12,
+                      paddingLeft: 6,
                     }}
                   >
-                    {expenseDonutData.slice(0, 6).map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => setSelectedDrillAccount({ id: item.id, name: item.name })}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 6,
-                          fontSize: 11,
-                          cursor: 'pointer',
-                          padding: '3px 6px',
-                          borderRadius: 4,
-                          background: 'rgba(255,255,255,0.6)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--brown-800)', fontWeight: 500 }}>
-                            {item.name}
-                          </span>
+                    {activePnlData.map((item) => {
+                      const pct = activePnlTotal > 0
+                        ? ((item.value / activePnlTotal) * 100).toFixed(1)
+                        : '0.0';
+                      return (
+                        <div
+                          key={item.name}
+                          onClick={() => setSelectedDrillAccount({ id: item.id, name: item.name })}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 6,
+                            fontSize: 11,
+                            cursor: 'pointer',
+                            padding: '4px 7px',
+                            borderRadius: 6,
+                            background: 'rgba(255,255,255,0.7)',
+                            border: '1px solid rgba(208, 174, 146, 0.25)',
+                          }}
+                          title="Click to inspect ledger entries"
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--brown-800)', fontWeight: 600 }}>
+                              {item.name}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-900)' }}>
+                              ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)', background: 'rgba(235, 215, 190, 0.35)', padding: '1px 4px', borderRadius: 3, fontWeight: 600 }}>
+                              {pct}%
+                            </span>
+                          </div>
                         </div>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-900)', flexShrink: 0 }}>
-                          {formatDisplayINR(item.value)}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
                 <div style={{ height: 230, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-500)', fontSize: 13 }}>
-                  No expense records in this date range.
+                  No entries recorded for this category in this date range.
                 </div>
               )}
             </div>

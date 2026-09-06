@@ -324,9 +324,34 @@ export const ReceivablesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-brown-700" />
-                  <span className="text-xs font-bold text-brown-900">Outstanding Aging Buckets</span>
+                  <span className="text-xs font-bold text-brown-900">
+                    Outstanding Aging Buckets ({agingType === 'receivable' ? 'Receivables' : 'Payables'})
+                  </span>
                 </div>
-                <span className="text-[11px] font-mono text-brown-600">Receivable Distribution</span>
+                <div className="flex items-center bg-surface border border-brown-300 rounded-[5px] p-0.5 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchAgingType('receivable')}
+                    className={`px-2 py-0.5 rounded-[3px] font-medium transition-colors cursor-pointer ${
+                      agingType === 'receivable'
+                        ? 'bg-brown-900 text-cream font-semibold shadow-xs'
+                        : 'text-brown-700 hover:text-brown-900'
+                    }`}
+                  >
+                    Receivable
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchAgingType('payable')}
+                    className={`px-2 py-0.5 rounded-[3px] font-medium transition-colors cursor-pointer ${
+                      agingType === 'payable'
+                        ? 'bg-brown-900 text-cream font-semibold shadow-xs'
+                        : 'text-brown-700 hover:text-brown-900'
+                    }`}
+                  >
+                    Payable
+                  </button>
+                </div>
               </div>
               <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -413,9 +438,14 @@ export const ReceivablesPage: React.FC = () => {
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                           <span className="truncate text-brown-800">{item.name}</span>
                         </div>
-                        <span className="font-mono font-semibold text-brown-900 shrink-0">
-                          {formatDisplayINR(item.value)}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-mono font-semibold text-brown-900">
+                            ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                          <span className="text-[10px] text-brown-500 font-mono hidden sm:inline">
+                            ({formatDisplayINR(item.value)})
+                          </span>
+                        </div>
                       </div>
                     ))}
                   </div>

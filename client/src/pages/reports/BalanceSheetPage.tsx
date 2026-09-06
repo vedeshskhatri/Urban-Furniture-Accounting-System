@@ -39,6 +39,16 @@ const ASSET_PALETTE = [
   '#D0AE92', // Light sand
 ];
 
+const LIABILITY_EQUITY_PALETTE = [
+  '#9E4A38', // Terracotta (Creditors / High obligations)
+  '#C08A3E', // Amber (Taxes / Accruals)
+  '#5F7052', // Olive (Current Period Profit)
+  '#4A3A34', // Walnut (Capital)
+  '#77574A',
+  '#A8836C',
+  '#D0AE92',
+];
+
 function formatDisplayINR(num: number): string {
   if (Math.abs(num) >= 10000000) {
     return `₹${(num / 10000000).toFixed(2)} Cr`;
@@ -57,6 +67,7 @@ export default function BalanceSheetPage() {
     name: string;
   } | null>(null);
   const [activeViewMode, setActiveViewMode] = useState<'both' | 'charts' | 'statement'>('both');
+  const [compositionMode, setCompositionMode] = useState<'assets' | 'liabilities'>('assets');
 
   const {
     data: report,
@@ -110,6 +121,68 @@ export default function BalanceSheetPage() {
       }))
       .sort((a, b) => b.value - a.value);
   }, [report]);
+
+  // Liabilities & Equity allocation donut data (Mirroring the right column of the statement)
+  const liabilitiesEquityDonutData = useMemo(() => {
+    if (!report) return [];
+    const items: Array<{
+      id: number;
+      name: string;
+      type: string;
+      value: number;
+      color: string;
+    }> = [];
+
+    let colorIdx = 0;
+    // 1. Current Liabilities
+    if (report.liabilities) {
+      for (const l of report.liabilities) {
+        const bal = new Decimal(l.balance || '0').toNumber();
+        if (bal > 0) {
+          items.push({
+            id: l.accountId,
+            name: l.accountName,
+            type: l.type,
+            value: bal,
+            color: LIABILITY_EQUITY_PALETTE[colorIdx++ % LIABILITY_EQUITY_PALETTE.length],
+          });
+        }
+      }
+    }
+
+    // 2. Capital Accounts
+    if (report.capital) {
+      for (const c of report.capital) {
+        const bal = new Decimal(c.balance || '0').toNumber();
+        if (bal > 0) {
+          items.push({
+            id: c.accountId,
+            name: c.accountName,
+            type: c.type,
+            value: bal,
+            color: LIABILITY_EQUITY_PALETTE[colorIdx++ % LIABILITY_EQUITY_PALETTE.length],
+          });
+        }
+      }
+    }
+
+    // 3. Current Period Profit (P&L)
+    const profitVal = new Decimal(report.currentPeriodProfit || '0').toNumber();
+    if (profitVal > 0) {
+      items.push({
+        id: -1,
+        name: 'Current Period Profit (P&L)',
+        type: 'equity_profit',
+        value: profitVal,
+        color: LIABILITY_EQUITY_PALETTE[colorIdx++ % LIABILITY_EQUITY_PALETTE.length],
+      });
+    }
+
+    return items.sort((a, b) => b.value - a.value);
+  }, [report]);
+
+  const activeCompositionData = compositionMode === 'assets' ? assetDonutData : liabilitiesEquityDonutData;
+  const activeCompositionTotal = compositionMode === 'assets' ? totalAssetsDec.toNumber() : totalClaimsDec.toNumber();
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 1080, margin: '0 auto', width: '100%' }}>
@@ -475,7 +548,7 @@ export default function BalanceSheetPage() {
               </div>
             </div>
 
-            {/* Chart 2: Asset Composition Donut */}
+            {/* Chart 2: Asset & Liability Composition Donut */}
             <div
               style={{
                 background: 'rgba(235, 215, 190, 0.1)',
@@ -487,40 +560,85 @@ export default function BalanceSheetPage() {
                 gap: 12,
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <PieIcon size={16} style={{ color: 'var(--brown-700)' }} />
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--brown-900)' }}>
-                    Asset Capital Composition
+                    {compositionMode === 'assets' ? 'Asset Capital Composition' : 'Liabilities & Equity Composition'}
                   </span>
                 </div>
-                <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)' }}>
-                  Click slice to inspect ledger
-                </span>
+
+                {/* Segmented Switcher to choose between Assets and Liabilities & Equity */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    background: 'rgba(235, 215, 190, 0.35)',
+                    padding: 2,
+                    borderRadius: 6,
+                    border: '1px solid rgba(208, 174, 146, 0.3)',
+                    gap: 2,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setCompositionMode('assets')}
+                    style={{
+                      background: compositionMode === 'assets' ? 'var(--surface)' : 'transparent',
+                      border: 'none',
+                      borderRadius: 5,
+                      padding: '3px 8px',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: compositionMode === 'assets' ? 'var(--brown-900)' : 'var(--brown-600)',
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    Assets ({assetDonutData.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCompositionMode('liabilities')}
+                    style={{
+                      background: compositionMode === 'liabilities' ? 'var(--surface)' : 'transparent',
+                      border: 'none',
+                      borderRadius: 5,
+                      padding: '3px 8px',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: compositionMode === 'liabilities' ? 'var(--brown-900)' : 'var(--brown-600)',
+                      cursor: 'pointer',
+                      transition: 'all 120ms ease',
+                    }}
+                  >
+                    Liabilities & Equity ({liabilitiesEquityDonutData.length})
+                  </button>
+                </div>
               </div>
 
-              {assetDonutData.length > 0 ? (
+              {activeCompositionData.length > 0 ? (
                 <div style={{ display: 'flex', alignItems: 'center', height: 230 }}>
-                  <div style={{ width: '55%', height: '100%' }}>
+                  <div style={{ width: '48%', height: '100%' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
-                          data={assetDonutData}
-                          innerRadius={55}
-                          outerRadius={80}
+                          data={activeCompositionData}
+                          innerRadius={52}
+                          outerRadius={78}
                           paddingAngle={3}
                           dataKey="value"
                           onClick={(data) => {
-                            if (data?.id) setSelectedDrillAccount({ id: data.id, name: data.name });
+                            if (data?.id && data.id > 0) setSelectedDrillAccount({ id: data.id, name: data.name });
                           }}
                           style={{ cursor: 'pointer' }}
                         >
-                          {assetDonutData.map((entry, idx) => (
-                            <Cell key={`asset-pie-${idx}`} fill={entry.color} />
+                          {activeCompositionData.map((entry, idx) => (
+                            <Cell key={`comp-pie-${idx}`} fill={entry.color} />
                           ))}
                         </Pie>
                         <RechartsTooltip
-                          formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 'Balance']}
+                          formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 'Balance']}
                           contentStyle={{
                             background: '#FFF',
                             borderRadius: 8,
@@ -533,50 +651,64 @@ export default function BalanceSheetPage() {
                     </ResponsiveContainer>
                   </div>
 
-                  {/* Slices Legend */}
+                  {/* Slices Legend with EXACT Indian currency matching the statement below */}
                   <div
                     style={{
-                      width: '45%',
+                      width: '52%',
                       maxHeight: 210,
                       overflowY: 'auto',
                       display: 'flex',
                       flexDirection: 'column',
                       gap: 6,
-                      paddingLeft: 12,
+                      paddingLeft: 6,
                     }}
                   >
-                    {assetDonutData.slice(0, 6).map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => setSelectedDrillAccount({ id: item.id, name: item.name })}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 6,
-                          fontSize: 11,
-                          cursor: 'pointer',
-                          padding: '3px 6px',
-                          borderRadius: 4,
-                          background: 'rgba(255,255,255,0.6)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--brown-800)', fontWeight: 500 }}>
-                            {item.name}
-                          </span>
+                    {activeCompositionData.map((item) => {
+                      const pct = activeCompositionTotal > 0
+                        ? ((item.value / activeCompositionTotal) * 100).toFixed(1)
+                        : '0.0';
+                      return (
+                        <div
+                          key={item.name}
+                          onClick={() => {
+                            if (item.id > 0) setSelectedDrillAccount({ id: item.id, name: item.name });
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 6,
+                            fontSize: 11,
+                            cursor: item.id > 0 ? 'pointer' : 'default',
+                            padding: '4px 7px',
+                            borderRadius: 6,
+                            background: 'rgba(255,255,255,0.7)',
+                            border: '1px solid rgba(208, 174, 146, 0.25)',
+                          }}
+                          title={item.id > 0 ? 'Click to inspect ledger entries' : undefined}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color, flexShrink: 0 }} />
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--brown-800)', fontWeight: 600 }}>
+                              {item.name}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                            <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-900)' }}>
+                              ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            <span style={{ fontSize: 9.5, fontFamily: 'var(--font-mono)', color: 'var(--brown-600)', background: 'rgba(235, 215, 190, 0.35)', padding: '1px 4px', borderRadius: 3, fontWeight: 600 }}>
+                              {pct}%
+                            </span>
+                          </div>
                         </div>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--brown-900)', flexShrink: 0 }}>
-                          {formatDisplayINR(item.value)}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
                 <div style={{ height: 230, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brown-500)', fontSize: 13 }}>
-                  No assets recorded as of this date.
+                  No entries recorded for this category as of this date.
                 </div>
               )}
             </div>
