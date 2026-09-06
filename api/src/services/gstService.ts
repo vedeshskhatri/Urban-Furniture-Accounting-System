@@ -42,21 +42,6 @@ export interface EWayBillInfo {
   status: 'ACTIVE' | 'NOT_REQUIRED';
 }
 
-export interface UpiPaymentDetails {
-  vpa: string;
-  payeeName: string;
-  amount: string;
-  invoiceNumber: string;
-  upiUrl: string;
-  qrDataUrl: string;
-  qrCodeSvg: string;
-  gateway?: string;
-  razorpayKeyId?: string;
-  razorpayUrl?: string;
-  razorpayQrSvg?: string;
-  razorpayQrDataUrl?: string;
-}
-
 export interface InvoiceGstDetails {
   invoiceId: number;
   invoiceNumber: string;
@@ -93,7 +78,6 @@ export interface InvoiceGstDetails {
   qrPayloadJson: string;
   qrCodeSvg: string;
   qrDataUrl: string;
-  upi: UpiPaymentDetails;
 }
 
 export class GstService {
@@ -307,74 +291,6 @@ export class GstService {
       margin: 2,
     });
 
-    // 1-Click NPCI Bharat QR / UPI Payment Link
-    const payableAmount = (inv.amount_due !== null && inv.amount_due !== undefined) 
-      ? new Decimal(inv.amount_due).toFixed(2)
-      : invoiceTotalDec.toFixed(2);
-
-    const upiVpa = process.env.UPI_VPA || 'urbanfurniture@icici';
-    const upiPayee = SELLER_LEGAL_NAME;
-    const upiUrl = `upi://pay?pa=${upiVpa}&pn=${encodeURIComponent(upiPayee)}&am=${payableAmount}&cu=INR&tn=${encodeURIComponent('Invoice ' + inv.number)}`;
-    
-    const upiQrSvg = QrMatrixGenerator.renderSvg(upiUrl, {
-      size: 260,
-      margin: 2,
-      foregroundColor: '#26211C',
-      backgroundColor: '#FFFFFF',
-    });
-    const upiQrDataUrl = await QrMatrixGenerator.renderPngDataUrl(upiUrl, {
-      size: 260,
-      margin: 2,
-    });
-
-    // Dynamic Razorpay Payment Gateway Link & Universal Checkout QR
-    let razorpayUrl: string | undefined = undefined;
-    let razorpayQrSvg: string | undefined = undefined;
-    let razorpayQrDataUrl: string | undefined = undefined;
-
-    if (new Decimal(payableAmount).greaterThan(0)) {
-      try {
-        const { RazorpayService } = await import('./razorpayService');
-        const rzpLink = await RazorpayService.createPaymentLink(
-          payableAmount,
-          inv.number,
-          inv.customer_name,
-          inv.customer_email,
-          { invoiceId: inv.id, invoiceNumber: inv.number, customerId: inv.customer_id }
-        );
-        if (rzpLink?.shortUrl) {
-          razorpayUrl = rzpLink.shortUrl;
-          razorpayQrSvg = QrMatrixGenerator.renderSvg(razorpayUrl, {
-            size: 260,
-            margin: 2,
-            foregroundColor: '#26211C',
-            backgroundColor: '#FFFFFF',
-          });
-          razorpayQrDataUrl = await QrMatrixGenerator.renderPngDataUrl(razorpayUrl, {
-            size: 260,
-            margin: 2,
-          });
-        }
-      } catch (rzpErr: any) {
-        console.warn('[gstService] Razorpay payment link notice (using fallback UPI):', rzpErr.message);
-      }
-    }
-
-    const upi: UpiPaymentDetails = {
-      vpa: upiVpa,
-      payeeName: upiPayee,
-      amount: payableAmount,
-      invoiceNumber: inv.number,
-      upiUrl,
-      qrDataUrl: upiQrDataUrl,
-      qrCodeSvg: upiQrSvg,
-      gateway: 'razorpay',
-      razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_TYL9FJAZxMYoFc',
-      razorpayUrl,
-      razorpayQrSvg,
-      razorpayQrDataUrl,
-    };
-
     return {
       invoiceId: inv.id,
       invoiceNumber: inv.number,
@@ -411,7 +327,6 @@ export class GstService {
       qrPayloadJson,
       qrCodeSvg,
       qrDataUrl,
-      upi,
     };
   }
 }
