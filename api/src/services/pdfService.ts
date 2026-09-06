@@ -36,6 +36,18 @@ export class PdfService {
       margin: 2,
     });
 
+    // 1-Click Dynamic UPI Payment Link & QR
+    const payableAmount = parseFloat(invoice.amountDue || invoice.total || '0').toFixed(2);
+    const upiVpa = process.env.UPI_VPA || 'urbanfurniture@icici';
+    const upiPayee = SELLER_LEGAL_NAME;
+    const upiUrl = `upi://pay?pa=${upiVpa}&pn=${encodeURIComponent(upiPayee)}&am=${payableAmount}&cu=INR&tn=${encodeURIComponent('Invoice ' + invoice.number)}`;
+    const upiQrSvg = QrMatrixGenerator.renderSvg(upiUrl, {
+      size: 95,
+      margin: 1,
+      foregroundColor: '#26211C',
+      backgroundColor: '#FFFFFF',
+    });
+
     // CGST & SGST Split (Intra-state Maharashtra default)
     const taxTotalNum = parseFloat(invoice.taxTotal || '0');
     const cgstAmount = (taxTotalNum / 2).toFixed(2);
@@ -206,7 +218,32 @@ export class PdfService {
           }
           .totals-section {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 24px;
+          }
+          .upi-box {
+            flex: 1;
+            background: #FAF8F5;
+            border: 1px solid #E5DFD7;
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+          }
+          .upi-qr-wrapper {
+            background: #FFFFFF;
+            padding: 4px;
+            border: 1.5px solid #26211C;
+            border-radius: 6px;
+            width: 95px;
+            height: 95px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
           }
           .totals-box {
             width: 300px;
@@ -214,6 +251,7 @@ export class PdfService {
             border: 1px solid #E5DFD7;
             border-radius: 8px;
             padding: 16px;
+            flex-shrink: 0;
           }
           .total-row {
             display: flex;
@@ -351,6 +389,29 @@ export class PdfService {
           </table>
 
           <div class="totals-section">
+            <div class="upi-box">
+              <div class="upi-qr-wrapper">
+                ${upiQrSvg}
+              </div>
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: #137333; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
+                  <span>⚡ 1-Click Scan &amp; Pay (UPI)</span>
+                </div>
+                <div style="font-size: 13px; font-weight: 700; color: #26211C; margin-top: 3px;">
+                  ${upiPayee}
+                </div>
+                <div style="font-size: 11px; color: #574F45; margin-top: 2px;">
+                  UPI ID: <strong style="font-family: monospace; color: #382A24;">${upiVpa}</strong>
+                </div>
+                <div style="font-size: 11px; color: #574F45; margin-top: 2px;">
+                  Amount Due: <strong style="font-family: monospace; color: ${parseFloat(payableAmount) > 0 ? '#C5221F' : '#137333'}; font-size: 13px;">₹${payableAmount}</strong>
+                </div>
+                <div style="font-size: 10px; color: #7B7267; margin-top: 4px; line-height: 1.3;">
+                  Scan via Google Pay, PhonePe, Paytm, BHIM or any UPI App for instant showroom settlement.
+                </div>
+              </div>
+            </div>
+
             <div class="totals-box">
               <div class="total-row">
                 <span>Taxable Amount:</span>

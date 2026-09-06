@@ -6,7 +6,7 @@ import { InvoiceLineGrid, InvoiceGridLine } from './components/InvoiceLineGrid';
 import { BlockingWarning } from './components/Warnings';
 import { PaymentHistoryPanel } from './components/PaymentHistoryPanel';
 import { CustomerInvoiceDTO } from '@shared/schemas/invoice';
-import { ShoppingCart, CreditCard, BookOpen, TrendingUp, Printer, Mail, AlertCircle, ShieldCheck, QrCode, Truck, Copy, Check } from 'lucide-react';
+import { ShoppingCart, CreditCard, BookOpen, TrendingUp, Printer, Mail, AlertCircle, ShieldCheck, QrCode, Truck, Copy, Check, Zap, ExternalLink } from 'lucide-react';
 import { JournalEntryModal } from '../../components/purchase/JournalEntryModal';
 import { RegisterPaymentModal } from '../../components/purchase/RegisterPaymentModal';
 import api from '../../lib/axios';
@@ -54,6 +54,8 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
   const [gstDetails, setGstDetails] = useState<any>(null);
   const [isGstPayloadModalOpen, setIsGstPayloadModalOpen] = useState<boolean>(false);
   const [copiedIrn, setCopiedIrn] = useState<boolean>(false);
+  const [qrTab, setQrTab] = useState<'tax' | 'upi'>('tax');
+  const [copiedUpi, setCopiedUpi] = useState<boolean>(false);
 
 
   // Fetch dropdown data
@@ -430,129 +432,256 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
           </div>
         )}
 
-        {/* Indian B2B e-Invoice & Statutory E-Way Bill Verification Card */}
+        {/* Indian Tax / e-Invoice & Dynamic UPI QR Verification Card */}
         {gstDetails && (
           <div className="bg-gradient-to-r from-amber-50/80 via-surface to-stone-50 border border-brown-300 rounded-[12px] p-5 shadow-sm mb-6">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-3 border-b border-brown-200">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
+                  qrTab === 'upi' ? 'bg-amber-100 border-amber-300 text-amber-800' : 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                }`}>
+                  {qrTab === 'upi' ? <Zap className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-bold text-brown-900 tracking-tight">
-                      Indian B2B e-Invoice Verification Seal
+                      {qrTab === 'upi' ? '1-Click Dynamic UPI Payment Gateway' : 'Indian B2B e-Invoice Verification Seal'}
                     </h3>
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 rounded uppercase">
-                      NIC IRN Verified
-                    </span>
-                    <span className="px-2 py-0.5 text-[10px] font-bold bg-brown-100 text-brown-800 border border-brown-300 rounded">
-                      HSN 9403
-                    </span>
+                    {qrTab === 'upi' ? (
+                      <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 rounded uppercase">
+                        Bharat QR / NPCI Ready
+                      </span>
+                    ) : (
+                      <>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 rounded uppercase">
+                          NIC IRN Verified
+                        </span>
+                        <span className="px-2 py-0.5 text-[10px] font-bold bg-brown-100 text-brown-800 border border-brown-300 rounded">
+                          HSN 9403
+                        </span>
+                      </>
+                    )}
                   </div>
                   <p className="text-xs text-brown-600 mt-0.5">
-                    Deterministic SHA-256 Invoice Reference Number &amp; Offline QR Matrix compliant with Indian GST Rules.
+                    {qrTab === 'upi'
+                      ? 'Instant customer counter settlement via Google Pay, PhonePe, Paytm, BHIM & Bank UPI apps.'
+                      : 'Deterministic SHA-256 Invoice Reference Number & Offline QR Matrix compliant with Indian GST Rules.'}
                   </p>
                 </div>
               </div>
 
-              {/* Statutory E-Way Bill Rule 138 Badge */}
+              {/* Mode Toggle Pills */}
               <div className="flex items-center gap-2">
-                {gstDetails.ewayBill?.required ? (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-xs font-medium">
-                    <Truck className="w-4 h-4 text-blue-700 shrink-0" />
-                    <div>
-                      <span className="font-bold">E-Way Bill Active:</span>{' '}
-                      <span className="font-mono font-bold text-blue-800">{gstDetails.ewayBill.ewayBillNo}</span>
-                      <span className="block text-[10px] text-blue-600">Valid 48h • Distance ~{gstDetails.ewayBill.approxDistanceKm} km</span>
+                <div className="inline-flex p-1 bg-brown-100/80 rounded-lg border border-brown-200 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => setQrTab('tax')}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                      qrTab === 'tax'
+                        ? 'bg-white text-brown-900 shadow-sm'
+                        : 'text-brown-600 hover:text-brown-900'
+                    }`}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>NIC e-Invoice QR</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrTab('upi')}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                      qrTab === 'upi'
+                        ? 'bg-amber-500 text-white shadow-sm'
+                        : 'text-brown-600 hover:text-brown-900'
+                    }`}
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>1-Click UPI QR</span>
+                  </button>
+                </div>
+
+                {qrTab === 'tax' && (
+                  gstDetails.ewayBill?.required ? (
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-xs font-medium">
+                      <Truck className="w-4 h-4 text-blue-700 shrink-0" />
+                      <div>
+                        <span className="font-bold">E-Way Bill:</span>{' '}
+                        <span className="font-mono font-bold text-blue-800">{gstDetails.ewayBill.ewayBillNo}</span>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 px-3 py-1 bg-brown-50 border border-brown-200 rounded-lg text-brown-700 text-xs">
-                    <Truck className="w-3.5 h-3.5 text-brown-500" />
-                    <span>Consignment &lt; ₹50k (EWB Exempt)</span>
-                  </div>
+                  ) : (
+                    <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brown-50 border border-brown-200 rounded-lg text-brown-700 text-xs">
+                      <Truck className="w-3.5 h-3.5 text-brown-500" />
+                      <span>&lt; ₹50k (EWB Exempt)</span>
+                    </div>
+                  )
                 )}
               </div>
             </div>
 
-            {/* IRN Details & QR Code Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-center">
-              <div className="md:col-span-3 space-y-2">
-                <div>
-                  <span className="text-[10px] font-bold text-brown-500 uppercase tracking-wider block">
-                    64-Character Invoice Reference Number (IRN Hash)
-                  </span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="p-2 bg-white border border-brown-200 rounded-md font-mono text-[11px] text-brown-900 break-all select-all flex-1 shadow-inner">
-                      {gstDetails.irn}
+            {/* TAB CONTENT */}
+            {qrTab === 'upi' ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-center">
+                <div className="md:col-span-3 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="p-3 bg-white rounded-lg border border-brown-200 shadow-xs">
+                      <span className="text-[10px] text-brown-500 uppercase tracking-wider block font-bold">Payee Beneficiary</span>
+                      <span className="font-bold text-brown-900 text-sm">{gstDetails.upi?.payeeName || 'Urban Furniture Pvt Ltd'}</span>
                     </div>
+                    <div className="p-3 bg-white rounded-lg border border-brown-200 shadow-xs">
+                      <span className="text-[10px] text-brown-500 uppercase tracking-wider block font-bold">UPI Virtual Payment Address</span>
+                      <span className="font-mono font-bold text-brown-900 text-sm">{gstDetails.upi?.vpa || 'urbanfurniture@icici'}</span>
+                    </div>
+                    <div className="p-3 bg-emerald-50/80 rounded-lg border border-emerald-200 shadow-xs">
+                      <span className="text-[10px] text-emerald-800 uppercase tracking-wider block font-bold">Payable Amount Due</span>
+                      <span className="font-mono font-extrabold text-emerald-900 text-lg">
+                        ₹{Number(gstDetails.upi?.amount || invoice?.amountDue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-bold text-brown-500 uppercase tracking-wider block">
+                      NPCI UPI Deep Link URL
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="p-2 bg-white border border-brown-200 rounded-md font-mono text-[11px] text-brown-900 break-all select-all flex-1 shadow-inner">
+                        {gstDetails.upi?.upiUrl}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (gstDetails.upi?.upiUrl) {
+                            navigator.clipboard.writeText(gstDetails.upi.upiUrl);
+                            setCopiedUpi(true);
+                            setTimeout(() => setCopiedUpi(false), 2000);
+                          }
+                        }}
+                        className="px-2.5 py-2 bg-surface border border-brown-300 rounded-md text-brown-700 hover:bg-brown-100 text-xs font-medium flex items-center gap-1 shrink-0 cursor-pointer"
+                        title="Copy UPI Deep Link"
+                      >
+                        {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedUpi ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex flex-wrap items-center gap-3">
+                    <a
+                      href={gstDetails.upi?.upiUrl}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open in UPI App (Mobile / POS)</span>
+                    </a>
+                    <span className="text-xs text-brown-500 font-medium">
+                      💡 Scannable by customer camera directly from screen or official printed invoice
+                    </span>
+                  </div>
+                </div>
+
+                {/* Scannable UPI QR Code */}
+                <div className="flex flex-col items-center justify-center p-3 bg-white border-2 border-amber-300 rounded-lg shadow-sm">
+                  {gstDetails.upi?.qrDataUrl ? (
+                    <img
+                      src={gstDetails.upi.qrDataUrl}
+                      alt="UPI Payment QR Code"
+                      className="w-28 h-28 object-contain"
+                    />
+                  ) : gstDetails.upi?.qrCodeSvg ? (
+                    <div
+                      className="w-28 h-28 flex items-center justify-center"
+                      dangerouslySetInnerHTML={{ __html: gstDetails.upi.qrCodeSvg }}
+                    />
+                  ) : (
+                    <div className="w-28 h-28 flex items-center justify-center text-brown-400 text-xs">
+                      Loading UPI QR...
+                    </div>
+                  )}
+                  <span className="text-[10px] font-bold text-amber-800 mt-1 uppercase tracking-wider flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-600 fill-amber-500" />
+                    Scan &amp; Pay UPI
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* NIC e-Invoice QR Code Tab */
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-center">
+                <div className="md:col-span-3 space-y-2">
+                  <div>
+                    <span className="text-[10px] font-bold text-brown-500 uppercase tracking-wider block">
+                      64-Character Invoice Reference Number (IRN Hash)
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="p-2 bg-white border border-brown-200 rounded-md font-mono text-[11px] text-brown-900 break-all select-all flex-1 shadow-inner">
+                        {gstDetails.irn}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(gstDetails.irn);
+                          setCopiedIrn(true);
+                          setTimeout(() => setCopiedIrn(false), 2000);
+                        }}
+                        className="px-2.5 py-2 bg-surface border border-brown-300 rounded-md text-brown-700 hover:bg-brown-100 text-xs font-medium flex items-center gap-1 shrink-0 cursor-pointer"
+                        title="Copy IRN Hash"
+                      >
+                        {copiedIrn ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedIrn ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1">
+                    <div className="p-2 bg-white/70 rounded border border-brown-100">
+                      <span className="text-[10px] text-brown-500 block">Seller GSTIN</span>
+                      <span className="font-mono font-bold text-brown-900">{gstDetails.sellerGstin}</span>
+                    </div>
+                    <div className="p-2 bg-white/70 rounded border border-brown-100">
+                      <span className="text-[10px] text-brown-500 block">Place of Supply</span>
+                      <span className="font-bold text-brown-900">{gstDetails.placeOfSupply}</span>
+                    </div>
+                    <div className="p-2 bg-white/70 rounded border border-brown-100">
+                      <span className="text-[10px] text-brown-500 block">Supply Category</span>
+                      <span className="font-bold text-brown-900">{gstDetails.supplyType === 'INTRA_STATE' ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1 flex items-center gap-3">
                     <button
                       type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText(gstDetails.irn);
-                        setCopiedIrn(true);
-                        setTimeout(() => setCopiedIrn(false), 2000);
-                      }}
-                      className="px-2.5 py-2 bg-surface border border-brown-300 rounded-md text-brown-700 hover:bg-brown-100 text-xs font-medium flex items-center gap-1 shrink-0 cursor-pointer"
-                      title="Copy IRN Hash"
+                      onClick={() => setIsGstPayloadModalOpen(true)}
+                      className="text-xs text-brown-700 hover:text-brown-900 underline font-semibold flex items-center gap-1 cursor-pointer"
                     >
-                      {copiedIrn ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedIrn ? 'Copied' : 'Copy'}</span>
+                      <QrCode className="w-3.5 h-3.5 text-brown-600" />
+                      Inspect Signed B2B QR Code Payload
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1">
-                  <div className="p-2 bg-white/70 rounded border border-brown-100">
-                    <span className="text-[10px] text-brown-500 block">Seller GSTIN</span>
-                    <span className="font-mono font-bold text-brown-900">{gstDetails.sellerGstin}</span>
-                  </div>
-                  <div className="p-2 bg-white/70 rounded border border-brown-100">
-                    <span className="text-[10px] text-brown-500 block">Place of Supply</span>
-                    <span className="font-bold text-brown-900">{gstDetails.placeOfSupply}</span>
-                  </div>
-                  <div className="p-2 bg-white/70 rounded border border-brown-100">
-                    <span className="text-[10px] text-brown-500 block">Supply Category</span>
-                    <span className="font-bold text-brown-900">{gstDetails.supplyType === 'INTRA_STATE' ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}</span>
-                  </div>
-                </div>
-
-                <div className="pt-1 flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsGstPayloadModalOpen(true)}
-                    className="text-xs text-brown-700 hover:text-brown-900 underline font-semibold flex items-center gap-1 cursor-pointer"
-                  >
-                    <QrCode className="w-3.5 h-3.5 text-brown-600" />
-                    Inspect Signed B2B QR Code Payload
-                  </button>
+                {/* Official B2B Vector QR Code */}
+                <div className="flex flex-col items-center justify-center p-3 bg-white border border-brown-200 rounded-lg shadow-sm">
+                  {gstDetails.qrDataUrl ? (
+                    <img
+                      src={gstDetails.qrDataUrl}
+                      alt="GST e-Invoice QR Code"
+                      className="w-28 h-28 object-contain"
+                    />
+                  ) : gstDetails.qrCodeSvg ? (
+                    <div
+                      className="w-28 h-28 flex items-center justify-center"
+                      dangerouslySetInnerHTML={{ __html: gstDetails.qrCodeSvg }}
+                    />
+                  ) : (
+                    <div className="w-28 h-28 flex items-center justify-center text-brown-400 text-xs">
+                      Loading QR...
+                    </div>
+                  )}
+                  <span className="text-[10px] font-bold text-brown-600 mt-1 uppercase tracking-wider">
+                    Offline QR Seal
+                  </span>
                 </div>
               </div>
-
-              {/* Official B2B Vector QR Code */}
-              <div className="flex flex-col items-center justify-center p-3 bg-white border border-brown-200 rounded-lg shadow-sm">
-                {gstDetails.qrDataUrl ? (
-                  <img
-                    src={gstDetails.qrDataUrl}
-                    alt="GST e-Invoice QR Code"
-                    className="w-28 h-28 object-contain"
-                  />
-                ) : gstDetails.qrCodeSvg ? (
-                  <div
-                    className="w-28 h-28 flex items-center justify-center"
-                    dangerouslySetInnerHTML={{ __html: gstDetails.qrCodeSvg }}
-                  />
-                ) : (
-                  <div className="w-28 h-28 flex items-center justify-center text-brown-400 text-xs">
-                    Loading QR...
-                  </div>
-                )}
-                <span className="text-[10px] font-bold text-brown-600 mt-1 uppercase tracking-wider">
-                  Offline QR Seal
-                </span>
-              </div>
-            </div>
+            )}
           </div>
         )}
 

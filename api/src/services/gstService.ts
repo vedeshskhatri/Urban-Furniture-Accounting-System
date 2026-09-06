@@ -42,6 +42,16 @@ export interface EWayBillInfo {
   status: 'ACTIVE' | 'NOT_REQUIRED';
 }
 
+export interface UpiPaymentDetails {
+  vpa: string;
+  payeeName: string;
+  amount: string;
+  invoiceNumber: string;
+  upiUrl: string;
+  qrDataUrl: string;
+  qrCodeSvg: string;
+}
+
 export interface InvoiceGstDetails {
   invoiceId: number;
   invoiceNumber: string;
@@ -78,6 +88,7 @@ export interface InvoiceGstDetails {
   qrPayloadJson: string;
   qrCodeSvg: string;
   qrDataUrl: string;
+  upi: UpiPaymentDetails;
 }
 
 export class GstService {
@@ -137,9 +148,13 @@ export class GstService {
         c.address as customer_address,
         c.city as customer_city,
         c.state as customer_state,
-        c.pincode as customer_pincode
+        c.pincode as customer_pincode,
+        vis.amount_due,
+        vis.amount_paid,
+        vis.payment_status
        FROM customer_invoices ci
        JOIN contacts c ON c.id = ci.customer_id
+       LEFT JOIN v_invoice_status vis ON vis.invoice_id = ci.id
        WHERE ci.id = $1`,
       [invoiceId]
     );
@@ -287,6 +302,36 @@ export class GstService {
       margin: 2,
     });
 
+    // 1-Click NPCI Bharat QR / UPI Payment Link
+    const payableAmount = (inv.amount_due !== null && inv.amount_due !== undefined) 
+      ? new Decimal(inv.amount_due).toFixed(2)
+      : invoiceTotalDec.toFixed(2);
+
+    const upiVpa = process.env.UPI_VPA || 'urbanfurniture@icici';
+    const upiPayee = SELLER_LEGAL_NAME;
+    const upiUrl = `upi://pay?pa=${upiVpa}&pn=${encodeURIComponent(upiPayee)}&am=${payableAmount}&cu=INR&tn=${encodeURIComponent('Invoice ' + inv.number)}`;
+    
+    const upiQrSvg = QrMatrixGenerator.renderSvg(upiUrl, {
+      size: 260,
+      margin: 2,
+      foregroundColor: '#26211C',
+      backgroundColor: '#FFFFFF',
+    });
+    const upiQrDataUrl = await QrMatrixGenerator.renderPngDataUrl(upiUrl, {
+      size: 260,
+      margin: 2,
+    });
+
+    const upi: UpiPaymentDetails = {
+      vpa: upiVpa,
+      payeeName: upiPayee,
+      amount: payableAmount,
+      invoiceNumber: inv.number,
+      upiUrl,
+      qrDataUrl: upiQrDataUrl,
+      qrCodeSvg: upiQrSvg,
+    };
+
     return {
       invoiceId: inv.id,
       invoiceNumber: inv.number,
@@ -323,6 +368,7 @@ export class GstService {
       qrPayloadJson,
       qrCodeSvg,
       qrDataUrl,
+      upi,
     };
   }
 }
