@@ -2194,6 +2194,21 @@ export const PortalRoomStudioPage: React.FC = () => {
         );
       }
 
+      // 5. Resilient fallback: if model is not currently in catalog, synthesize model metadata from saved item
+      if (!model && item.url) {
+        model = {
+          id: item.modelId || `custom-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+          name: item.nameLabel || item.query || 'Custom Piece',
+          category: 'Custom',
+          filename: item.url.split('/').pop() || 'model.glb',
+          url: item.url,
+          defaultScale: item.scale || 1.0,
+          defaultY: 0,
+          sizeBytes: 0,
+          sizeKB: '0 KB',
+        };
+      }
+
       if (model) {
         handleAddFurniture(
           model,
@@ -2208,6 +2223,8 @@ export const PortalRoomStudioPage: React.FC = () => {
     });
 
     playChimeSuccess();
+    setSaveSuccessToast(`Loaded "${style.name}"!`);
+    setTimeout(() => setSaveSuccessToast(null), 3500);
   };
 
   // Backward compatibility wrapper
@@ -3727,7 +3744,8 @@ export const PortalRoomStudioPage: React.FC = () => {
             style={{
               width: '100%',
               maxWidth: 1040,
-              maxHeight: '88vh',
+              height: '86vh',
+              maxHeight: '86vh',
               backgroundColor: '#FCFAF6',
               borderRadius: 16,
               border: '1px solid rgba(214, 198, 180, 0.6)',
@@ -3748,6 +3766,7 @@ export const PortalRoomStudioPage: React.FC = () => {
                 justifyContent: 'space-between',
                 gap: 16,
                 backgroundColor: '#FFFFFF',
+                flexShrink: 0,
               }}
             >
               <div>
@@ -3774,7 +3793,7 @@ export const PortalRoomStudioPage: React.FC = () => {
                     fontFamily: 'var(--font-body)',
                   }}
                 >
-                  Apply pre-configured interior plans with coordinated designer furniture, tailored lighting ambience, and camera viewpoints.
+                  Click any plan to instantly apply interior layout, handcrafted furniture, tailored lighting, and camera angle.
                 </p>
               </div>
 
@@ -3854,6 +3873,7 @@ export const PortalRoomStudioPage: React.FC = () => {
                 display: 'flex',
                 gap: 6,
                 backgroundColor: 'rgba(247, 243, 235, 0.75)',
+                flexShrink: 0,
               }}
             >
               {['All', 'Living', 'Workspace', 'Bedroom', 'Hospitality', 'Custom'].map((cat) => {
@@ -3891,10 +3911,13 @@ export const PortalRoomStudioPage: React.FC = () => {
             {/* Styles Cards Grid */}
             <div
               style={{
-                padding: '20px 24px 28px',
+                flex: '1 1 0%',
+                minHeight: 0,
                 overflowY: 'auto',
+                padding: '20px 24px 28px',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(295px, 1fr))',
+                alignContent: 'start',
                 gap: 18,
               }}
             >
@@ -3914,25 +3937,37 @@ export const PortalRoomStudioPage: React.FC = () => {
                   return (
                     <div
                       key={style.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleApplyRoomStyle(style)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleApplyRoomStyle(style);
+                        }
+                      }}
                       style={{
                         backgroundColor: '#FFFFFF',
                         borderRadius: 12,
-                        border: '1px solid rgba(214, 198, 180, 0.5)',
+                        border: '1px solid rgba(214, 198, 180, 0.55)',
                         boxShadow: '0 2px 10px rgba(44, 34, 30, 0.04)',
                         overflow: 'hidden',
                         display: 'flex',
                         flexDirection: 'column',
                         justifyContent: 'space-between',
-                        transition: 'all 150ms ease',
+                        transition: 'all 160ms ease',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        minHeight: 330,
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.transform = 'translateY(-3px)';
                         e.currentTarget.style.borderColor = style.accentColor;
-                        e.currentTarget.style.boxShadow = '0 10px 24px rgba(44, 34, 30, 0.09)';
+                        e.currentTarget.style.boxShadow = '0 12px 28px rgba(44, 34, 30, 0.12)';
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'none';
-                        e.currentTarget.style.borderColor = 'rgba(214, 198, 180, 0.5)';
+                        e.currentTarget.style.borderColor = 'rgba(214, 198, 180, 0.55)';
                         e.currentTarget.style.boxShadow = '0 2px 10px rgba(44, 34, 30, 0.04)';
                       }}
                     >
@@ -4065,7 +4100,11 @@ export const PortalRoomStudioPage: React.FC = () => {
                       {/* Card Footer: Confident Action Button */}
                       <div style={{ padding: '0 16px 14px' }}>
                         <button
-                          onClick={() => handleApplyRoomStyle(style)}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleApplyRoomStyle(style);
+                          }}
                           style={{
                             width: '100%',
                             padding: '8px 14px',
