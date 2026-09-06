@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CustomerStatementModal } from './components/CustomerStatementModal';
+import { formatYAxisINR } from '../../lib/money';
 import {
   AlertCircle,
   BarChart3,
@@ -31,16 +32,6 @@ const DEBTOR_PALETTE = [
   '#5F7052', // Olive
   '#4A3A34', // Deep Walnut
 ];
-
-function formatDisplayINR(num: number): string {
-  if (Math.abs(num) >= 10000000) {
-    return `₹${(num / 10000000).toFixed(2)} Cr`;
-  }
-  if (Math.abs(num) >= 100000) {
-    return `₹${(num / 100000).toFixed(2)} L`;
-  }
-  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-}
 
 export interface CustomerReceivableItem {
   customerId: number;
@@ -363,7 +354,8 @@ export const ReceivablesPage: React.FC = () => {
                       tickLine={false}
                     />
                     <YAxis
-                      tickFormatter={formatDisplayINR}
+                      tickFormatter={formatYAxisINR}
+                      width={56}
                       tick={{ fill: '#77574A', fontSize: 9, fontFamily: 'monospace' }}
                       axisLine={false}
                       tickLine={false}
@@ -443,7 +435,7 @@ export const ReceivablesPage: React.FC = () => {
                             ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                           <span className="text-[10px] text-brown-500 font-mono hidden sm:inline">
-                            ({formatDisplayINR(item.value)})
+                            ({formatYAxisINR(item.value)})
                           </span>
                         </div>
                       </div>

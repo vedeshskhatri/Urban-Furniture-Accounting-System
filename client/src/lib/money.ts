@@ -45,3 +45,34 @@ export function formatINRCompact(value: string): string {
   }
   return formatINR(value);
 }
+
+/**
+ * Clean, human-readable Indian Rupee tick formatter for chart Y-axes.
+ * Accurately scales dynamically across Cr, L, and K without producing
+ * awkward repeats like "₹0.0Cr".
+ */
+export function formatYAxisINR(val: number | string): string {
+  const n = typeof val === 'string' ? parseFloat(val) : val;
+  if (isNaN(n) || n === 0 || Math.abs(n) < 0.01) {
+    return '₹0';
+  }
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+
+  if (abs >= 10_000_000) {
+    const cr = abs / 10_000_000;
+    const formatted = cr >= 10 ? cr.toFixed(1) : cr.toFixed(2);
+    return `${sign}₹${parseFloat(formatted)} Cr`;
+  }
+  if (abs >= 100_000) {
+    const l = abs / 100_000;
+    const formatted = l >= 10 ? l.toFixed(1) : l.toFixed(2);
+    return `${sign}₹${parseFloat(formatted)} L`;
+  }
+  if (abs >= 1_000) {
+    const k = abs / 1_000;
+    const formatted = k >= 10 ? k.toFixed(0) : k.toFixed(1);
+    return `${sign}₹${parseFloat(formatted)} K`;
+  }
+  return `${sign}₹${Math.round(abs).toLocaleString('en-IN')}`;
+}

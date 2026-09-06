@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { StatusBadge } from '../../components/StatusBadge';
 import { CustomerInvoiceDTO } from '@shared/schemas/invoice';
+import { formatYAxisINR } from '../../lib/money';
 import {
   Mic,
   ArrowUpDown,
@@ -40,16 +41,6 @@ const STATUS_COLORS: Record<string, string> = {
   draft: '#A8836C', // Sand brown
   confirmed: '#77574A', // Walnut
 };
-
-function formatDisplayINR(num: number): string {
-  if (Math.abs(num) >= 10000000) {
-    return `₹${(num / 10000000).toFixed(2)} Cr`;
-  }
-  if (Math.abs(num) >= 100000) {
-    return `₹${(num / 100000).toFixed(2)} L`;
-  }
-  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-}
 
 export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = ({ onSelectInvoice, onNewInvoice }) => {
   const navigate = useNavigate();
@@ -303,7 +294,8 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                       tickLine={false}
                     />
                     <YAxis
-                      tickFormatter={formatDisplayINR}
+                      tickFormatter={formatYAxisINR}
+                      width={56}
                       tick={{ fill: '#77574A', fontSize: 9, fontFamily: 'monospace' }}
                       axisLine={false}
                       tickLine={false}
@@ -387,7 +379,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                           ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                         <span className="text-[10px] text-brown-500 font-mono hidden sm:inline">
-                          ({formatDisplayINR(item.value)})
+                          ({formatYAxisINR(item.value)})
                         </span>
                       </div>
                     </button>

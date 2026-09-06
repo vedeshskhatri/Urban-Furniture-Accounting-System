@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import { ReportsApi, BalanceSheetReport } from '../../api/reports.api';
 import Money from '../../components/ui/Money';
+import { formatYAxisINR } from '../../lib/money';
 import LedgerDrilldownModal from './LedgerDrilldownModal';
 import {
   Printer,
@@ -48,16 +49,6 @@ const LIABILITY_EQUITY_PALETTE = [
   '#A8836C',
   '#D0AE92',
 ];
-
-function formatDisplayINR(num: number): string {
-  if (Math.abs(num) >= 10000000) {
-    return `₹${(num / 10000000).toFixed(2)} Cr`;
-  }
-  if (Math.abs(num) >= 100000) {
-    return `₹${(num / 100000).toFixed(2)} L`;
-  }
-  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-}
 
 export default function BalanceSheetPage() {
   const navigate = useNavigate();
@@ -523,7 +514,8 @@ export default function BalanceSheetPage() {
                       tickLine={false}
                     />
                     <YAxis
-                      tickFormatter={formatDisplayINR}
+                      tickFormatter={formatYAxisINR}
+                      width={56}
                       tick={{ fill: '#77574A', fontSize: 10, fontFamily: 'var(--font-mono)' }}
                       axisLine={false}
                       tickLine={false}

@@ -15,6 +15,7 @@ import { VendorBillsApi } from '../../api/vendorBills.api';
 import { VendorBill } from '@shared/schemas/vendorBill.schema';
 import { StatusBadge } from '../../components/StatusBadge';
 import { Money } from '../../components/Money';
+import { formatYAxisINR } from '../../lib/money';
 import {
   FileText,
   Building2,
@@ -36,16 +37,6 @@ const VENDOR_PALETTE = [
   '#5F7052', // Olive
   '#A8836C', // Sand
 ];
-
-function formatDisplayINR(num: number): string {
-  if (Math.abs(num) >= 10000000) {
-    return `₹${(num / 10000000).toFixed(2)} Cr`;
-  }
-  if (Math.abs(num) >= 100000) {
-    return `₹${(num / 100000).toFixed(2)} L`;
-  }
-  return `₹${num.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
-}
 
 interface VendorBillListPageProps {
   onSelectBill: (id: number) => void;
@@ -252,7 +243,8 @@ export const VendorBillListPage: React.FC<VendorBillListPageProps> = ({ onSelect
                       tickLine={false}
                     />
                     <YAxis
-                      tickFormatter={formatDisplayINR}
+                      tickFormatter={formatYAxisINR}
+                      width={56}
                       tick={{ fill: '#77574A', fontSize: 9, fontFamily: 'monospace' }}
                       axisLine={false}
                       tickLine={false}
@@ -332,7 +324,7 @@ export const VendorBillListPage: React.FC<VendorBillListPageProps> = ({ onSelect
                             ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
                           <span className="text-[10px] text-brown-500 font-mono hidden sm:inline">
-                            ({formatDisplayINR(item.value)})
+                            ({formatYAxisINR(item.value)})
                           </span>
                         </div>
                       </div>
