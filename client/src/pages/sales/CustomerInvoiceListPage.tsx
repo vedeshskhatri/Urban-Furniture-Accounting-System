@@ -213,7 +213,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
         color: '#C08A3E',
         pct: totalBilled > 0 ? `${((partialInvoicesTotal / totalBilled) * 100).toFixed(1)}%` : '0%',
         count: statusCounts.partial || 0,
-        subtext: `₹${formatDisplayINR(partialPaidPortion)} collected · ₹${formatDisplayINR(partialDuePortion)} due`,
+        subtext: `${formatYAxisINR(partialPaidPortion)} collected · ${formatYAxisINR(partialDuePortion)} due`,
       },
       {
         name: 'Not Paid',
@@ -522,6 +522,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                           ? 'bg-brown-200/80 border-brown-400 font-bold'
                           : 'hover:bg-brown-100/70 border-transparent'
                       }`}
+                    >
                       <div className="flex items-center justify-between gap-1 w-full">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
@@ -568,7 +569,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
             </span>
             <span className="text-amber-800">
               • Showing <strong>{filtered.length}</strong> of {invoices.length} invoices
-              ({formatDisplayINR(filtered.reduce((acc, inv) => acc + parseFloat(inv.total || '0'), 0))} total)
+              ({formatYAxisINR(filtered.reduce((acc, inv) => acc + parseFloat(inv.total || '0'), 0))} total)
             </span>
           </div>
           <button
