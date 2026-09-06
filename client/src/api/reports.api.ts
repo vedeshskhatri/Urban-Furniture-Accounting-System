@@ -197,8 +197,11 @@ export const ReportsApi = {
       if (to) params.set('to', to);
       const res = await api.get<{ data: ProfitLossReport; error: any }>(`/api/reports/profit-loss?${params.toString()}`);
       if (res.data?.data) return res.data.data;
-    } catch {
-      // offline fallback
+    } catch (err) {
+      // Only fall back to sample data when the browser is genuinely offline.
+      // Swallowing real API errors here masks backend problems and shows
+      // misleading numbers that never change when the period is toggled.
+      if (typeof navigator !== 'undefined' && navigator.onLine) throw err;
     }
     return SAMPLE_PL;
   },
@@ -209,8 +212,8 @@ export const ReportsApi = {
       if (asOf) params.set('asOf', asOf);
       const res = await api.get<{ data: BalanceSheetReport; error: any }>(`/api/reports/balance-sheet?${params.toString()}`);
       if (res.data?.data) return res.data.data;
-    } catch {
-      // offline fallback
+    } catch (err) {
+      if (typeof navigator !== 'undefined' && navigator.onLine) throw err;
     }
     return SAMPLE_BS;
   },
