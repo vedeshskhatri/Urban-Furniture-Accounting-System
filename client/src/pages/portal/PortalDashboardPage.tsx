@@ -50,6 +50,53 @@ interface RecentInvoice {
   paymentStatus: string;
 }
 
+const ROOMS = [
+  {
+    id: 'lounge',
+    title: 'Minimalist Lounge',
+    subtitle: 'Serene low-profile living collection',
+    category: 'Seating & Tables',
+    icon: Armchair,
+    highlight: 'Velvet 3-Seater Sofa, Round Ash Coffee Table & Accent Chair',
+    image: '/images/products/aspen-lounge-sofa.jpg',
+    preset: 'lounge',
+    piecesCount: 3,
+  },
+  {
+    id: 'study',
+    title: 'Executive Study',
+    subtitle: 'Ergonomic precision meets solid hardwood',
+    category: 'Storage & Work',
+    icon: Briefcase,
+    highlight: 'Oak Writing Desk, Mesh Executive Chair & 5-Tier Bookshelf',
+    image: '/images/products/oakridge-writing-desk.jpg',
+    preset: 'study',
+    piecesCount: 3,
+  },
+  {
+    id: 'bedroom',
+    title: 'Zen Bedroom Suite',
+    subtitle: 'Restful architecture in solid natural timber',
+    category: 'Beds & Nightstands',
+    icon: Bed,
+    highlight: 'Upholstered Double Bed Frame, Nightstands & Solid Wood Drawers',
+    image: '/images/products/upholstered-queen-bed.jpg',
+    preset: 'bedroom',
+    piecesCount: 3,
+  },
+  {
+    id: 'dining',
+    title: 'Nordic Dining Space',
+    subtitle: 'Crafted dining tables & console storage',
+    category: 'Dining & Kitchen',
+    icon: Utensils,
+    highlight: 'Solid Oak Dining Table, Marlow Console & Dining Seating',
+    image: '/images/products/dining-table-oak.jpg',
+    preset: 'lounge',
+    piecesCount: 4,
+  },
+] as const;
+
 export const PortalDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = usePortalAuth();
@@ -63,6 +110,14 @@ export const PortalDashboardPage: React.FC = () => {
   const [recentInvoices, setRecentInvoices] = useState<RecentInvoice[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Preload architectural space images for instantaneous, flicker-free switching
+    ROOMS.forEach((r) => {
+      const img = new Image();
+      img.src = r.image;
+    });
+  }, []);
 
   useEffect(() => {
     // 1. Fetch featured products
@@ -102,54 +157,7 @@ export const PortalDashboardPage: React.FC = () => {
     }
   }, [user]);
 
-  const rooms = [
-    {
-      id: 'lounge',
-      title: 'Minimalist Lounge',
-      subtitle: 'Serene low-profile living collection',
-      category: 'Seating & Tables',
-      icon: Armchair,
-      highlight: 'Velvet 3-Seater Sofa, Round Ash Coffee Table & Accent Chair',
-      image: '/images/products/aspen-lounge-sofa.jpg',
-      preset: 'lounge',
-      piecesCount: 3,
-    },
-    {
-      id: 'study',
-      title: 'Executive Study',
-      subtitle: 'Ergonomic precision meets solid hardwood',
-      category: 'Storage & Work',
-      icon: Briefcase,
-      highlight: 'Oak Writing Desk, Mesh Executive Chair & 5-Tier Bookshelf',
-      image: '/images/products/oakridge-writing-desk.jpg',
-      preset: 'study',
-      piecesCount: 3,
-    },
-    {
-      id: 'bedroom',
-      title: 'Zen Bedroom Suite',
-      subtitle: 'Restful architecture in solid natural timber',
-      category: 'Beds & Nightstands',
-      icon: Bed,
-      highlight: 'Upholstered Double Bed Frame, Nightstands & Solid Wood Drawers',
-      image: '/images/products/upholstered-queen-bed.jpg',
-      preset: 'bedroom',
-      piecesCount: 3,
-    },
-    {
-      id: 'dining',
-      title: 'Nordic Dining Space',
-      subtitle: 'Crafted dining tables & console storage',
-      category: 'Dining & Kitchen',
-      icon: Utensils,
-      highlight: 'Solid Oak Dining Table, Marlow Console & Dining Seating',
-      image: '/images/products/dining-table-oak.jpg',
-      preset: 'lounge',
-      piecesCount: 4,
-    },
-  ] as const;
-
-  const currentRoom = rooms.find((r) => r.id === activeRoom) || rooms[0];
+  const currentRoom = ROOMS.find((r) => r.id === activeRoom) || ROOMS[0];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
@@ -164,7 +172,9 @@ export const PortalDashboardPage: React.FC = () => {
           boxShadow: '0 20px 48px rgba(46, 34, 29, 0.16)',
           display: 'grid',
           gridTemplateColumns: '1.2fr 1fr',
+          height: 380,
           minHeight: 380,
+          maxHeight: 380,
         }}
       >
         {/* Left: Atmospheric Branding & CTAs */}
@@ -287,15 +297,14 @@ export const PortalDashboardPage: React.FC = () => {
         </div>
 
         {/* Right: Architectural Imagery Showcase */}
-        <div style={{ position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
           <img
-            src={currentRoom.image}
-            alt={currentRoom.title}
+            src="/images/products/aspen-lounge-sofa.jpg"
+            alt="Atelier Showroom Showcase"
             style={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              transition: 'transform 600ms cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
           <div
@@ -320,7 +329,7 @@ export const PortalDashboardPage: React.FC = () => {
             }}
           >
             <span style={{ fontSize: 12, fontWeight: 600, color: '#2C221E', fontFamily: 'var(--font-display)' }}>
-              {currentRoom.title}
+              Curated Atelier Showcase
             </span>
           </div>
         </div>
@@ -578,13 +587,18 @@ export const PortalDashboardPage: React.FC = () => {
               border: '1px solid rgba(208, 174, 146, 0.45)',
             }}
           >
-            {rooms.map((room) => {
+            {ROOMS.map((room) => {
               const Icon = room.icon;
               const isSelected = activeRoom === room.id;
               return (
                 <button
                   key={room.id}
-                  onClick={() => setActiveRoom(room.id as any)}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveRoom(room.id);
+                  }}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -599,7 +613,8 @@ export const PortalDashboardPage: React.FC = () => {
                     color: isSelected ? 'var(--cream)' : 'var(--brown-800)',
                     cursor: 'pointer',
                     boxShadow: isSelected ? '0 2px 6px rgba(74, 58, 52, 0.18)' : 'none',
-                    transition: 'all 140ms ease',
+                    transition: 'background-color 140ms ease, color 140ms ease',
+                    outline: 'none',
                   }}
                 >
                   <Icon size={13} />
@@ -619,17 +634,22 @@ export const PortalDashboardPage: React.FC = () => {
             overflow: 'hidden',
             backgroundColor: '#FDFBF7',
             border: '1px solid rgba(208, 174, 146, 0.35)',
+            height: 340,
+            minHeight: 340,
+            maxHeight: 340,
+            boxSizing: 'border-box',
           }}
         >
-          <div style={{ position: 'relative', height: 320, overflow: 'hidden' }}>
+          <div style={{ position: 'relative', height: '100%', overflow: 'hidden' }}>
             <img
+              key={currentRoom.id}
               src={currentRoom.image}
               alt={currentRoom.title}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                transition: 'transform 400ms ease',
+                transition: 'opacity 200ms ease',
               }}
             />
             <div
@@ -654,10 +674,12 @@ export const PortalDashboardPage: React.FC = () => {
 
           <div
             style={{
-              padding: '32px',
+              padding: '26px 32px',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
+              height: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <div>

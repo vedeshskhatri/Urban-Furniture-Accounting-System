@@ -9,7 +9,8 @@ export const analyticRouter = Router();
 analyticRouter.get('/', async (req: Request, res: Response) => {
   try {
     const includeArchived = req.query.includeArchived === 'true';
-    const type = typeof req.query.type === 'string' ? req.query.type : undefined;
+    const rawType = typeof req.query.type === 'string' ? req.query.type : undefined;
+    const type = rawType && rawType !== 'all' ? rawType : undefined;
     const analytics = await AccountService.getAllAnalytics(includeArchived, type);
     return sendSuccess(res, analytics);
   } catch (err: any) {

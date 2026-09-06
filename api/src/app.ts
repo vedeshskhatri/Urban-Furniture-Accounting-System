@@ -36,9 +36,32 @@ export const app: Express = express();
 
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
+const allowedOrigins = [
+  corsOrigin,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5174',
+];
+
 app.use(
   cors({
-    origin: [corsOrigin, 'http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      // Explicit allowed origins
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow localhost on any port, or local network IPs (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+      if (
+        /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(
+          origin
+        )
+      ) {
+        return callback(null, true);
+      }
+      // Permissive fallback in development so team members on LAN / tunnels can connect seamlessly
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
