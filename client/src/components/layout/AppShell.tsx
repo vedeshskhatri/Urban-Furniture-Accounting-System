@@ -51,7 +51,8 @@ export default function AppShell() {
     }
   };
 
-  const isAuthenticated = localStorage.getItem('urban_logged_in') === 'true';
+  const token = localStorage.getItem('urban_token');
+  const isAuthenticated = localStorage.getItem('urban_logged_in') === 'true' && !!token;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;

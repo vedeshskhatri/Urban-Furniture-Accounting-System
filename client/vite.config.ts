@@ -12,7 +12,7 @@ const sharedDir = fs.existsSync(path.resolve(__dirname, '../shared'))
 
 // Determine API proxy target: inside Docker network use service name 'api', on host use localhost:5000
 const isDocker = fs.existsSync('/.dockerenv') || fs.existsSync('/shared');
-const apiTarget = process.env.API_TARGET || (isDocker ? 'http://api:5000' : 'http://localhost:5000');
+const apiTarget = process.env.API_TARGET || (isDocker ? 'http://api:5000' : 'http://localhost:5002');
 
 export default defineConfig({
   plugins: [

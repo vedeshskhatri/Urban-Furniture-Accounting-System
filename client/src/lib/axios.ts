@@ -23,4 +23,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const url = error.config?.url || '';
+      if (!url.includes('/login') && !url.includes('/accept-invite')) {
+        localStorage.removeItem('urban_token');
+        localStorage.removeItem('urban_logged_in');
+        if (window.location.pathname.startsWith('/portal')) {
+          localStorage.removeItem('urban_portal_token');
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login?portal=customer';
+          }
+        } else if (!window.location.pathname.startsWith('/login') && window.location.pathname !== '/') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
