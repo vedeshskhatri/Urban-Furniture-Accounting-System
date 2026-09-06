@@ -18,6 +18,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { formatINR } from '../../lib/money';
+import api from '../../lib/axios';
 
 interface Gstr1Data {
   period: string;
@@ -132,14 +133,14 @@ export const GstReportPage: React.FC = () => {
     setLoading(true);
     try {
       const [res1, res3b, resEwb] = await Promise.all([
-        fetch('/api/gst/gstr-1').then(r => r.json()),
-        fetch('/api/gst/gstr-3b').then(r => r.json()),
-        fetch('/api/gst/eway-bills').then(r => r.json()),
+        api.get('/api/gst/gstr-1').then(r => r.data),
+        api.get('/api/gst/gstr-3b').then(r => r.data),
+        api.get('/api/gst/eway-bills').then(r => r.data),
       ]);
 
-      if (res1.data) setGstr1(res1.data);
-      if (res3b.data) setGstr3b(res3b.data);
-      if (resEwb.data) setEwayBills(resEwb.data);
+      if (res1?.data) setGstr1(res1.data);
+      if (res3b?.data) setGstr3b(res3b.data);
+      if (resEwb?.data) setEwayBills(resEwb.data);
     } catch (err) {
       console.error('Failed to load GST data:', err);
     } finally {

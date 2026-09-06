@@ -26,6 +26,7 @@
     "pg": "^8.23.0",
     "prisma": "5.22.0",
     "puppeteer": "^25.10.0",
+    "qrcode": "^1.5.4",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "ts-node": "^10.9.2",
@@ -36,6 +37,7 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10"
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/qrcode": "^1.5.6"
   }
 }

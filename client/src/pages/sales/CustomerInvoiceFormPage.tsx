@@ -9,6 +9,7 @@ import { CustomerInvoiceDTO } from '@shared/schemas/invoice';
 import { ShoppingCart, CreditCard, BookOpen, TrendingUp, Printer, Mail, AlertCircle, ShieldCheck, QrCode, Truck, Copy, Check } from 'lucide-react';
 import { JournalEntryModal } from '../../components/purchase/JournalEntryModal';
 import { RegisterPaymentModal } from '../../components/purchase/RegisterPaymentModal';
+import api from '../../lib/axios';
 import Decimal from 'decimal.js';
 
 export interface CustomerInvoiceFormPageProps {
@@ -101,10 +102,9 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
         setInvoiceDate(inv.invoiceDate);
         setDueDate(inv.dueDate || '');
         // Fetch B2B e-Invoice & QR verification details
-        fetch(`/api/gst/invoice/${idToLoad}`)
-          .then(r => r.json())
-          .then(gJson => gJson.data && setGstDetails(gJson.data))
-          .catch(() => {});
+        api.get(`/api/gst/invoice/${idToLoad}`)
+          .then(res => res.data?.data && setGstDetails(res.data.data))
+          .catch(e => console.warn('GST fetch warning:', e.message));
         setLines(inv.lines.map(l => ({
           productId: l.productId,
           accountId: l.accountId,
@@ -201,9 +201,8 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
       if (json.data) {
         setInvoice(json.data);
         setSuccessMsg(`Invoice ${json.data.number} Confirmed & Posted to Ledger! (Debit Debtors, Credit Income)`);
-        fetch(`/api/gst/invoice/${json.data.id}`)
-          .then(r => r.json())
-          .then(gJson => gJson.data && setGstDetails(gJson.data))
+        api.get(`/api/gst/invoice/${json.data.id}`)
+          .then(res => res.data?.data && setGstDetails(res.data.data))
           .catch(() => {});
       } else {
         setError(json.error?.message || 'Failed to post invoice');
@@ -531,13 +530,24 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
                 </div>
               </div>
 
-              {/* Vector SVG QR Code */}
+              {/* Official B2B Vector QR Code */}
               <div className="flex flex-col items-center justify-center p-3 bg-white border border-brown-200 rounded-lg shadow-sm">
-                <img
-                  src={gstDetails.qrDataUrl}
-                  alt="GST e-Invoice QR Code"
-                  className="w-28 h-28 object-contain"
-                />
+                {gstDetails.qrDataUrl ? (
+                  <img
+                    src={gstDetails.qrDataUrl}
+                    alt="GST e-Invoice QR Code"
+                    className="w-28 h-28 object-contain"
+                  />
+                ) : gstDetails.qrCodeSvg ? (
+                  <div
+                    className="w-28 h-28 flex items-center justify-center"
+                    dangerouslySetInnerHTML={{ __html: gstDetails.qrCodeSvg }}
+                  />
+                ) : (
+                  <div className="w-28 h-28 flex items-center justify-center text-brown-400 text-xs">
+                    Loading QR...
+                  </div>
+                )}
                 <span className="text-[10px] font-bold text-brown-600 mt-1 uppercase tracking-wider">
                   Offline QR Seal
                 </span>

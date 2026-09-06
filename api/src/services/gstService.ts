@@ -275,18 +275,16 @@ export class GstService {
     };
     const qrPayloadJson = JSON.stringify(qrPayload);
 
-    // Render offline Vector SVG and Data URL
+    // Render offline Vector SVG and high-resolution PNG Data URL
     const qrCodeSvg = QrMatrixGenerator.renderSvg(qrPayloadJson, {
-      size: 220,
+      size: 260,
       margin: 2,
       foregroundColor: '#26211C',
       backgroundColor: '#FFFFFF',
     });
-    const qrDataUrl = QrMatrixGenerator.renderDataUrl(qrPayloadJson, {
-      size: 220,
+    const qrDataUrl = await QrMatrixGenerator.renderPngDataUrl(qrPayloadJson, {
+      size: 260,
       margin: 2,
-      foregroundColor: '#26211C',
-      backgroundColor: '#FFFFFF',
     });
 
     return {

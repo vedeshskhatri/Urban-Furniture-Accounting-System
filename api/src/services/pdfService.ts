@@ -31,6 +31,10 @@ export class PdfService {
       size: 160,
       margin: 2,
     });
+    const qrSvg = QrMatrixGenerator.renderSvg(JSON.stringify(qrPayload), {
+      size: 80,
+      margin: 2,
+    });
 
     // CGST & SGST Split (Intra-state Maharashtra default)
     const taxTotalNum = parseFloat(invoice.taxTotal || '0');
@@ -268,7 +272,9 @@ export class PdfService {
               </div>
             </div>
             <div style="text-align: center; shrink: 0; background: #FFFFFF; padding: 6px 8px; border: 1px solid #D5CCC0; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-              <img src="${qrDataUrl}" width="80" height="80" style="display: block;" alt="GST e-Invoice QR Code" />
+              <div style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                ${qrSvg}
+              </div>
               <div style="font-size: 8px; font-weight: 800; color: #4A3A34; margin-top: 3px; letter-spacing: 0.5px;">OFFLINE QR</div>
             </div>
           </div>
