@@ -7,6 +7,7 @@ transaction history.
 Every journal entry it emits balances. Run verify at the end.
 """
 import random
+import hashlib
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, timedelta
 
@@ -159,6 +160,26 @@ for i in range(34):                               # customers
     contacts.append({"id": cid, "name": nm, "type": "customer", "city": c})
 vendors   = [c for c in contacts if c["type"] == "vendor"]
 customers = [c for c in contacts if c["type"] == "customer"]
+
+# ── GSTIN registration (state code + plausible PAN block) ─────────────────
+_STATE_CODE = {"Maharashtra": "27", "Gujarat": "24", "Rajasthan": "08",
+               "Karnataka": "29", "Tamil Nadu": "33", "Delhi": "07"}
+def _assign_gstin(c):
+    # suppliers almost always registered; ~35% of customers (corporate buyers)
+    reg_pct = 85 if c["type"] in ("vendor", "both") else 35
+    if (c["id"] * 7 + 3) % 100 >= reg_pct:
+        c["gstin"] = None
+        return
+    st = c["city"][1] if isinstance(c["city"], (list, tuple)) else ""
+    code = _STATE_CODE.get(st, "27")
+    h = hashlib.md5(c["name"].encode()).hexdigest()
+    letters = "ABCDEFGHIJKLMNOP"
+    p1 = "".join(letters[int(ch, 16)] for ch in h[:5])
+    p3 = letters[int(h[5], 16)]
+    chk = letters[int(hashlib.md5((c["name"] + ":chk").encode()).hexdigest()[0], 16)]
+    c["gstin"] = f"{code}{p1}{(c['id'] * 137 + 11) % 10000:04d}{p3}1Z{chk}"
+for c in contacts:
+    _assign_gstin(c)
 
 # ── ledger accumulators ───────────────────────────────────────────────────
 sql, entries, lines = [], [], []
@@ -347,9 +368,12 @@ out.append("\n-- contacts")
 for c in contacts:
     city, st, pin = c["city"]
     em = c["name"].lower().replace(" ", ".").replace("&", "and") + "@example.com"
-    out.append(f"INSERT INTO contacts (id,name,type,email,mobile,city,state,pincode) "
+    g = c.get("gstin")
+    gcol = ",gstin" if g else ""
+    gval = f",'{g}'" if g else ""
+    out.append(f"INSERT INTO contacts (id,name,type,email,mobile,city,state,pincode{gcol}) "
                f"OVERRIDING SYSTEM VALUE VALUES ({c['id']},'{esc(c['name'])}','{c['type']}','{esc(em)}',"
-               f"'9{random.randint(100000000,999999999)}','{city}','{st}','{pin}');")
+               f"'9{random.randint(100000000,999999999)}','{city}','{st}','{pin}'{gval});")
 
 out.append("\n-- products")
 for p in products:

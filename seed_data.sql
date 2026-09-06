@@ -10195,3 +10195,25 @@ UPDATE doc_sequences SET current_number=986    WHERE code='JE';
 UPDATE products p SET stock_qty = COALESCE((SELECT SUM(qty_change) FROM stock_moves m WHERE m.product_id=p.id),0);
 
 COMMIT;
+
+-- ── GSTIN registration for a realistic subset of contacts ────────────────
+-- Enables B2B invoices, inter-state IGST and ITC eligibility in the GST
+-- Compliance Center. Idempotent + deterministic. See db/seed-gstin.sql.
+UPDATE contacts c
+SET gstin =
+      (CASE
+         WHEN lower(coalesce(c.state, '')) LIKE '%maha%' THEN '27'
+         WHEN lower(coalesce(c.state, '')) LIKE '%gujar%' THEN '24'
+         WHEN lower(coalesce(c.state, '')) LIKE '%rajas%' THEN '08'
+         WHEN lower(coalesce(c.state, '')) LIKE '%karna%' THEN '29'
+         WHEN lower(coalesce(c.state, '')) LIKE '%tamil%' THEN '33'
+         WHEN lower(coalesce(c.state, '')) LIKE '%delhi%' THEN '07'
+         ELSE '27'
+       END)
+      || upper(translate(substr(md5(c.name), 1, 5), '0123456789abcdef', 'ABCDEFGHIJKLMNOP'))
+      || lpad(((c.id * 137 + 11) % 10000)::text, 4, '0')
+      || upper(translate(substr(md5(c.name || ':pan'), 1, 1), '0123456789abcdef', 'ABCDEFGHIJKLMNOP'))
+      || '1Z'
+      || upper(translate(substr(md5(c.name || ':chk'), 1, 1), '0123456789abcdef', 'ABCDEFGHIJKLMNOP'))
+WHERE (c.gstin IS NULL OR c.gstin = '')
+  AND ((c.id * 7 + 3) % 100) < (CASE WHEN c.type IN ('vendor', 'both') THEN 85 ELSE 35 END);

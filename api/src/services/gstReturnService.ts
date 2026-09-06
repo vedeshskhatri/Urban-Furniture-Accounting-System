@@ -379,59 +379,15 @@ export class GstReturnService {
       cess: '0.00',
     };
 
-    // 2. Inward supplies eligible for ITC (from vendor_bills)
-    let billWhere = `WHERE vb.status IN ('confirmed')`;
-    const billParams: any[] = [];
-
-    if (filters?.year) {
-      billParams.push(filters.year);
-      billWhere += ` AND EXTRACT(YEAR FROM vb.bill_date) = $${billParams.length}`;
-    }
-    if (filters?.month) {
-      billParams.push(filters.month);
-      billWhere += ` AND EXTRACT(MONTH FROM vb.bill_date) = $${billParams.length}`;
-    }
-
-    const billsRes = await clientOrPool.query(
-      `SELECT 
-        vb.subtotal,
-        vb.tax_total,
-        c.state as vendor_state,
-        c.gstin as vendor_gstin
-       FROM vendor_bills vb
-       JOIN contacts c ON c.id = vb.vendor_id
-       ${billWhere}`,
-      billParams
-    );
-
-    let itcTaxable = new Decimal(0);
-    let itcCgst = new Decimal(0);
-    let itcSgst = new Decimal(0);
-    let itcIgst = new Decimal(0);
-
-    for (const bill of billsRes.rows) {
-      const sub = new Decimal(bill.subtotal || 0);
-      const tax = new Decimal(bill.tax_total || 0);
-      itcTaxable = itcTaxable.plus(sub);
-
-      const vState = (bill.vendor_state || '').toLowerCase();
-      const vGstin = (bill.vendor_gstin || '').trim();
-      const isMaha = vState.includes('maha') || vState === 'mh' || vGstin.startsWith('27') || (!vState && !vGstin);
-
-      if (isMaha) {
-        const half = tax.dividedBy(2);
-        itcCgst = itcCgst.plus(half);
-        itcSgst = itcSgst.plus(half);
-      } else {
-        itcIgst = itcIgst.plus(tax);
-      }
-    }
+    // 2. Eligible ITC — reuse the GSTR-2B computation so the two returns
+    //    always reconcile (ITC is only credited for registered vendors).
+    const gstr2b = await this.getGstr2BSummary(filters, clientOrPool);
 
     const itcAvailable: Gstr3BTable = {
-      taxableValue: itcTaxable.toFixed(2),
-      igst: itcIgst.toFixed(2),
-      cgst: itcCgst.toFixed(2),
-      sgst: itcSgst.toFixed(2),
+      taxableValue: gstr2b.totalTaxableValue,
+      igst: gstr2b.totalIgst,
+      cgst: gstr2b.totalCgst,
+      sgst: gstr2b.totalSgst,
       cess: '0.00',
     };
 
@@ -440,9 +396,9 @@ export class GstReturnService {
     const outSgst = new Decimal(outwardSupplies.sgst);
     const outIgst = new Decimal(outwardSupplies.igst);
 
-    const netCgst = Decimal.max(0, outCgst.minus(itcCgst));
-    const netSgst = Decimal.max(0, outSgst.minus(itcSgst));
-    const netIgst = Decimal.max(0, outIgst.minus(itcIgst));
+    const netCgst = Decimal.max(0, outCgst.minus(itcAvailable.cgst));
+    const netSgst = Decimal.max(0, outSgst.minus(itcAvailable.sgst));
+    const netIgst = Decimal.max(0, outIgst.minus(itcAvailable.igst));
 
     const netTaxPayable: Gstr3BTable = {
       taxableValue: outwardSupplies.taxableValue,
