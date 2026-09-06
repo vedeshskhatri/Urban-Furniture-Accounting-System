@@ -31,8 +31,6 @@ import {
   Sparkles,
   Compass,
   FileCheck2,
-  Volume2,
-  VolumeX,
   CheckCircle,
   Camera,
   BookmarkPlus,
@@ -43,8 +41,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
-import { playWoodClick, playChimeSuccess, toggleAmbientSoundscape } from '../../lib/soundEffects';
-import { useAmbientMusic } from '../../lib/ambientMusic';
+import { playWoodClick, playChimeSuccess } from '../../lib/soundEffects';
 import { resolveProductImage, resolveProductModel } from '../../lib/productMedia';
 
 interface ShowroomModel {
@@ -929,7 +926,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [quoteSubmitting, setQuoteSubmitting] = useState<boolean>(false);
   const [quoteSuccess, setQuoteSuccess] = useState<any | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const { isPlaying: ambientSoundActive, toggle: toggleAmbientMusic } = useAmbientMusic();
+
 
   // 1. Fetch available models from API & Catalogue products (supplements static fallback)
   useEffect(() => {
@@ -1500,10 +1497,6 @@ export const PortalRoomStudioPage: React.FC = () => {
     setPlacedItems((prev) => prev.map((p) => (p.instanceId === selectedInstanceId ? { ...p, finish } : p)));
   };
 
-  const handleToggleAudio = () => {
-    toggleAmbientMusic();
-    playWoodClick(1.0);
-  };
 
   const handleRequestRoomQuote = async () => {
     if (placedItems.length === 0) return;
@@ -2818,29 +2811,6 @@ export const PortalRoomStudioPage: React.FC = () => {
             {quoteSubmitting ? 'Drafting...' : `Request Quote (${placedItems.length})`}
           </button>
 
-          {/* Ambient Japandi Audio Toggle */}
-          <button
-            data-ambient-toggle="true"
-            onClick={handleToggleAudio}
-            title={ambientSoundActive ? 'Mute chill lo-fi background music' : 'Play chill lo-fi background music'}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              backgroundColor: 'rgba(253, 250, 246, 0.94)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(208, 174, 146, 0.45)',
-              boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: ambientSoundActive ? 'var(--posted)' : 'var(--brown-700)',
-              transition: 'all 120ms ease',
-            }}
-          >
-            {ambientSoundActive ? <Volume2 size={14} /> : <VolumeX size={14} />}
-          </button>
         </div>
       </div>
 
@@ -3376,40 +3346,48 @@ export const PortalRoomStudioPage: React.FC = () => {
         )}
       </div>
 
-      {/* ── Room Architecture Loading Badge ── */}
+      {/* ── Full-Screen Room Loading Overlay ── */}
       {roomLoading && (
         <div
           style={{
             position: 'absolute',
-            top: 72,
-            left: 20,
-            backgroundColor: 'rgba(255, 255, 255, 0.96)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(208, 174, 146, 0.45)',
-            borderRadius: 999,
-            padding: '5px 14px',
-            fontSize: 11,
-            fontWeight: 600,
-            fontFamily: 'var(--font-display)',
-            color: 'var(--brown-900)',
-            boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
+            inset: 0,
+            backgroundColor: 'rgba(251, 248, 242, 0.97)',
+            backdropFilter: 'blur(12px)',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: 7,
-            zIndex: 30,
+            justifyContent: 'center',
+            gap: 20,
+            zIndex: 50,
           }}
         >
+          {/* Animated ring */}
           <div
             style={{
-              width: 7,
-              height: 7,
+              width: 56,
+              height: 56,
               borderRadius: '50%',
-              backgroundColor: '#8A4B38',
+              border: '3px solid rgba(138, 75, 56, 0.15)',
+              borderTopColor: '#8A4B38',
+              animation: 'spin 0.9s linear infinite',
             }}
           />
-          <span>Architectural Studio Ready • Enhancing Textures...</span>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: 'var(--font-display)', color: 'var(--brown-900)', marginBottom: 6 }}>
+              Preparing the Atelier
+            </div>
+            <div style={{ fontSize: 12.5, color: 'var(--brown-700)', fontFamily: 'var(--font-display)' }}>
+              Loading your 3D showroom — this may take a moment on first visit
+            </div>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--brown-500)', fontFamily: 'var(--font-mono)' }}>
+            room_blank.compressed.glb
+          </div>
         </div>
       )}
+
 
       {/* Subtle Loading indicator */}
       {loadingModel && (

@@ -872,8 +872,9 @@ export const PortalDashboardPage: React.FC = () => {
               {/* Image Preview with 3D Pill */}
               <div style={{ position: 'relative', height: 180, overflow: 'hidden', backgroundColor: '#F6F2EC' }}>
                 <img
-                  src={resolveProductImage(p)}
+                  src={p.image_url || resolveProductImage(p)}
                   alt={p.name}
+                  onError={(e) => { e.currentTarget.src = resolveProductImage(p); }}
                   style={{
                     width: '100%',
                     height: '100%',

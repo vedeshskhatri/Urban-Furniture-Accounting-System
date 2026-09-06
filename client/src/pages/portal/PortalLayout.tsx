@@ -15,19 +15,12 @@ import {
   Search,
 } from 'lucide-react';
 import { GlobalCommandPalette } from '../../components/common/GlobalCommandPalette';
-import { PortalAmbientAudioBadge } from '../../components/portal/PortalAmbientAudioBadge';
-import { ambientMusic } from '../../lib/ambientMusic';
+
 
 export const PortalLayout: React.FC = () => {
   const { user, logout } = usePortalAuth();
   const navigate = useNavigate();
 
-  // Silence any playing ambient music whenever user leaves the Customer Portal
-  React.useEffect(() => {
-    return () => {
-      ambientMusic.stopAndSilence();
-    };
-  }, []);
 
   /* True when internal staff member has authenticated on the main app */
   const isInternalStaff = localStorage.getItem('urban_logged_in') === 'true';
@@ -450,17 +443,6 @@ export const PortalLayout: React.FC = () => {
         </div>
       </footer>
 
-      {/* ── Fixed Floating Ambient Sound Capsule on Side ── */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          zIndex: 90,
-        }}
-      >
-        <PortalAmbientAudioBadge direction="up" />
-      </div>
 
       <GlobalCommandPalette />
     </div>
