@@ -240,7 +240,7 @@ portalRouter.post('/invoices/:id/razorpay/verify-payment', requireAuth, requireP
       return sendError(res, 'NOT_FOUND', 'Invoice not found or unauthorized', 404);
     }
 
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount } = req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, recipientEmail } = req.body;
     const { RazorpayService } = await import('../services/razorpayService');
     const isValid = RazorpayService.verifySignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
     if (!isValid) {
@@ -267,19 +267,19 @@ portalRouter.post('/invoices/:id/razorpay/verify-payment', requireAuth, requireP
           paymentAmount,
           paymentMethod: 'Razorpay Online Gateway',
           paymentRef: razorpay_payment_id,
-          recipientEmail: req.user?.email || updatedInvoice.customerEmail,
+          recipientEmail: recipientEmail || req.user?.email || updatedInvoice.customerEmail,
         });
       }
     } catch (eErr: any) {
       console.warn('[PortalRoutes] Resend email dispatch notice:', eErr.message);
     }
 
-
     return sendSuccess(res, {
       success: true,
       payment,
       razorpayPaymentId: razorpay_payment_id,
       email: emailResult,
+      pdfUrl: `/api/portal/invoices/${invId}/pdf`,
     });
   } catch (err: any) {
     return sendError(res, 'PAYMENT_ERROR', err.message, 400);

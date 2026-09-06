@@ -5,7 +5,7 @@ import StatusBadge from '../../components/ui/StatusBadge';
 import { formatINR } from '../../lib/money';
 import { loadRazorpayScript } from '../../lib/razorpay';
 import api from '../../lib/axios';
-import { Award, ShieldCheck, Printer, X, Sparkles, CheckCircle } from 'lucide-react';
+import { Award, ShieldCheck, Printer, X, Sparkles, CheckCircle, Download } from 'lucide-react';
 import { playWoodClick, playChimeSuccess } from '../../lib/soundEffects';
 
 /* ─── types ──────────────────────────────────────────────────────────── */
@@ -578,8 +578,31 @@ export const PortalInvoiceDetail: React.FC = () => {
               )}
 
               {payStep === 'success' && (
-                <div style={{ padding: '10px 12px', background: 'var(--posted-bg)', border: '1px solid var(--posted)', borderRadius: 'var(--radius-sm)', color: 'var(--posted)', fontSize: 12, fontFamily: 'var(--font-body)' }}>
-                  ✓ {paySuccessMsg}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '14px 16px', background: 'var(--posted-bg)', border: '1px solid var(--posted)', borderRadius: 'var(--radius-sm)', color: 'var(--posted)', fontSize: 13, fontFamily: 'var(--font-body)' }}>
+                  <div style={{ fontWeight: 600 }}>✓ {paySuccessMsg}</div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                    <a
+                      href={`/api/portal/invoices/${invoiceId}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '6px 14px',
+                        borderRadius: 6,
+                        backgroundColor: 'var(--brown-900)',
+                        color: 'var(--cream)',
+                        textDecoration: 'none',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        fontFamily: 'var(--font-display)',
+                      }}
+                    >
+                      <Download size={13} />
+                      <span>Download Official PDF Receipt</span>
+                    </a>
+                  </div>
                 </div>
               )}
 

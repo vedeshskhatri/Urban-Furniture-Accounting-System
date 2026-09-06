@@ -41,7 +41,12 @@ export const PortalInvoiceList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<number | null>(null);
-  const [successNotice, setSuccessNotice] = useState<string | null>(null);
+  const [successNotice, setSuccessNotice] = useState<{
+    message: string;
+    pdfUrl?: string;
+    emailSent?: boolean;
+    recipient?: string;
+  } | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'due' | 'paid'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -108,9 +113,23 @@ export const PortalInvoiceList: React.FC = () => {
               throw new Error(verifyRes.data.error.message || 'Payment signature verification failed');
             }
 
-            setSuccessNotice(
-              `Payment ${response.razorpay_payment_id} verified & posted to General Ledger! Official PDF receipt generated.`
-            );
+            const resData = verifyRes.data?.data;
+            const pdfUrl = resData?.pdfUrl || `/api/portal/invoices/${row.id}/pdf`;
+            const emailSent = resData?.email?.success;
+            const recipient = resData?.email?.recipient;
+
+            setSuccessNotice({
+              message: `Payment ${response.razorpay_payment_id} verified & posted to General Ledger!`,
+              pdfUrl,
+              emailSent,
+              recipient,
+            });
+
+            try {
+              window.open(pdfUrl, '_blank');
+            } catch {
+              // Browser popup blocker fallback handled by banner
+            }
             fetchInvoices();
           } catch (vErr: any) {
             setActionError(vErr?.response?.data?.error?.message || vErr.message || 'Signature verification failed');
@@ -230,7 +249,7 @@ export const PortalInvoiceList: React.FC = () => {
       {successNotice && (
         <div
           style={{
-            padding: '14px 18px',
+            padding: '16px 20px',
             background: 'rgba(95, 112, 82, 0.12)',
             border: '1px solid var(--posted)',
             borderRadius: 14,
@@ -240,25 +259,65 @@ export const PortalInvoiceList: React.FC = () => {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 14,
             boxShadow: '0 2px 8px rgba(95, 112, 82, 0.1)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <CheckCircle2 size={16} />
-            <span>{successNotice}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <CheckCircle2 size={20} />
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700 }}>{successNotice.message}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--brown-800)', marginTop: 2 }}>
+                {successNotice.emailSent
+                  ? `Official signed PDF receipt emailed to ${successNotice.recipient}.`
+                  : 'Official signed GST PDF receipt generated and ready for instant download.'}
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => setSuccessNotice(null)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--posted)',
-              display: 'flex',
-            }}
-          >
-            <X size={14} />
-          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {successNotice.pdfUrl && (
+              <a
+                href={successNotice.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '7px 16px',
+                  borderRadius: 8,
+                  backgroundColor: 'var(--brown-900)',
+                  color: 'var(--cream)',
+                  textDecoration: 'none',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-display)',
+                  boxShadow: '0 2px 6px rgba(74, 58, 52, 0.18)',
+                  transition: 'all 120ms ease',
+                }}
+              >
+                <Download size={13} />
+                <span>Download PDF Receipt</span>
+              </a>
+            )}
+
+            <button
+              onClick={() => setSuccessNotice(null)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--posted)',
+                display: 'flex',
+                padding: 4,
+              }}
+              title="Dismiss"
+            >
+              <X size={15} />
+            </button>
+          </div>
         </div>
       )}
 
