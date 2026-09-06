@@ -51,8 +51,7 @@ export const JournalListPage: React.FC<JournalListPageProps> = ({
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        {/* Wireframe Header Title: Journals (List View) */}
-        <h1 style={styles.heading}>Journals (List View)</h1>
+        <h1 style={styles.heading}>Journals</h1>
 
         {/* Outer Card */}
         <div style={styles.card}>

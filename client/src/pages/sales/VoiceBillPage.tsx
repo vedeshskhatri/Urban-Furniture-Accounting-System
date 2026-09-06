@@ -611,7 +611,7 @@ export const VoiceBillPage: React.FC = () => {
             </span>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold font-display text-brown-900 tracking-tight">
-                AI e-Bill Studio (Voice & Chat)
+                AI e-Bill Assistant (Voice & Chat)
               </h1>
               <p className="text-xs text-brown-600 mt-0.5">
                 Bilingual (Hindi + English) offline conversational billing with real-time ledger accounting

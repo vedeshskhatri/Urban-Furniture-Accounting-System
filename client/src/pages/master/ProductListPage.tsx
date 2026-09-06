@@ -99,9 +99,8 @@ export const ProductListPage: React.FC<ProductListPageProps> = ({
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        {/* Title matching wireframe: Product Master List View / Product Master Kanban View */}
         <h1 style={styles.heading}>
-          {viewMode === 'list' ? 'Product Master List View' : 'Product Master Kanban View'}
+          Products &amp; Services
         </h1>
 
         {/* Outer Wireframe Card */}

@@ -71,9 +71,8 @@ export const ContactListPage: React.FC<ContactListPageProps> = ({
   return (
     <div style={styles.page}>
       <div style={styles.container}>
-        {/* Title matching wireframe: Contact List View / Contact Kanban View */}
         <h1 style={styles.heading}>
-          {viewMode === 'list' ? 'Contact List View' : 'Contact Kanban View'}
+          Contacts
         </h1>
 
         {/* Outer Wireframe Card */}
