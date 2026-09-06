@@ -18,8 +18,9 @@ services:
 
   api:
     build: ./api
+    restart: unless-stopped
     working_dir: /app
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm run dev"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/urban
       JWT_SECRET: ${JWT_SECRET:-973feb758c1b75f8eb452e732f71e51a27bcc0725dfff4a9951f54091787bab8}
@@ -46,8 +47,9 @@ services:
 
   web:
     image: node:20
+    restart: unless-stopped
     working_dir: /app
-    command: sh -c "npm install && npm run dev -- --host"
+    command: sh -c "npm run dev -- --host"
     environment:
       API_TARGET: http://api:5000
       VITE_API_URL: ""
