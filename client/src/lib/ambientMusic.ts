@@ -1,17 +1,16 @@
 /**
  * Ambient Lounge Background Music Controller
  * 
- * STRICT POLICY:
+ * STRICT & BULLETPROOF POLICY:
+ * - Instant, synchronous pause/stop on user interaction (zero delayed bleed).
  * - Exclusively allowed on the CUSTOMER PORTAL side (/portal/*).
  * - STRICTLY MUTED & STOPPED on all Accounting, Admin, ERP, and internal staff routes.
- * - If a user navigates away from /portal to the ERP, music instantly stops and silences.
- * - 100% offline-first, served locally from /audio/
- * - Seamlessly loops through the playlist
- * - Gentle, unobtrusive default volume (~12-14%)
- * - Smooth fade-in and fade-out transitions
+ * - Sequence operation tokens (operationId) prevent async Promise race conditions.
+ * - Integrated with Web Audio synthesizer cleanup (stopAllAmbientSound).
  */
 
 import { useState, useEffect } from 'react';
+import { stopAllAmbientSound } from './soundEffects';
 
 export interface AmbientTrack {
   id: string;
@@ -50,11 +49,12 @@ class AmbientMusicController {
   private audio: HTMLAudioElement | null = null;
   private currentTrackIdx = 0;
   private listeners: Set<Listener> = new Set();
-  private userEnabled = true;
+  private userEnabled = false; // Default paused until explicitly played or unlocked
+  private shouldPlay = false;
   private targetVolume = DEFAULT_VOLUME;
-  private isFading = false;
   private fadeTimer: any = null;
   private routeCheckTimer: any = null;
+  private operationId = 0;
 
   constructor() {
     if (typeof window === 'undefined') return;
@@ -73,9 +73,8 @@ class AmbientMusicController {
       }
     }
 
-    // Only initialize and set up autoplay if already on customer portal
-    this.setupAutoplayUnlock();
     this.setupRouteGuard();
+    this.setupAutoplayUnlock();
   }
 
   private initAudio() {
@@ -87,7 +86,7 @@ class AmbientMusicController {
 
       // Auto-advance to next track when finished
       this.audio.addEventListener('ended', () => {
-        if (isCustomerPortalRoute()) {
+        if (isCustomerPortalRoute() && this.shouldPlay && this.userEnabled) {
           this.nextTrack();
         } else {
           this.stopAndSilence();
@@ -110,26 +109,30 @@ class AmbientMusicController {
    */
   private setupRouteGuard() {
     const checkRoute = () => {
-      if (!isCustomerPortalRoute() && this.isPlaying) {
+      if (!isCustomerPortalRoute() && (this.isPlaying || this.shouldPlay)) {
         this.stopAndSilence();
       }
     };
 
     window.addEventListener('popstate', checkRoute);
     window.addEventListener('hashchange', checkRoute);
-    // Lightweight 500ms safety poll for SPA client-side navigations
     this.routeCheckTimer = setInterval(checkRoute, 500);
   }
 
   private setupAutoplayUnlock() {
-    const unlock = () => {
-      // STRICT CHECK: Only start audio if user is on the customer portal!
-      // NEVER trigger on Accounting, Admin, or ERP pages.
-      if (!isCustomerPortalRoute()) {
+    const unlock = (e: Event) => {
+      // If user clicked directly on an audio toggle button, let the button handler manage it
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('[data-ambient-toggle]')) {
         return;
       }
 
-      if (this.userEnabled && (!this.audio || this.audio.paused)) {
+      // Only unlock if on customer portal and user has enabled music
+      if (!isCustomerPortalRoute() || !this.userEnabled) {
+        return;
+      }
+
+      if (!this.audio || this.audio.paused) {
         this.playWithFade();
       }
 
@@ -137,8 +140,8 @@ class AmbientMusicController {
       window.removeEventListener('keydown', unlock);
     };
 
-    window.addEventListener('pointerdown', unlock, { passive: true });
-    window.addEventListener('keydown', unlock, { passive: true });
+    window.addEventListener('pointerdown', unlock, { passive: true, once: true });
+    window.addEventListener('keydown', unlock, { passive: true, once: true });
   }
 
   public subscribe(listener: Listener): () => void {
@@ -153,7 +156,7 @@ class AmbientMusicController {
   }
 
   public get isPlaying(): boolean {
-    return !!(this.audio && !this.audio.paused && !this.audio.ended);
+    return !!(this.audio && !this.audio.paused && !this.audio.ended && this.shouldPlay);
   }
 
   public get isEnabled(): boolean {
@@ -169,20 +172,51 @@ class AmbientMusicController {
   }
 
   /**
-   * Instantly stops and silences all music.
-   * Called whenever leaving the customer portal or entering accounting/admin.
+   * Instantly stops and silences all music synchronously.
    */
   public stopAndSilence() {
+    this.operationId++;
+    this.shouldPlay = false;
     clearInterval(this.fadeTimer);
+
     if (this.audio) {
-      this.audio.pause();
-      this.audio.currentTime = 0;
+      try {
+        this.audio.pause();
+        this.audio.currentTime = 0;
+        this.audio.volume = 0;
+      } catch {}
     }
+
+    stopAllAmbientSound();
     this.notify();
   }
 
+  /**
+   * Instantly pauses music synchronously without delayed bleed.
+   */
+  public pause() {
+    this.operationId++;
+    this.shouldPlay = false;
+    this.userEnabled = false;
+    localStorage.setItem(STORAGE_KEY_ENABLED, 'false');
+
+    clearInterval(this.fadeTimer);
+
+    if (this.audio) {
+      try {
+        this.audio.pause();
+      } catch {}
+    }
+
+    stopAllAmbientSound();
+    this.notify();
+  }
+
+  /**
+   * Plays music with smooth, clean ramp up.
+   */
   public playWithFade() {
-    // STRICT GUARD: If not on customer portal, abort immediately!
+    // STRICT GUARD: Only on customer portal
     if (!isCustomerPortalRoute()) {
       this.stopAndSilence();
       return;
@@ -191,6 +225,8 @@ class AmbientMusicController {
     this.initAudio();
     if (!this.audio) return;
 
+    const op = ++this.operationId;
+    this.shouldPlay = true;
     this.userEnabled = true;
     localStorage.setItem(STORAGE_KEY_ENABLED, 'true');
 
@@ -201,63 +237,37 @@ class AmbientMusicController {
     if (promise) {
       promise
         .then(() => {
-          // Double check we haven't navigated away during async play
-          if (!isCustomerPortalRoute()) {
-            this.stopAndSilence();
+          // If paused or navigated away while async play was resolving, immediately pause!
+          if (op !== this.operationId || !this.shouldPlay || !isCustomerPortalRoute()) {
+            if (this.audio) this.audio.pause();
             return;
           }
 
-          this.isFading = true;
-          const steps = 16;
-          const stepTime = 50; // 800ms total fade-in
+          // Smooth 400ms fade-in
+          const steps = 10;
+          const stepTime = 40;
           let step = 0;
           this.fadeTimer = setInterval(() => {
             step++;
-            if (!this.audio || !isCustomerPortalRoute()) {
+            if (!this.audio || op !== this.operationId || !this.shouldPlay || !isCustomerPortalRoute()) {
               clearInterval(this.fadeTimer);
-              if (!isCustomerPortalRoute()) this.stopAndSilence();
+              if (this.audio && (!this.shouldPlay || !isCustomerPortalRoute())) {
+                this.audio.pause();
+              }
               return;
             }
             const currentVol = (this.targetVolume * step) / steps;
             this.audio.volume = Math.min(this.targetVolume, Math.max(0, currentVol));
             if (step >= steps) {
               clearInterval(this.fadeTimer);
-              this.isFading = false;
             }
           }, stepTime);
           this.notify();
         })
         .catch((err) => {
-          console.debug('Autoplay waiting for user interaction on customer portal:', err.message);
+          console.debug('Autoplay waiting for interaction on customer portal:', err.message);
         });
     }
-  }
-
-  public pauseWithFade() {
-    if (!this.audio) return;
-    this.userEnabled = false;
-    localStorage.setItem(STORAGE_KEY_ENABLED, 'false');
-
-    clearInterval(this.fadeTimer);
-    const startVol = this.audio.volume;
-    const steps = 10;
-    const stepTime = 35; // 350ms fade-out
-    let step = 0;
-
-    this.fadeTimer = setInterval(() => {
-      step++;
-      if (!this.audio) {
-        clearInterval(this.fadeTimer);
-        return;
-      }
-      const currentVol = startVol * (1 - step / steps);
-      this.audio.volume = Math.max(0, currentVol);
-      if (step >= steps) {
-        clearInterval(this.fadeTimer);
-        this.audio.pause();
-        this.notify();
-      }
-    }, stepTime);
   }
 
   public toggle(): boolean {
@@ -266,8 +276,8 @@ class AmbientMusicController {
       return false;
     }
 
-    if (this.isPlaying) {
-      this.pauseWithFade();
+    if (this.isPlaying || this.shouldPlay) {
+      this.pause();
       return false;
     } else {
       this.playWithFade();
@@ -280,7 +290,7 @@ class AmbientMusicController {
     this.targetVolume = clamped;
     localStorage.setItem(STORAGE_KEY_VOLUME, clamped.toString());
 
-    if (this.audio && !this.isFading) {
+    if (this.audio && this.shouldPlay) {
       this.audio.volume = clamped;
     }
     this.notify();
@@ -292,7 +302,7 @@ class AmbientMusicController {
       return;
     }
     this.currentTrackIdx = (this.currentTrackIdx + 1) % AMBIENT_PLAYLIST.length;
-    this.loadCurrentTrack(this.isPlaying || this.userEnabled);
+    this.loadCurrentTrack(this.isPlaying || this.shouldPlay);
   }
 
   public prevTrack() {
@@ -302,7 +312,7 @@ class AmbientMusicController {
     }
     this.currentTrackIdx =
       (this.currentTrackIdx - 1 + AMBIENT_PLAYLIST.length) % AMBIENT_PLAYLIST.length;
-    this.loadCurrentTrack(this.isPlaying || this.userEnabled);
+    this.loadCurrentTrack(this.isPlaying || this.shouldPlay);
   }
 
   private loadCurrentTrack(autoPlay = true) {
@@ -311,10 +321,9 @@ class AmbientMusicController {
       this.stopAndSilence();
       return;
     }
-    const wasPlaying = this.isPlaying;
     this.audio.src = AMBIENT_PLAYLIST[this.currentTrackIdx].src;
     this.audio.load();
-    if (wasPlaying || autoPlay) {
+    if (autoPlay) {
       this.playWithFade();
     } else {
       this.notify();
@@ -343,6 +352,7 @@ export function useAmbientMusic() {
     volume: ambientMusic.volume,
     currentTrack: ambientMusic.currentTrack,
     toggle: () => ambientMusic.toggle(),
+    pause: () => ambientMusic.pause(),
     setVolume: (v: number) => ambientMusic.setVolume(v),
     nextTrack: () => ambientMusic.nextTrack(),
     prevTrack: () => ambientMusic.prevTrack(),

@@ -160,3 +160,21 @@ export function toggleAmbientSoundscape(onState?: boolean): boolean {
     return false;
   }
 }
+
+/**
+ * Instantly stop any synthesized ambient background sound
+ */
+export function stopAllAmbientSound() {
+  try {
+    if (ambientGain && audioCtx) {
+      ambientGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    }
+    if (ambientSource) {
+      ambientSource.disconnect();
+      ambientSource = null;
+    }
+    isAmbientPlaying = false;
+  } catch {
+    // Ignore
+  }
+}

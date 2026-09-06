@@ -66,7 +66,8 @@ export class AuthService {
 
   static async login(input: LoginInput): Promise<AuthResult> {
     const raw = (input.login_id || '').trim();
-    const effectiveLoginId = raw === 'admin' ? 'adminuf' : (raw === 'client' ? 'clientuf' : raw);
+    // Only 'admin' maps to 'adminuf' for staff login convenience. Customers (client) must use the portal.
+    const effectiveLoginId = raw === 'admin' ? 'adminuf' : raw;
     const result = await pool.query(
       `SELECT id, login_id, email, full_name, password_hash, role, contact_id
        FROM users
@@ -96,6 +97,19 @@ export class AuthService {
         action: 'login_failed',
         userId: user.id,
         afterData: { loginId: user.login_id, reason: 'bad_password' },
+      }).catch(() => undefined);
+      throw new Error('Invalid Login Id or Password');
+    }
+
+    // Role check: Customers (contact role) CANNOT access the admin side of the system!
+    // While trying to enter the admin side, it SHALL return as Invalid Login Id or Password.
+    if (user.role === 'contact' || user.contact_id !== null) {
+      await AuditService.log({
+        tableName: 'users',
+        recordId: user.id,
+        action: 'login_failed',
+        userId: user.id,
+        afterData: { loginId: user.login_id, reason: 'customer_denied_admin_access' },
       }).catch(() => undefined);
       throw new Error('Invalid Login Id or Password');
     }
