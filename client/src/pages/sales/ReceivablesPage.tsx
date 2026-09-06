@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   ResponsiveContainer,
   BarChart,
@@ -22,6 +22,7 @@ import {
   ChevronUp,
   Clock,
   Users,
+  RefreshCw,
 } from 'lucide-react';
 
 const DEBTOR_PALETTE = [
@@ -97,6 +98,7 @@ export interface OverdueSummary {
 
 export const ReceivablesPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'summary' | 'aging'>('summary');
   const [agingType, setAgingType] = useState<'receivable' | 'payable'>('receivable');
   const [receivables, setReceivables] = useState<CustomerReceivableItem[]>([]);
@@ -116,10 +118,15 @@ export const ReceivablesPage: React.FC = () => {
 
   const loadData = (type: 'receivable' | 'payable' = agingType) => {
     setLoading(true);
+    setError(null);
+    const fetchOptions = {
+      cache: 'no-store' as RequestCache,
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    };
     Promise.all([
-      fetch('/api/receivables').then(r => r.json()),
-      fetch(`/api/aging?type=${type}`).then(r => r.json()),
-      fetch('/api/receivables/overdue').then(r => r.json()),
+      fetch('/api/receivables', fetchOptions).then(r => r.json()),
+      fetch(`/api/aging?type=${type}`, fetchOptions).then(r => r.json()),
+      fetch('/api/receivables/overdue', fetchOptions).then(r => r.json()),
     ])
       .then(([recJson, agingJson, overdueJson]) => {
         if (recJson.data) setReceivables(recJson.data);
@@ -132,7 +139,10 @@ export const ReceivablesPage: React.FC = () => {
 
   const handleSwitchAgingType = (type: 'receivable' | 'payable') => {
     setAgingType(type);
-    fetch(`/api/aging?type=${type}`)
+    fetch(`/api/aging?type=${type}`, {
+      cache: 'no-store' as RequestCache,
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    })
       .then(r => r.json())
       .then(json => {
         if (json.data) setAgingData(json.data);
@@ -140,8 +150,20 @@ export const ReceivablesPage: React.FC = () => {
       .catch(console.error);
   };
 
+  // Re-fetch immediately whenever user navigates to this page or query params change
   useEffect(() => {
     loadData();
+  }, [location.key, location.search]);
+
+  // Re-fetch when browser window/tab gains focus or is restored from history
+  useEffect(() => {
+    const handleFocus = () => loadData();
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handleFocus);
+    };
   }, []);
 
   const handleToggleCustomer = async (customerId: number) => {
@@ -154,7 +176,10 @@ export const ReceivablesPage: React.FC = () => {
     setExpandedCustomerId(customerId);
     setInvoicesLoading(true);
     try {
-      const res = await fetch(`/api/receivables/customers/${customerId}/invoices`);
+      const res = await fetch(`/api/receivables/customers/${customerId}/invoices`, {
+        cache: 'no-store' as RequestCache,
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      });
       const json = await res.json();
       if (json.data) {
         setCustomerInvoices(json.data);
@@ -218,6 +243,15 @@ export const ReceivablesPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2 flex-wrap">
+          <button
+            onClick={() => loadData()}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 bg-surface border border-brown-300 hover:bg-brown-100 text-brown-900 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+            title="Refresh receivables ledger and reload cleared dues"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-brown-700 ${loading ? 'animate-spin' : ''}`} />
+            <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
           <button
             onClick={() => setShowVisualAnalytics(prev => !prev)}
             className="inline-flex items-center gap-1.5 bg-surface border border-brown-300 hover:bg-brown-100 text-brown-900 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors shadow-xs"
@@ -528,8 +562,8 @@ export const ReceivablesPage: React.FC = () => {
                               </button>
                               {Number(item.totalOutstanding) > 0 && (
                                 <button
-                                  onClick={() => navigate(`/sales/payments?customerId=${item.customerId}`)}
-                                  className="px-2.5 py-1 text-xs font-semibold bg-brown-900 text-cream rounded hover:bg-brown-700 transition-colors shadow-xs"
+                                  onClick={() => navigate(`/sales/payments?customerId=${item.customerId}&from=receivables`)}
+                                  className="px-2.5 py-1 text-xs font-semibold bg-brown-900 text-cream rounded hover:bg-brown-700 transition-colors shadow-xs cursor-pointer"
                                 >
                                   Settle Due
                                 </button>
@@ -595,8 +629,8 @@ export const ReceivablesPage: React.FC = () => {
                                               </button>
                                               {Number(inv.amountDue) > 0 && (
                                                 <button
-                                                  onClick={() => navigate(`/sales/payments?invoiceId=${inv.id}`)}
-                                                  className="px-2 py-0.5 text-[11px] font-semibold text-cream bg-posted hover:bg-emerald-800 rounded shadow-xs"
+                                                  onClick={() => navigate(`/sales/payments?invoiceId=${inv.id}&from=receivables`)}
+                                                  className="px-2 py-0.5 text-[11px] font-semibold text-cream bg-posted hover:bg-emerald-800 rounded shadow-xs cursor-pointer"
                                                 >
                                                   Pay
                                                 </button>

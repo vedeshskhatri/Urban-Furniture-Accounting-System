@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
   ResponsiveContainer,
   BarChart,
@@ -54,6 +54,10 @@ function formatDisplayINR(num: number): string {
 
 export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = ({ onSelectInvoice, onNewInvoice }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isSettledBanner = searchParams.get('settled') === 'true' || searchParams.get('payment') === 'success';
+
   const [invoices, setInvoices] = useState<CustomerInvoiceDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -63,14 +67,18 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
   const [donutMode, setDonutMode] = useState<'realization' | 'status'>('realization');
 
   useEffect(() => {
-    fetch('/api/invoices')
+    setLoading(true);
+    fetch('/api/invoices', {
+      cache: 'no-store' as RequestCache,
+      headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+    })
       .then(res => res.json())
       .then(json => {
         if (json.data) setInvoices(json.data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [location.key]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -316,6 +324,14 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
         </div>
         <div className="flex items-center space-x-2.5 flex-wrap">
           <button
+            onClick={() => navigate('/sales/receivables')}
+            className="inline-flex items-center gap-1.5 bg-surface border border-brown-300 hover:bg-brown-100 text-brown-900 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+            title="Return to Accounts Receivable to settle more customer dues"
+          >
+            <CreditCard className="w-3.5 h-3.5 text-brown-700" />
+            <span>← Settle More Bills (Receivables)</span>
+          </button>
+          <button
             onClick={() => setShowVisualAnalytics(prev => !prev)}
             className="inline-flex items-center gap-1.5 bg-surface border border-brown-300 hover:bg-brown-100 text-brown-900 px-3 py-1.5 rounded-[6px] text-xs font-semibold transition-colors shadow-xs"
           >
@@ -351,6 +367,24 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
           </button>
         </div>
       </div>
+
+      {/* Payment Settlement Success Banner with Direct Return */}
+      {isSettledBanner && (
+        <div className="p-3.5 bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-[8px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <span className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              ✓
+            </span>
+            <span>Customer payment registered and settled successfully! General ledger updated.</span>
+          </div>
+          <button
+            onClick={() => navigate('/sales/receivables')}
+            className="px-3.5 py-1.5 bg-brown-900 hover:bg-brown-800 text-cream rounded-[6px] text-xs font-bold transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <span>← Settle More Bills (Receivables)</span>
+          </button>
+        </div>
+      )}
 
       {/* ── Executive Invoicing & Settlement Analytics Panel ── */}
       {showVisualAnalytics && (
