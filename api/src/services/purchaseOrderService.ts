@@ -89,17 +89,25 @@ export class PurchaseOrderService {
       });
     }
 
-    return pos.map(p => ({
-      id: p.id,
-      number: p.number,
-      vendorId: p.vendor_id,
-      vendorName: p.vendor_name,
-      poDate: p.order_date instanceof Date ? p.order_date.toISOString().split('T')[0] : String(p.order_date),
-      status: p.status,
-      total: String(p.total),
-      lines: linesByPo[p.id] || [],
-      createdAt: p.created_at,
-    }));
+    return pos.map(p => {
+      const poDate = p.order_date instanceof Date ? p.order_date.toISOString().split('T')[0] : String(p.order_date);
+      return {
+        id: p.id,
+        number: p.number,
+        vendorId: p.vendor_id,
+        vendorName: p.vendor_name,
+        vendor_id: p.vendor_id,
+        vendor_name: p.vendor_name,
+        poDate,
+        po_date: poDate,
+        status: p.status,
+        total: String(p.total),
+        total_amount: String(p.total),
+        lines: linesByPo[p.id] || [],
+        createdAt: p.created_at,
+        created_at: p.created_at,
+      };
+    }) as any;
   }
 
   static async getById(id: number): Promise<PurchaseOrderDTO | null> {
@@ -140,17 +148,23 @@ export class PurchaseOrderService {
       total: String(l.total),
     }));
 
+    const poDate = po.order_date instanceof Date ? po.order_date.toISOString().split('T')[0] : String(po.order_date);
     return {
       id: po.id,
       number: po.number,
       vendorId: po.vendor_id,
       vendorName: po.vendor_name,
-      poDate: po.order_date instanceof Date ? po.order_date.toISOString().split('T')[0] : String(po.order_date),
+      vendor_id: po.vendor_id,
+      vendor_name: po.vendor_name,
+      poDate,
+      po_date: poDate,
       status: po.status,
       total: String(po.total),
+      total_amount: String(po.total),
       lines,
       createdAt: po.created_at,
-    };
+      created_at: po.created_at,
+    } as any;
   }
 
   static async create(input: CreatePOInput, userId?: number): Promise<PurchaseOrderDTO> {

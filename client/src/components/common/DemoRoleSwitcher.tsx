@@ -55,23 +55,45 @@ export const DemoRoleSwitcher: React.FC = () => {
     playWoodClick(1.0);
 
     try {
-      const res = await api.post('/api/auth/login', {
-        login_id: role.loginId,
-        password: role.password,
-      });
+      if (role.id === 'contact') {
+        const res = await api.post('/api/portal/login', {
+          login_id: role.loginId,
+          password: role.password,
+        });
 
-      if (res.data?.data) {
-        const { user, token } = res.data.data;
-        localStorage.setItem('urban_token', token);
-        localStorage.setItem('urban_user', JSON.stringify(user));
-        localStorage.setItem('urban_logged_in', 'true');
+        if (res.data?.data) {
+          const { user, token } = res.data.data;
+          localStorage.setItem('urban_portal_token', token);
+          localStorage.setItem('urban_portal_user', JSON.stringify(user));
+          // Clear admin session to prevent leakage
+          localStorage.removeItem('urban_logged_in');
+          localStorage.removeItem('urban_user');
 
-        playChimeSuccess();
-        setIsOpen(false);
+          playChimeSuccess();
+          setIsOpen(false);
+          navigate(role.landingPage, { replace: true });
+          window.location.reload();
+        }
+      } else {
+        const res = await api.post('/api/auth/login', {
+          login_id: role.loginId,
+          password: role.password,
+        });
 
-        // Redirect to role landing page
-        navigate(role.landingPage, { replace: true });
-        window.location.reload();
+        if (res.data?.data) {
+          const { user, token } = res.data.data;
+          localStorage.setItem('urban_token', token);
+          localStorage.setItem('urban_user', JSON.stringify(user));
+          localStorage.setItem('urban_logged_in', 'true');
+          // Clear customer portal session to prevent leakage
+          localStorage.removeItem('urban_portal_token');
+          localStorage.removeItem('urban_portal_user');
+
+          playChimeSuccess();
+          setIsOpen(false);
+          navigate(role.landingPage, { replace: true });
+          window.location.reload();
+        }
       }
     } catch (err) {
       console.error('Failed to switch demo role:', err);
