@@ -230,7 +230,7 @@ export class AccountService {
     if (!includeArchived) {
       query += ' AND is_archived = false';
     }
-    if (type) {
+    if (type && type !== 'all') {
       params.push(type);
       query += ` AND type = $${params.length}`;
     }

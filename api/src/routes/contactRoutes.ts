@@ -46,7 +46,7 @@ contactRouter.get('/', async (req: Request, res: Response) => {
     const type = req.query.type as string | undefined;
     const includeArchived = req.query.includeArchived === 'true';
 
-    let query = 'SELECT id, name, type, email, mobile, address, city, state, pincode, gstin, is_archived, created_at FROM contacts WHERE 1=1';
+    let query = 'SELECT id, name, type, email, mobile, address, city, state, pincode, gstin, image_path, is_archived, created_at, updated_at FROM contacts WHERE 1=1';
     const params: any[] = [];
 
     if (!includeArchived) {

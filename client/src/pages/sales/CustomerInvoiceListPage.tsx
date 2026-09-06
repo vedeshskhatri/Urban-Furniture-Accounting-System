@@ -522,6 +522,7 @@ export const CustomerInvoiceListPage: React.FC<CustomerInvoiceListPageProps> = (
                           ? 'bg-brown-200/80 border-brown-400 font-bold'
                           : 'hover:bg-brown-100/70 border-transparent'
                       }`}
+                      title="Click to filter table by this status"
                     >
                       <div className="flex items-center justify-between gap-1 w-full">
                         <div className="flex items-center gap-1.5 min-w-0">

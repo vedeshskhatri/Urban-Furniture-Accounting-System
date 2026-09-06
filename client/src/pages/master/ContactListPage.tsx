@@ -10,6 +10,31 @@ interface ContactListPageProps {
   initialViewMode?: 'list' | 'kanban';
 }
 
+const ContactAvatar: React.FC<{
+  src?: string | null;
+  name: string;
+  iconSize: number;
+  imgStyle: React.CSSProperties;
+}> = ({ src, name, iconSize, imgStyle }) => {
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    setLoadFailed(false);
+  }, [src]);
+
+  if (src && !loadFailed) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        onError={() => setLoadFailed(true)}
+        style={imgStyle}
+      />
+    );
+  }
+  return <User size={iconSize} color="var(--brown-600, #8C6A58)" />;
+};
+
 export const ContactListPage: React.FC<ContactListPageProps> = ({
   onSelectContact,
   onNewContact,
@@ -207,15 +232,12 @@ export const ContactListPage: React.FC<ContactListPageProps> = ({
                         {/* Image Thumbnail */}
                         <td style={{ ...styles.td, textAlign: 'center' }}>
                           <div style={styles.avatarThumbnail}>
-                            {c.image_path ? (
-                              <img
-                                src={c.image_path}
-                                alt={c.name}
-                                style={styles.avatarImg}
-                              />
-                            ) : (
-                              <User size={16} color="var(--brown-600, #8C6A58)" />
-                            )}
+                            <ContactAvatar
+                              src={c.image_path}
+                              name={c.name}
+                              iconSize={16}
+                              imgStyle={styles.avatarImg}
+                            />
                           </div>
                         </td>
 
@@ -250,15 +272,12 @@ export const ContactListPage: React.FC<ContactListPageProps> = ({
                 >
                   {/* Left: Square Image */}
                   <div style={styles.kanbanImgBox}>
-                    {c.image_path ? (
-                      <img
-                        src={c.image_path}
-                        alt={c.name}
-                        style={styles.kanbanImg}
-                      />
-                    ) : (
-                      <User size={26} color="var(--brown-600, #8C6A58)" />
-                    )}
+                    <ContactAvatar
+                      src={c.image_path}
+                      name={c.name}
+                      iconSize={26}
+                      imgStyle={styles.kanbanImg}
+                    />
                   </div>
 
                   {/* Right: Contact Details */}
