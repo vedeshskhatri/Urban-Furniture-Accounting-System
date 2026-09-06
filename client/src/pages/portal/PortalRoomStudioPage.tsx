@@ -43,6 +43,13 @@ import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
 import { playWoodClick, playChimeSuccess } from '../../lib/soundEffects';
 import { resolveProductImage, resolveProductModel } from '../../lib/productMedia';
+import {
+  saveImportedModel,
+  loadAllImportedModels,
+  deleteImportedModel,
+  createBlobUrlFromBuffer,
+  type StoredImportedModel,
+} from '../../lib/importedModelsDB';
 
 interface ShowroomModel {
   id: string;
@@ -955,6 +962,28 @@ export const PortalRoomStudioPage: React.FC = () => {
         }
       })
       .catch((err) => console.warn('Failed to load catalogue products:', err));
+
+    // Restore previously-imported .glb models from IndexedDB
+    loadAllImportedModels()
+      .then((stored) => {
+        if (!stored || stored.length === 0) return;
+        const restored: ShowroomModel[] = stored.map((s) => ({
+          id: s.id,
+          name: s.displayName,
+          filename: s.filename,
+          category: 'Imported',
+          defaultScale: 1,
+          defaultY: 0,
+          sizeBytes: s.sizeBytes,
+          sizeKB: (s.sizeBytes / 1024).toFixed(1),
+          url: createBlobUrlFromBuffer(s.data),
+        }));
+        setCatalogModels((prev) => [
+          ...prev.filter((m) => m.category !== 'Imported'),
+          ...restored,
+        ]);
+      })
+      .catch((err) => console.warn('Could not restore imported models from IndexedDB:', err));
   }, []);
 
   // 2. Initialise Three.js Studio Scene
@@ -1928,7 +1957,7 @@ export const PortalRoomStudioPage: React.FC = () => {
     playWoodClick(1.2);
   }, []);
 
-  // Import custom .glb model from local filesystem
+  // Import custom .glb model from local filesystem — persisted to IndexedDB
   const handleImportGLB = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1943,28 +1972,64 @@ export const PortalRoomStudioPage: React.FC = () => {
     playWoodClick(0.95);
     setLoadingModel(true);
 
-    const blobUrl = URL.createObjectURL(file);
+    const modelId = `imported_${Date.now()}_${file.name}`;
     const displayName = file.name.replace(/\.glb$/i, '').replace(/[-_]/g, ' ');
 
-    const importedModel: ShowroomModel = {
-      id: `imported_${Date.now()}_${file.name}`,
-      name: displayName,
-      filename: file.name,
-      category: 'Imported',
-      defaultScale: 1,
-      defaultY: 0,
-      sizeBytes: file.size,
-      sizeKB: (file.size / 1024).toFixed(1),
-      url: blobUrl,
+    // Read file as ArrayBuffer so we can persist it in IndexedDB
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      const buffer = evt.target?.result as ArrayBuffer;
+      if (!buffer) { setLoadingModel(false); return; }
+
+      // Persist to IndexedDB
+      const stored: StoredImportedModel = {
+        id: modelId,
+        filename: file.name,
+        displayName,
+        sizeBytes: file.size,
+        data: buffer,
+        importedAt: Date.now(),
+      };
+      try {
+        await saveImportedModel(stored);
+      } catch (err) {
+        console.warn('Could not persist imported model to IndexedDB:', err);
+      }
+
+      const blobUrl = createBlobUrlFromBuffer(buffer);
+
+      const importedModel: ShowroomModel = {
+        id: modelId,
+        name: displayName,
+        filename: file.name,
+        category: 'Imported',
+        defaultScale: 1,
+        defaultY: 0,
+        sizeBytes: file.size,
+        sizeKB: (file.size / 1024).toFixed(1),
+        url: blobUrl,
+      };
+
+      // Add to catalog so it appears in the side panel
+      setCatalogModels((prev) => [...prev, importedModel]);
+
+      // Immediately place in centre of scene
+      const centerPos: [number, number, number] = [0, 0, 0];
+      handleAddFurniture(importedModel, centerPos, 0, 1, undefined, undefined);
     };
-
-    // Add to catalog so it appears in the side panel
-    setCatalogModels((prev) => [...prev, importedModel]);
-
-    // Immediately place in centre of scene
-    const centerPos: [number, number, number] = [0, 0, 0];
-    handleAddFurniture(importedModel, centerPos, 0, 1, undefined, undefined);
+    reader.onerror = () => { setLoadingModel(false); };
+    reader.readAsArrayBuffer(file);
   }, [handleAddFurniture]);
+
+  // Remove a stored imported model from IndexedDB and the catalog
+  const handleDeleteImportedModel = useCallback(async (modelId: string) => {
+    try {
+      await deleteImportedModel(modelId);
+    } catch (err) {
+      console.warn('Could not delete model from IndexedDB:', err);
+    }
+    setCatalogModels((prev) => prev.filter((m) => m.id !== modelId));
+  }, []);
 
   // Export High-Resolution Blueprint Snapshot
   const handleExportSnapshot = useCallback(() => {
@@ -3296,7 +3361,7 @@ export const PortalRoomStudioPage: React.FC = () => {
                     e.currentTarget.style.transform = 'none';
                   }}
                 >
-                  <div style={{ overflow: 'hidden', marginRight: 8 }}>
+                  <div style={{ overflow: 'hidden', marginRight: 8, flex: 1 }}>
                     <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--brown-500)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                       {model.category}
                     </div>
@@ -3316,29 +3381,54 @@ export const PortalRoomStudioPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddFurniture(model);
-                    }}
-                    title="Add to room"
-                    style={{
-                      background: 'none',
-                      border: '1px solid rgba(208, 174, 146, 0.5)',
-                      borderRadius: 6,
-                      padding: '3px 8px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      color: 'var(--brown-900)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Plus size={11} /> Add
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddFurniture(model);
+                      }}
+                      title="Add to room"
+                      style={{
+                        background: 'none',
+                        border: '1px solid rgba(208, 174, 146, 0.5)',
+                        borderRadius: 6,
+                        padding: '3px 8px',
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: 'var(--brown-900)',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    >
+                      <Plus size={11} /> Add
+                    </button>
+
+                    {model.category === 'Imported' && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteImportedModel(model.id);
+                        }}
+                        title="Remove from library"
+                        style={{
+                          background: 'none',
+                          border: '1px solid rgba(200, 80, 60, 0.3)',
+                          borderRadius: 6,
+                          padding: '3px 6px',
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: '#C8503C',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <X size={10} />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
