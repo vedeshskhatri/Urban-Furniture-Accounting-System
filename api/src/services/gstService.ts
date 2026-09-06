@@ -50,6 +50,11 @@ export interface UpiPaymentDetails {
   upiUrl: string;
   qrDataUrl: string;
   qrCodeSvg: string;
+  gateway?: string;
+  razorpayKeyId?: string;
+  razorpayUrl?: string;
+  razorpayQrSvg?: string;
+  razorpayQrDataUrl?: string;
 }
 
 export interface InvoiceGstDetails {
@@ -322,6 +327,39 @@ export class GstService {
       margin: 2,
     });
 
+    // Dynamic Razorpay Payment Gateway Link & Universal Checkout QR
+    let razorpayUrl: string | undefined = undefined;
+    let razorpayQrSvg: string | undefined = undefined;
+    let razorpayQrDataUrl: string | undefined = undefined;
+
+    if (new Decimal(payableAmount).greaterThan(0)) {
+      try {
+        const { RazorpayService } = await import('./razorpayService');
+        const rzpLink = await RazorpayService.createPaymentLink(
+          payableAmount,
+          inv.number,
+          inv.customer_name,
+          inv.customer_email,
+          { invoiceId: inv.id, invoiceNumber: inv.number, customerId: inv.customer_id }
+        );
+        if (rzpLink?.shortUrl) {
+          razorpayUrl = rzpLink.shortUrl;
+          razorpayQrSvg = QrMatrixGenerator.renderSvg(razorpayUrl, {
+            size: 260,
+            margin: 2,
+            foregroundColor: '#26211C',
+            backgroundColor: '#FFFFFF',
+          });
+          razorpayQrDataUrl = await QrMatrixGenerator.renderPngDataUrl(razorpayUrl, {
+            size: 260,
+            margin: 2,
+          });
+        }
+      } catch (rzpErr: any) {
+        console.warn('[gstService] Razorpay payment link notice (using fallback UPI):', rzpErr.message);
+      }
+    }
+
     const upi: UpiPaymentDetails = {
       vpa: upiVpa,
       payeeName: upiPayee,
@@ -330,6 +368,11 @@ export class GstService {
       upiUrl,
       qrDataUrl: upiQrDataUrl,
       qrCodeSvg: upiQrSvg,
+      gateway: 'razorpay',
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_TYL9FJAZxMYoFc',
+      razorpayUrl,
+      razorpayQrSvg,
+      razorpayQrDataUrl,
     };
 
     return {

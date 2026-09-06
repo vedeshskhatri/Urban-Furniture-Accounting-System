@@ -10,6 +10,7 @@ import { ShoppingCart, CreditCard, BookOpen, TrendingUp, Printer, Mail, AlertCir
 import { JournalEntryModal } from '../../components/purchase/JournalEntryModal';
 import { RegisterPaymentModal } from '../../components/purchase/RegisterPaymentModal';
 import api from '../../lib/axios';
+import { loadRazorpayScript } from '../../lib/razorpay';
 import Decimal from 'decimal.js';
 
 export interface CustomerInvoiceFormPageProps {
@@ -56,6 +57,9 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
   const [copiedIrn, setCopiedIrn] = useState<boolean>(false);
   const [qrTab, setQrTab] = useState<'tax' | 'upi'>('tax');
   const [copiedUpi, setCopiedUpi] = useState<boolean>(false);
+  const [paymentQrMode, setPaymentQrMode] = useState<'razorpay' | 'direct_upi'>('razorpay');
+  const [razorpayLoading, setRazorpayLoading] = useState<boolean>(false);
+  const [copiedRazorpay, setCopiedRazorpay] = useState<boolean>(false);
 
 
   // Fetch dropdown data
@@ -245,6 +249,65 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
       });
     } finally {
       setEmailSending(false);
+    }
+  };
+
+  const handleRazorpayCheckout = async () => {
+    if (!invoice?.id) return;
+    setRazorpayLoading(true);
+    setError(null);
+    try {
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) throw new Error('Could not load Razorpay SDK');
+
+      const amountToPay = Number(invoice.amountDue || invoice.total || '0').toFixed(2);
+      const orderRes = await api.post(`/api/invoices/${invoice.id}/razorpay/create-order`, {
+        amount: amountToPay,
+      });
+      const order = orderRes.data?.data;
+      if (!order) throw new Error(orderRes.data?.error?.message || 'Failed to create Razorpay order');
+
+      const rzpKey = (window as any).__VITE_RAZORPAY_KEY_ID__ || (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_TYL9FJAZxMYoFc';
+      const orderId = order.orderId || order.id;
+
+      const rzp = new (window as any).Razorpay({
+        key: rzpKey,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'Urban Furniture',
+        description: `Invoice ${invoice.number} Settlement`,
+        order_id: orderId,
+        prefill: {
+          name: invoice.customerName || '',
+        },
+        theme: { color: '#77574A' },
+        handler: async (response: any) => {
+          try {
+            const verifyRes = await api.post(`/api/invoices/${invoice.id}/razorpay/verify-payment`, {
+              razorpay_order_id: response.razorpay_order_id || orderId,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: amountToPay,
+            });
+            if (verifyRes.data?.error) throw new Error(verifyRes.data.error.message || 'Signature verification failed');
+            setSuccessMsg(`Payment ${response.razorpay_payment_id} verified & posted to General Ledger! Official receipt emailed.`);
+            loadInvoice(invoice.id);
+          } catch (vErr: any) {
+            setError(vErr?.response?.data?.error?.message || vErr.message || 'Payment verification failed');
+          } finally {
+            setRazorpayLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setRazorpayLoading(false);
+          },
+        },
+      });
+      rzp.open();
+    } catch (err: any) {
+      setError(err?.response?.data?.error?.message || err.message || 'Razorpay initiation failed');
+      setRazorpayLoading(false);
     }
   };
 
@@ -520,87 +583,170 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
 
             {/* TAB CONTENT */}
             {qrTab === 'upi' ? (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-center">
-                <div className="md:col-span-3 space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-3 bg-white rounded-lg border border-brown-200 shadow-xs">
-                      <span className="text-[10px] text-brown-500 uppercase tracking-wider block font-bold">Payee Beneficiary</span>
-                      <span className="font-bold text-brown-900 text-sm">{gstDetails.upi?.payeeName || 'Urban Furniture Pvt Ltd'}</span>
+              <div className="mt-4 space-y-4">
+                {/* Submode switcher: Razorpay vs Direct UPI */}
+                <div className="flex items-center justify-between pb-2 border-b border-brown-200/70 gap-2 flex-wrap">
+                  <div className="inline-flex p-1 bg-white rounded-lg border border-brown-200 text-xs font-semibold shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentQrMode('razorpay')}
+                      className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                        paymentQrMode === 'razorpay'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'text-brown-700 hover:text-brown-900'
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>⚡ Razorpay Universal QR (Cards / UPI / NetBanking)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentQrMode('direct_upi')}
+                      className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                        paymentQrMode === 'direct_upi'
+                          ? 'bg-amber-600 text-white shadow-xs'
+                          : 'text-brown-700 hover:text-brown-900'
+                      }`}
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>📱 Direct UPI App QR</span>
+                    </button>
+                  </div>
+
+                  {invoice && Number(invoice.amountDue) > 0 && (
+                    <button
+                      type="button"
+                      disabled={razorpayLoading}
+                      onClick={handleRazorpayCheckout}
+                      className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50 cursor-pointer"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>{razorpayLoading ? 'Launching Razorpay...' : '💳 Pay via Razorpay Modal Now'}</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                  <div className="md:col-span-3 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="p-3 bg-white rounded-lg border border-brown-200 shadow-2xs">
+                        <span className="text-[10px] text-brown-500 uppercase tracking-wider block font-bold">Payee Beneficiary</span>
+                        <span className="font-bold text-brown-900 text-sm">{gstDetails.upi?.payeeName || 'Urban Furniture Pvt Ltd'}</span>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg border border-brown-200 shadow-2xs">
+                        <span className="text-[10px] text-brown-500 uppercase tracking-wider block font-bold">
+                          {paymentQrMode === 'razorpay' ? 'Payment Gateway' : 'UPI Virtual Payment Address'}
+                        </span>
+                        <span className="font-mono font-bold text-brown-900 text-sm">
+                          {paymentQrMode === 'razorpay' ? 'Razorpay Gateway Verified' : (gstDetails.upi?.vpa || 'urbanfurniture@icici')}
+                        </span>
+                      </div>
+                      <div className="p-3 bg-emerald-50/80 rounded-lg border border-emerald-200 shadow-2xs">
+                        <span className="text-[10px] text-emerald-800 uppercase tracking-wider block font-bold">Payable Amount Due</span>
+                        <span className="font-mono font-extrabold text-emerald-900 text-lg">
+                          ₹{Number(gstDetails.upi?.amount || invoice?.amountDue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="p-3 bg-white rounded-lg border border-brown-200 shadow-xs">
-                      <span className="text-[10px] text-brown-500 uppercase tracking-wider block font-bold">UPI Virtual Payment Address</span>
-                      <span className="font-mono font-bold text-brown-900 text-sm">{gstDetails.upi?.vpa || 'urbanfurniture@icici'}</span>
+
+                    <div>
+                      <span className="text-[10px] font-bold text-brown-500 uppercase tracking-wider block">
+                        {paymentQrMode === 'razorpay' ? 'Razorpay Dynamic Checkout URL' : 'NPCI UPI Deep Link URL'}
+                      </span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="p-2 bg-white border border-brown-200 rounded-md font-mono text-[11px] text-brown-900 break-all select-all flex-1 shadow-inner">
+                          {paymentQrMode === 'razorpay'
+                            ? (gstDetails.upi?.razorpayUrl || gstDetails.upi?.upiUrl)
+                            : gstDetails.upi?.upiUrl}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const linkToCopy = paymentQrMode === 'razorpay'
+                              ? (gstDetails.upi?.razorpayUrl || gstDetails.upi?.upiUrl)
+                              : gstDetails.upi?.upiUrl;
+                            if (linkToCopy) {
+                              navigator.clipboard.writeText(linkToCopy);
+                              setCopiedUpi(true);
+                              setTimeout(() => setCopiedUpi(false), 2000);
+                            }
+                          }}
+                          className="px-2.5 py-2 bg-surface border border-brown-300 rounded-md text-brown-700 hover:bg-brown-100 text-xs font-medium flex items-center gap-1 shrink-0 cursor-pointer"
+                          title="Copy Link"
+                        >
+                          {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedUpi ? 'Copied' : 'Copy'}</span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="p-3 bg-emerald-50/80 rounded-lg border border-emerald-200 shadow-xs">
-                      <span className="text-[10px] text-emerald-800 uppercase tracking-wider block font-bold">Payable Amount Due</span>
-                      <span className="font-mono font-extrabold text-emerald-900 text-lg">
-                        ₹{Number(gstDetails.upi?.amount || invoice?.amountDue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+
+                    <div className="pt-1 flex flex-wrap items-center gap-3">
+                      {paymentQrMode === 'razorpay' && gstDetails.upi?.razorpayUrl ? (
+                        <a
+                          href={gstDetails.upi.razorpayUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open Razorpay Checkout Page</span>
+                        </a>
+                      ) : (
+                        <a
+                          href={gstDetails.upi?.upiUrl}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open in UPI App (Mobile / POS)</span>
+                        </a>
+                      )}
+                      <span className="text-xs text-brown-500 font-medium">
+                        {paymentQrMode === 'razorpay'
+                          ? '💡 Customers can scan with ANY camera or browser to pay with Credit/Debit Cards, UPI, NetBanking, EMI & Wallets'
+                          : '💡 Scannable directly by Google Pay, PhonePe, Paytm, BHIM & bank apps'}
                       </span>
                     </div>
                   </div>
 
-                  <div>
-                    <span className="text-[10px] font-bold text-brown-500 uppercase tracking-wider block">
-                      NPCI UPI Deep Link URL
-                    </span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="p-2 bg-white border border-brown-200 rounded-md font-mono text-[11px] text-brown-900 break-all select-all flex-1 shadow-inner">
-                        {gstDetails.upi?.upiUrl}
+                  {/* Scannable QR Code */}
+                  <div className="flex flex-col items-center justify-center p-3 bg-white border-2 border-amber-300 rounded-lg shadow-sm">
+                    {paymentQrMode === 'razorpay' && (gstDetails.upi?.razorpayQrDataUrl || gstDetails.upi?.razorpayQrSvg) ? (
+                      gstDetails.upi.razorpayQrDataUrl ? (
+                        <img
+                          src={gstDetails.upi.razorpayQrDataUrl}
+                          alt="Razorpay Payment QR Code"
+                          className="w-28 h-28 object-contain"
+                        />
+                      ) : (
+                        <div
+                          className="w-28 h-28 flex items-center justify-center"
+                          dangerouslySetInnerHTML={{ __html: gstDetails.upi.razorpayQrSvg }}
+                        />
+                      )
+                    ) : gstDetails.upi?.qrDataUrl ? (
+                      <img
+                        src={gstDetails.upi.qrDataUrl}
+                        alt="UPI Payment QR Code"
+                        className="w-28 h-28 object-contain"
+                      />
+                    ) : gstDetails.upi?.qrCodeSvg ? (
+                      <div
+                        className="w-28 h-28 flex items-center justify-center"
+                        dangerouslySetInnerHTML={{ __html: gstDetails.upi.qrCodeSvg }}
+                      />
+                    ) : (
+                      <div className="w-28 h-28 flex items-center justify-center text-brown-400 text-xs">
+                        Loading QR...
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (gstDetails.upi?.upiUrl) {
-                            navigator.clipboard.writeText(gstDetails.upi.upiUrl);
-                            setCopiedUpi(true);
-                            setTimeout(() => setCopiedUpi(false), 2000);
-                          }
-                        }}
-                        className="px-2.5 py-2 bg-surface border border-brown-300 rounded-md text-brown-700 hover:bg-brown-100 text-xs font-medium flex items-center gap-1 shrink-0 cursor-pointer"
-                        title="Copy UPI Deep Link"
-                      >
-                        {copiedUpi ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedUpi ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="pt-1 flex flex-wrap items-center gap-3">
-                    <a
-                      href={gstDetails.upi?.upiUrl}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-md text-xs font-bold transition shadow-xs cursor-pointer"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Open in UPI App (Mobile / POS)</span>
-                    </a>
-                    <span className="text-xs text-brown-500 font-medium">
-                      💡 Scannable by customer camera directly from screen or official printed invoice
+                    )}
+                    <span className="text-[10px] font-bold text-amber-800 mt-1 uppercase tracking-wider flex items-center gap-1 text-center">
+                      <Zap className="w-3 h-3 text-amber-600 fill-amber-500 shrink-0" />
+                      {paymentQrMode === 'razorpay' ? 'Razorpay Universal' : 'Direct UPI Scan'}
+                    </span>
+                    <span className="text-[9px] text-brown-500">
+                      {paymentQrMode === 'razorpay' ? 'Cards • UPI • NetBank' : 'NPCI / Bharat QR'}
                     </span>
                   </div>
-                </div>
-
-                {/* Scannable UPI QR Code */}
-                <div className="flex flex-col items-center justify-center p-3 bg-white border-2 border-amber-300 rounded-lg shadow-sm">
-                  {gstDetails.upi?.qrDataUrl ? (
-                    <img
-                      src={gstDetails.upi.qrDataUrl}
-                      alt="UPI Payment QR Code"
-                      className="w-28 h-28 object-contain"
-                    />
-                  ) : gstDetails.upi?.qrCodeSvg ? (
-                    <div
-                      className="w-28 h-28 flex items-center justify-center"
-                      dangerouslySetInnerHTML={{ __html: gstDetails.upi.qrCodeSvg }}
-                    />
-                  ) : (
-                    <div className="w-28 h-28 flex items-center justify-center text-brown-400 text-xs">
-                      Loading UPI QR...
-                    </div>
-                  )}
-                  <span className="text-[10px] font-bold text-amber-800 mt-1 uppercase tracking-wider flex items-center gap-1">
-                    <Zap className="w-3 h-3 text-amber-600 fill-amber-500" />
-                    Scan &amp; Pay UPI
-                  </span>
                 </div>
               </div>
             ) : (

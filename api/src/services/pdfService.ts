@@ -395,19 +395,19 @@ export class PdfService {
               </div>
               <div>
                 <div style="font-size: 11px; font-weight: 800; color: #137333; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 4px;">
-                  <span>⚡ 1-Click Scan &amp; Pay (UPI)</span>
+                  <span>⚡ Scan &amp; Pay (Razorpay / UPI)</span>
                 </div>
                 <div style="font-size: 13px; font-weight: 700; color: #26211C; margin-top: 3px;">
                   ${upiPayee}
                 </div>
                 <div style="font-size: 11px; color: #574F45; margin-top: 2px;">
-                  UPI ID: <strong style="font-family: monospace; color: #382A24;">${upiVpa}</strong>
+                  Gateway: <strong style="font-family: monospace; color: #382A24;">Razorpay / NPCI Verified</strong>
                 </div>
                 <div style="font-size: 11px; color: #574F45; margin-top: 2px;">
                   Amount Due: <strong style="font-family: monospace; color: ${parseFloat(payableAmount) > 0 ? '#C5221F' : '#137333'}; font-size: 13px;">₹${payableAmount}</strong>
                 </div>
                 <div style="font-size: 10px; color: #7B7267; margin-top: 4px; line-height: 1.3;">
-                  Scan via Google Pay, PhonePe, Paytm, BHIM or any UPI App for instant showroom settlement.
+                  Scan via Google Pay, PhonePe, Paytm, BHIM, Cards or NetBanking for instant settlement.
                 </div>
               </div>
             </div>
