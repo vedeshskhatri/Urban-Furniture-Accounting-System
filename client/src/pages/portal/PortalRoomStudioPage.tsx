@@ -35,6 +35,10 @@ import {
   VolumeX,
   CheckCircle,
   Camera,
+  BookmarkPlus,
+  Save,
+  Check,
+  FolderHeart,
 } from 'lucide-react';
 import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
@@ -81,16 +85,51 @@ export interface RoomStyleConcept {
   ceilingLight: boolean;
   standingLamp: boolean;
   palette: string[];
+  isCustom?: boolean;
+  createdAt?: string;
   items: Array<{
     query: string;
     fallbackQuery?: string;
     position: [number, number, number];
     rotationY: number;
     nameLabel: string;
+    scaleFactor?: number;
+    scale?: number;
+    modelId?: string;
+    url?: string;
+    finish?: 'oak' | 'teak' | 'walnut' | 'charcoal';
   }>;
 }
 
 export const ROOM_STYLES: RoomStyleConcept[] = [
+  {
+    id: 'grand-residence',
+    name: 'Grand Architectural Residence',
+    tagline: 'Complete master suite layout with sleeping sanctuary, private library, fireside lounge & 4-guest dining',
+    category: 'Living',
+    badge: 'CLIENT BESPOKE • SUITE',
+    accentColor: '#8A4B38',
+    description: 'A comprehensive residential architecture seamlessly orchestrating a master double suite, dedicated reading library, low-profile lounge, and 4-chair circular dining ensemble.',
+    ambience: 'dusk',
+    cameraView: 'overview',
+    ceilingLight: true,
+    standingLamp: true,
+    palette: ['#1F1714', '#5E4035', '#A88B74', '#F7F3EE'],
+    items: [
+      { query: 'Bed Double by Quaternius', fallbackQuery: 'Bed Double', position: [-2.4, 0, 1.0], rotationY: -Math.PI / 2, nameLabel: 'Double Platform Bed' },
+      { query: 'Bookcase with Books by Quaternius', fallbackQuery: 'Bookcase', position: [-2.7, 0, -0.8], rotationY: Math.PI / 2, nameLabel: 'Antique Library Bookcase' },
+      { query: 'Standing lamp', position: [-1.7, 0, -0.3], rotationY: 0, nameLabel: 'Bedside Floor Lamp' },
+      { query: 'Standing lamp', position: [-1.6, 0, 1.8], rotationY: 0, nameLabel: 'Suite Accent Floor Lamp' },
+      { query: 'Couch Large by Quaternius', fallbackQuery: 'Couch Large', position: [-0.6, 0, -2.3], rotationY: 0, nameLabel: 'Large Minimalist Sofa' },
+      { query: 'Table Round Small', fallbackQuery: 'Table', position: [1.2, 0, -0.5], rotationY: 0, nameLabel: 'Round Dining Table' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [1.2, 0, -1.35], rotationY: 0, nameLabel: 'Dining Chair (North)' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [1.2, 0, 0.35], rotationY: Math.PI, nameLabel: 'Dining Chair (South)' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [0.35, 0, -0.5], rotationY: Math.PI / 2, nameLabel: 'Dining Chair (West)' },
+      { query: 'Chair by Quaternius', fallbackQuery: 'Chair', position: [2.05, 0, -0.5], rotationY: -Math.PI / 2, nameLabel: 'Dining Chair (East)' },
+      { query: 'Drawer by Quaternius', fallbackQuery: 'Drawer', position: [-0.8, 0, 1.6], rotationY: 0, nameLabel: 'Solid Oak Low Bench' },
+      { query: 'Shelf Small by Quaternius', fallbackQuery: 'Shelf', position: [2.4, 0, 1.5], rotationY: -Math.PI / 2, nameLabel: 'Hallway Media Console' },
+    ],
+  },
   {
     id: 'japandi-lounge',
     name: 'Japandi Minimalist Living',
@@ -212,6 +251,304 @@ export const ROOM_STYLES: RoomStyleConcept[] = [
   },
 ];
 
+// ── Visual Architectural Floorplan Banner for Room Style Cards ──
+const RoomStyleVisualBanner: React.FC<{
+  style: RoomStyleConcept;
+  onDelete?: (e: React.MouseEvent) => void;
+}> = ({ style, onDelete }) => {
+  const isDark = style.ambience === 'dusk';
+  const bannerBg = isDark
+    ? 'linear-gradient(135deg, #241A16 0%, #3B2820 100%)'
+    : style.ambience === 'studio'
+    ? 'linear-gradient(135deg, #F0F4F7 0%, #DFE7EC 100%)'
+    : 'linear-gradient(135deg, #FAF5ED 0%, #EDE1CE 100%)';
+
+  const strokeColor = isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(44, 34, 30, 0.12)';
+  const furnitureFill = isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(44, 34, 30, 0.16)';
+  const accentFill = style.accentColor;
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        height: 105,
+        background: bannerBg,
+        borderBottom: '1px solid rgba(214, 198, 180, 0.35)',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '10px 14px',
+      }}
+    >
+      {/* Background Architectural Blueprint Floorplan SVG */}
+      <svg
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+        }}
+        viewBox="0 0 300 105"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        {/* Subtle grid lines */}
+        <pattern id={`grid-${style.id}`} width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M 20 0 L 0 0 0 20" fill="none" stroke={strokeColor} strokeWidth="0.5" />
+        </pattern>
+        <rect width="100%" height="100%" fill={`url(#grid-${style.id})`} opacity="0.6" />
+
+        {/* Room perimeter border */}
+        <rect
+          x="28"
+          y="12"
+          width="244"
+          height="80"
+          rx="6"
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="1.2"
+          strokeDasharray="4 3"
+        />
+
+        {/* Specific Architectural Layout Silhouettes */}
+        {style.id === 'japandi-lounge' && (
+          <g transform="translate(150, 52)">
+            {/* Sofa */}
+            <rect x="-42" y="-26" width="84" height="22" rx="5" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            {/* Coffee Table */}
+            <circle cx="0" cy="8" r="12" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            {/* Left Lounge Chair */}
+            <rect x="-46" y="2" width="16" height="16" rx="3" fill={furnitureFill} transform="rotate(25, -38, 10)" />
+            {/* Right Lounge Chair */}
+            <rect x="30" y="2" width="16" height="16" rx="3" fill={furnitureFill} transform="rotate(-25, 38, 10)" />
+            {/* Floor Lamp dot */}
+            <circle cx="-56" cy="-22" r="4" fill={accentFill} opacity="0.8" />
+          </g>
+        )}
+
+        {style.id === 'grand-residence' && (
+          <g transform="translate(150, 52)">
+            {/* Double Platform Bed */}
+            <rect x="-90" y="-18" width="38" height="40" rx="4" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            <rect x="-85" y="-14" width="28" height="10" rx="2" fill={accentFill} opacity="0.4" />
+            {/* Bookcase wall */}
+            <rect x="-95" y="-30" width="48" height="6" rx="1" fill={furnitureFill} />
+            {/* Living Zone Sofa */}
+            <rect x="-18" y="-26" width="44" height="16" rx="3" fill={furnitureFill} />
+            {/* Dining Table with 4 Chairs */}
+            <circle cx="68" cy="4" r="14" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            <circle cx="68" cy="-15" r="4" fill={furnitureFill} />
+            <circle cx="68" cy="23" r="4" fill={furnitureFill} />
+            <circle cx="49" cy="4" r="4" fill={furnitureFill} />
+            <circle cx="87" cy="4" r="4" fill={furnitureFill} />
+            {/* Credenza */}
+            <rect x="42" y="-28" width="48" height="6" rx="1" fill={furnitureFill} />
+          </g>
+        )}
+
+        {style.id === 'executive-study' && (
+          <g transform="translate(150, 52)">
+            {/* Executive Desk */}
+            <rect x="-35" y="-8" width="70" height="22" rx="3" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            {/* Ergonomic Armchair */}
+            <circle cx="0" cy="-20" r="9" fill={furnitureFill} stroke={accentFill} strokeWidth="0.8" />
+            {/* Left Library Shelves */}
+            <rect x="-88" y="-26" width="10" height="52" rx="2" fill={furnitureFill} />
+            {/* Right Display Shelves */}
+            <rect x="78" y="-26" width="10" height="52" rx="2" fill={furnitureFill} />
+            {/* Visitor Chair */}
+            <circle cx="24" cy="22" r="7" fill={furnitureFill} opacity="0.7" />
+          </g>
+        )}
+
+        {style.id === 'zen-bedroom' && (
+          <g transform="translate(150, 52)">
+            {/* Center Double Platform Bed */}
+            <rect x="-32" y="-22" width="64" height="50" rx="4" fill={furnitureFill} stroke={accentFill} strokeWidth="1.2" />
+            <rect x="-24" y="-16" width="48" height="14" rx="2" fill={accentFill} opacity="0.35" />
+            {/* Left Nightstand */}
+            <rect x="-54" y="-20" width="14" height="16" rx="2" fill={furnitureFill} />
+            {/* Right Nightstand */}
+            <rect x="40" y="-20" width="14" height="16" rx="2" fill={furnitureFill} />
+            {/* Linen Drawer */}
+            <rect x="68" y="2" width="8" height="24" rx="1" fill={furnitureFill} />
+            {/* Twilight Floor Lamp */}
+            <circle cx="-54" cy="16" r="5" fill="#E8C39E" opacity="0.9" />
+          </g>
+        )}
+
+        {style.id === 'social-salon' && (
+          <g transform="translate(150, 52)">
+            {/* Curved Sofa */}
+            <path d="M -38 -18 Q 0 -32 38 -18 L 34 -4 Q 0 -16 -34 -4 Z" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            {/* Round Conversation Table */}
+            <circle cx="0" cy="8" r="13" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            {/* 2 Armchairs */}
+            <circle cx="-40" cy="12" r="9" fill={furnitureFill} />
+            <circle cx="40" cy="12" r="9" fill={furnitureFill} />
+            {/* Wall Credenza */}
+            <rect x="-30" y="28" width="60" height="6" rx="2" fill={furnitureFill} />
+          </g>
+        )}
+
+        {style.id === 'nordic-atelier' && (
+          <g transform="translate(150, 52)">
+            {/* Writing Desk */}
+            <rect x="-65" y="-20" width="46" height="18" rx="2" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            <circle cx="-42" cy="6" r="8" fill={furnitureFill} />
+            {/* Minimalist Daybed */}
+            <rect x="25" y="-22" width="48" height="26" rx="3" fill={furnitureFill} stroke={accentFill} strokeWidth="1" />
+            {/* Storage shelf */}
+            <rect x="-85" y="6" width="8" height="22" rx="1" fill={furnitureFill} />
+          </g>
+        )}
+
+        {style.id === 'blank' && (
+          <g transform="translate(150, 52)">
+            <circle cx="0" cy="0" r="16" fill="none" stroke={accentFill} strokeWidth="1" strokeDasharray="3 3" />
+            <line x1="-10" y1="0" x2="10" y2="0" stroke={accentFill} strokeWidth="1.5" />
+            <line x1="0" y1="-10" x2="0" y2="10" stroke={accentFill} strokeWidth="1.5" />
+          </g>
+        )}
+
+        {/* Custom saved style representation */}
+        {style.isCustom && (
+          <g transform="translate(150, 52)">
+            {style.items.slice(0, 8).map((item, idx) => {
+              const cx = Math.max(-80, Math.min(80, item.position[0] * 30));
+              const cy = Math.max(-25, Math.min(25, item.position[2] * 16));
+              return (
+                <rect
+                  key={idx}
+                  x={cx - 7}
+                  y={cy - 6}
+                  width="14"
+                  height="12"
+                  rx="2"
+                  fill={furnitureFill}
+                  stroke={accentFill}
+                  strokeWidth="0.8"
+                />
+              );
+            })}
+          </g>
+        )}
+      </svg>
+
+      {/* Top Banner Row: Category Pill & Ambience/Delete */}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span
+            style={{
+              fontSize: 9,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: isDark ? '#FAF7F2' : style.accentColor,
+              backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : `${style.accentColor}18`,
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.2)' : `${style.accentColor}35`}`,
+              padding: '2px 7px',
+              borderRadius: 4,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+            }}
+          >
+            {style.badge}
+          </span>
+          {style.isCustom && (
+            <span
+              style={{
+                fontSize: 8.5,
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                color: '#FAF7F2',
+                backgroundColor: '#8A4B38',
+                padding: '2px 6px',
+                borderRadius: 4,
+              }}
+            >
+              SAVED
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span
+            style={{
+              fontSize: 9,
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 600,
+              color: isDark ? '#E5D6CC' : '#5C4A3E',
+              backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.7)',
+              padding: '2px 7px',
+              borderRadius: 4,
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            {style.ambience === 'morning' ? '☀️ Morning' : style.ambience === 'dusk' ? '🌙 Dusk' : '💡 Studio'}
+          </span>
+
+          {style.isCustom && onDelete && (
+            <button
+              onClick={onDelete}
+              title="Delete this saved room style"
+              style={{
+                background: 'rgba(255,255,255,0.85)',
+                border: 'none',
+                padding: '3px 5px',
+                borderRadius: 4,
+                cursor: 'pointer',
+                color: '#B94A48',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              }}
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Banner Row: Palette Swatches & Camera Perspective */}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          {style.palette.map((hex, i) => (
+            <div
+              key={i}
+              title={`Color tone: ${hex}`}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: '50%',
+                backgroundColor: hex,
+                border: '1.5px solid rgba(255,255,255,0.7)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+              }}
+            />
+          ))}
+        </div>
+
+        <span
+          style={{
+            fontSize: 9,
+            fontFamily: 'var(--font-mono)',
+            color: isDark ? '#D9C8BE' : '#7C675C',
+            textTransform: 'capitalize',
+            backgroundColor: isDark ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.5)',
+            padding: '1px 6px',
+            borderRadius: 3,
+          }}
+        >
+          {style.cameraView === 'walkin' ? '👁️ Walk-In' : style.cameraView === 'overview' ? '🧭 Dollhouse' : '▦ Top Plan'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
 export const PortalRoomStudioPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -291,6 +628,25 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [roomStyleFilter, setRoomStyleFilter] = useState<string>('All');
   const [loadingModel, setLoadingModel] = useState<boolean>(false);
   const [isDraggingOverCanvas, setIsDraggingOverCanvas] = useState<boolean>(false);
+
+  // Custom Room Styles stored in localStorage
+  const [customRoomStyles, setCustomRoomStyles] = useState<RoomStyleConcept[]>(() => {
+    try {
+      const stored = localStorage.getItem('urban_custom_room_styles');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+  const allRoomStyles = [...ROOM_STYLES, ...customRoomStyles];
+
+  // Save Style Modal States
+  const [isSaveStyleModalOpen, setIsSaveStyleModalOpen] = useState<boolean>(false);
+  const [saveStyleName, setSaveStyleName] = useState<string>('');
+  const [saveStyleCategory, setSaveStyleCategory] = useState<'Living' | 'Workspace' | 'Bedroom' | 'Hospitality' | 'Custom'>('Living');
+  const [saveStyleTagline, setSaveStyleTagline] = useState<string>('');
+  const [saveStyleColor, setSaveStyleColor] = useState<string>('#8A4B38');
+  const [saveSuccessToast, setSaveSuccessToast] = useState<string | null>(null);
 
   // Quote & Audio States
   const [quoteSubmitting, setQuoteSubmitting] = useState<boolean>(false);
@@ -910,98 +1266,43 @@ export const PortalRoomStudioPage: React.FC = () => {
   }, [selectedInstanceId, placedItems]);
 
   // 6. Add Furniture Model to Scene (with In-Memory Caching for 0ms Instant Placement)
-  const handleAddFurniture = useCallback((model: ShowroomModel, customPos?: [number, number, number], customRot?: number) => {
-    if (!sceneRef.current) return;
+  const handleAddFurniture = useCallback(
+    (
+      model: ShowroomModel,
+      customPos?: [number, number, number],
+      customRot?: number,
+      customScaleFactor?: number,
+      customExactScale?: number,
+      customFinish?: 'oak' | 'teak' | 'walnut' | 'charcoal'
+    ) => {
+      if (!sceneRef.current) return;
 
-    const instanceId = `item-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-    const modelUrl = model.url.replace(/^\/models\//i, '/Models/');
+      const instanceId = `item-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      const modelUrl = model.url.replace(/^\/models\//i, '/Models/');
 
-    // Default position: in front of the camera or staggered
-    const pos: [number, number, number] = customPos || [
-      (Math.random() - 0.5) * 2.2,
-      0,
-      (Math.random() - 0.5) * 2.0 - 0.4,
-    ];
-    const initialRot = customRot || 0;
+      // Default position: in front of the camera or staggered
+      const pos: [number, number, number] = customPos || [
+        (Math.random() - 0.5) * 2.2,
+        0,
+        (Math.random() - 0.5) * 2.0 - 0.4,
+      ];
+      const initialRot = customRot || 0;
+      const factor = customScaleFactor || 1.0;
 
-    // Check if model prototype is already cached in memory
-    const cached = modelCacheRef.current.get(modelUrl);
-    if (cached) {
-      const group = new THREE.Group();
-      const inner = SkeletonUtils.clone(cached.scene);
-      group.add(inner);
-      group.scale.set(cached.baseScale, cached.baseScale, cached.baseScale);
-      group.position.set(pos[0], 0, pos[2]);
-      if (initialRot !== 0) {
-        group.rotation.y = initialRot;
-      }
-
-      sceneRef.current.add(group);
-      placedMeshesRef.current.set(instanceId, group);
-
-      const newItem: PlacedFurniture = {
-        instanceId,
-        modelId: model.id,
-        name: model.name,
-        category: model.category,
-        url: modelUrl,
-        position: [pos[0], 0, pos[2]],
-        rotationY: initialRot,
-        scale: cached.baseScale,
-        scaleFactor: 1.0,
-      };
-
-      setPlacedItems((prev) => [...prev, newItem]);
-      setSelectedInstanceId(instanceId);
-      return;
-    }
-
-    setLoadingModel(true);
-    const loader = new GLTFLoader();
-    if (dracoLoaderRef.current) {
-      loader.setDRACOLoader(dracoLoaderRef.current);
-    }
-
-    loader.load(
-      modelUrl,
-      (gltf) => {
+      // Check if model prototype is already cached in memory
+      const cached = modelCacheRef.current.get(modelUrl);
+      if (cached) {
         const group = new THREE.Group();
-        const inner = gltf.scene;
-
-        inner.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-            child.frustumCulled = true;
-          }
-        });
-
-        // Compute Bounding Box & Scale to realistic architectural dimensions
-        const rawBox = new THREE.Box3().setFromObject(inner);
-        const rawSize = rawBox.getSize(new THREE.Vector3());
-        const rawCenter = rawBox.getCenter(new THREE.Vector3());
-
-        const maxDim = Math.max(rawSize.x, rawSize.y, rawSize.z);
-        const targetDim = model.category === 'Beds' ? 2.3 : (model.category === 'Seating' && model.name.includes('Large') ? 2.2 : 1.5);
-        const scale = maxDim > 0 ? (targetDim / maxDim) * model.defaultScale : 1;
-
-        // Center inner model horizontally and ground its base flush at y = 0
-        inner.position.set(-rawCenter.x, -rawBox.min.y, -rawCenter.z);
-
-        // Store cloned prototype in cache for 0ms future additions
-        modelCacheRef.current.set(modelUrl, {
-          scene: inner.clone(true),
-          baseScale: scale,
-        });
-
+        const inner = SkeletonUtils.clone(cached.scene);
         group.add(inner);
-        group.scale.set(scale, scale, scale);
+        const finalScale = customExactScale || cached.baseScale * factor;
+        group.scale.set(finalScale, finalScale, finalScale);
         group.position.set(pos[0], 0, pos[2]);
         if (initialRot !== 0) {
           group.rotation.y = initialRot;
         }
 
-        sceneRef.current?.add(group);
+        sceneRef.current.add(group);
         placedMeshesRef.current.set(instanceId, group);
 
         const newItem: PlacedFurniture = {
@@ -1012,21 +1313,92 @@ export const PortalRoomStudioPage: React.FC = () => {
           url: modelUrl,
           position: [pos[0], 0, pos[2]],
           rotationY: initialRot,
-          scale,
-          scaleFactor: 1.0,
+          scale: finalScale,
+          scaleFactor: factor,
+          finish: customFinish,
         };
 
         setPlacedItems((prev) => [...prev, newItem]);
         setSelectedInstanceId(instanceId);
-        setLoadingModel(false);
-      },
-      undefined,
-      (err) => {
-        console.error('Error loading furniture model:', err);
-        setLoadingModel(false);
+        return;
       }
-    );
-  }, []);
+
+      setLoadingModel(true);
+      const loader = new GLTFLoader();
+      if (dracoLoaderRef.current) {
+        loader.setDRACOLoader(dracoLoaderRef.current);
+      }
+
+      loader.load(
+        modelUrl,
+        (gltf) => {
+          const group = new THREE.Group();
+          const inner = gltf.scene;
+
+          inner.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              child.castShadow = true;
+              child.receiveShadow = true;
+              child.frustumCulled = true;
+            }
+          });
+
+          // Compute Bounding Box & Scale to realistic architectural dimensions
+          const rawBox = new THREE.Box3().setFromObject(inner);
+          const rawSize = rawBox.getSize(new THREE.Vector3());
+          const rawCenter = rawBox.getCenter(new THREE.Vector3());
+
+          const maxDim = Math.max(rawSize.x, rawSize.y, rawSize.z);
+          const targetDim = model.category === 'Beds' ? 2.3 : (model.category === 'Seating' && model.name.includes('Large') ? 2.2 : 1.5);
+          const scale = maxDim > 0 ? (targetDim / maxDim) * model.defaultScale : 1;
+
+          // Center inner model horizontally and ground its base flush at y = 0
+          inner.position.set(-rawCenter.x, -rawBox.min.y, -rawCenter.z);
+
+          // Store cloned prototype in cache for 0ms future additions
+          modelCacheRef.current.set(modelUrl, {
+            scene: inner.clone(true),
+            baseScale: scale,
+          });
+
+          const finalScale = customExactScale || scale * factor;
+
+          group.add(inner);
+          group.scale.set(finalScale, finalScale, finalScale);
+          group.position.set(pos[0], 0, pos[2]);
+          if (initialRot !== 0) {
+            group.rotation.y = initialRot;
+          }
+
+          sceneRef.current?.add(group);
+          placedMeshesRef.current.set(instanceId, group);
+
+          const newItem: PlacedFurniture = {
+            instanceId,
+            modelId: model.id,
+            name: model.name,
+            category: model.category,
+            url: modelUrl,
+            position: [pos[0], 0, pos[2]],
+            rotationY: initialRot,
+            scale: finalScale,
+            scaleFactor: factor,
+            finish: customFinish,
+          };
+
+          setPlacedItems((prev) => [...prev, newItem]);
+          setSelectedInstanceId(instanceId);
+          setLoadingModel(false);
+        },
+        undefined,
+        (err) => {
+          console.error('Error loading furniture model:', err);
+          setLoadingModel(false);
+        }
+      );
+    },
+    []
+  );
 
   // 7. Handle Canvas Drag & Drop from Bottom Tray (Zero allocations)
   const handleCanvasDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -1187,11 +1559,18 @@ export const PortalRoomStudioPage: React.FC = () => {
     if (!item) return;
     const model = catalogModels.find((m) => m.id === item.modelId || m.name === item.name);
     if (model) {
-      handleAddFurniture(model, [
-        Math.max(-4.2, Math.min(4.2, item.position[0] + 0.4)),
-        0,
-        Math.max(-4.2, Math.min(4.2, item.position[2] + 0.4)),
-      ]);
+      handleAddFurniture(
+        model,
+        [
+          Math.max(-4.2, Math.min(4.2, item.position[0] + 0.4)),
+          0,
+          Math.max(-4.2, Math.min(4.2, item.position[2] + 0.4)),
+        ],
+        item.rotationY,
+        item.scaleFactor,
+        item.scale,
+        item.finish
+      );
     }
   }, [selectedInstanceId, placedItems, catalogModels, handleAddFurniture]);
 
@@ -1345,20 +1724,46 @@ export const PortalRoomStudioPage: React.FC = () => {
       return;
     }
 
-    // 3. Place each curated furniture item with exact position and rotation
+    // 3. Place each curated furniture item with exact model, size/scale, position, and rotation
     style.items.forEach((item) => {
-      const q = item.query.toLowerCase();
-      let model = catalogModels.find(
-        (m) => m.filename.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)
-      );
+      // 1. Try finding by exact modelId
+      let model = item.modelId
+        ? catalogModels.find((m) => m.id === item.modelId)
+        : null;
+
+      // 2. Try finding by exact url
+      if (!model && item.url) {
+        const itemUrlClean = item.url.replace(/^\/models\//i, '/Models/');
+        model = catalogModels.find(
+          (m) => m.url.replace(/^\/models\//i, '/Models/') === itemUrlClean
+        );
+      }
+
+      // 3. Try finding by query (filename / name)
+      if (!model) {
+        const q = item.query.toLowerCase();
+        model = catalogModels.find(
+          (m) => m.filename.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)
+        );
+      }
+
+      // 4. Try finding by fallbackQuery
       if (!model && item.fallbackQuery) {
         const fb = item.fallbackQuery.toLowerCase();
         model = catalogModels.find(
           (m) => m.filename.toLowerCase().includes(fb) || m.name.toLowerCase().includes(fb)
         );
       }
+
       if (model) {
-        handleAddFurniture(model, item.position, item.rotationY);
+        handleAddFurniture(
+          model,
+          item.position,
+          item.rotationY,
+          item.scaleFactor,
+          item.scale,
+          item.finish
+        );
       }
     });
 
@@ -1373,11 +1778,84 @@ export const PortalRoomStudioPage: React.FC = () => {
       bedroom: 'zen-bedroom',
       blank: 'blank',
     };
-    const match = ROOM_STYLES.find((s) => s.id === (map[preset] || preset));
+    const match = allRoomStyles.find((s) => s.id === (map[preset] || preset));
     if (match) {
       handleApplyRoomStyle(match);
     }
   };
+
+  // ── Save Current Room Orientation & Layout as Reusable Room Style ──
+  const handleSaveCurrentLayoutAsStyle = () => {
+    if (placedItems.length === 0) return;
+    const name = saveStyleName.trim() || `Bespoke Suite (${placedItems.length} pcs)`;
+    const newStyle: RoomStyleConcept = {
+      id: `custom-style-${Date.now()}`,
+      name,
+      tagline: saveStyleTagline.trim() || `${placedItems.length} handcrafted pieces bespoke layout`,
+      category: saveStyleCategory,
+      badge: 'CUSTOM • ATELIER',
+      accentColor: saveStyleColor,
+      description: `Bespoke client layout saved on ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} with ${placedItems.length} handcrafted pieces.`,
+      ambience,
+      cameraView,
+      ceilingLight: ceilingLightOn,
+      standingLamp: standingLampOn,
+      palette: ['#1F1714', saveStyleColor, '#D0AE92', '#FAF6F0'],
+      isCustom: true,
+      createdAt: new Date().toISOString(),
+      items: placedItems.map((item) => ({
+        query: item.url.split('/').pop()?.replace('.glb', '') || item.name,
+        fallbackQuery: item.name,
+        position: [item.position[0], item.position[1], item.position[2]],
+        rotationY: item.rotationY,
+        nameLabel: item.name,
+        scaleFactor: item.scaleFactor || 1.0,
+        scale: item.scale,
+        modelId: item.modelId,
+        url: item.url,
+        finish: item.finish,
+      })),
+    };
+
+    const updated = [newStyle, ...customRoomStyles];
+    setCustomRoomStyles(updated);
+    try {
+      localStorage.setItem('urban_custom_room_styles', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Failed to save custom room style to localStorage', err);
+    }
+
+    setIsSaveStyleModalOpen(false);
+    setSaveStyleName('');
+    setSaveStyleTagline('');
+    playChimeSuccess();
+    setSaveSuccessToast(`Saved "${name}" to Room Styles!`);
+    setTimeout(() => setSaveSuccessToast(null), 3500);
+  };
+
+  const handleDeleteCustomStyle = (styleId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    playWoodClick(0.9);
+    const updated = customRoomStyles.filter((s) => s.id !== styleId);
+    setCustomRoomStyles(updated);
+    try {
+      localStorage.setItem('urban_custom_room_styles', JSON.stringify(updated));
+    } catch (err) {
+      console.warn('Failed to update localStorage', err);
+    }
+  };
+
+  // Automatically apply preloaded style from URL (?style=... or ?preset=...)
+  useEffect(() => {
+    if (catalogModels.length === 0) return;
+    const preloadedStyleId = searchParams.get('style') || searchParams.get('preset');
+    if (preloadedStyleId) {
+      const match = allRoomStyles.find((s) => s.id === preloadedStyleId);
+      if (match) {
+        handleApplyRoomStyle(match);
+      }
+    }
+  }, [catalogModels, searchParams]);
 
   const selectedItem = placedItems.find((item) => item.instanceId === selectedInstanceId);
   const categories = ['All', 'Seating', 'Beds', 'Tables', 'Storage'];
@@ -1490,11 +1968,13 @@ export const PortalRoomStudioPage: React.FC = () => {
             style={{
               fontSize: 10,
               fontFamily: 'var(--font-mono)',
-              color: placedItems.length > 0 ? '#2E7D32' : '#8C7362',
-              backgroundColor: placedItems.length > 0 ? '#E8F5E9' : 'rgba(140, 115, 98, 0.1)',
+              color: '#8C7362',
+              backgroundColor: 'rgba(140, 115, 98, 0.1)',
               padding: '2px 7px',
               borderRadius: 4,
               fontWeight: 600,
+              whiteSpace: 'nowrap',
+              lineHeight: '1.2',
             }}
           >
             {placedItems.length} {placedItems.length === 1 ? 'piece' : 'pieces'}
@@ -1630,7 +2110,7 @@ export const PortalRoomStudioPage: React.FC = () => {
                 fontWeight: 700,
               }}
             >
-              6
+              {allRoomStyles.length}
             </span>
           </button>
 
@@ -1666,39 +2146,6 @@ export const PortalRoomStudioPage: React.FC = () => {
             <Camera size={13} color="#5C4A3E" />
             <span>Export Plan</span>
           </button>
-
-          {/* Clear Room Button (when room has furniture) */}
-          {placedItems.length > 0 && (
-            <button
-              onClick={handleClearAll}
-              title="Clear all furniture from room"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                backgroundColor: 'rgba(253, 250, 246, 0.94)',
-                backdropFilter: 'blur(16px)',
-                padding: '6px 9px',
-                borderRadius: 8,
-                border: '1px solid rgba(192, 57, 43, 0.3)',
-                fontSize: 11.5,
-                fontWeight: 600,
-                fontFamily: 'var(--font-display)',
-                color: '#C0392B',
-                cursor: 'pointer',
-                transition: 'all 120ms ease',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(253, 250, 246, 0.94)';
-              }}
-            >
-              <Trash2 size={12} />
-              <span>Clear</span>
-            </button>
-          )}
 
           {/* Ambience & Lighting */}
           <div style={{ position: 'relative' }}>
@@ -2204,22 +2651,46 @@ export const PortalRoomStudioPage: React.FC = () => {
                   ({filteredModels.length})
                 </span>
               </div>
-              <button
-                onClick={() => setIsDockOpen(false)}
-                title="Collapse"
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: 'var(--brown-600)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: 4,
-                  borderRadius: 6,
-                }}
-              >
-                <X size={15} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {placedItems.length > 0 && (
+                  <button
+                    onClick={handleClearAll}
+                    title="Clear all furniture pieces from room"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#C0392B',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    <Trash2 size={11} />
+                    <span>Clear</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsDockOpen(false)}
+                  title="Collapse"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--brown-600)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 4,
+                    borderRadius: 6,
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
             </div>
 
             {/* Instant Search Bar */}
@@ -2536,7 +3007,7 @@ export const PortalRoomStudioPage: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: 960,
+              maxWidth: 1040,
               maxHeight: '88vh',
               backgroundColor: '#FCFAF6',
               borderRadius: 16,
@@ -2551,16 +3022,17 @@ export const PortalRoomStudioPage: React.FC = () => {
             {/* Modal Header */}
             <div
               style={{
-                padding: '20px 24px 16px',
-                borderBottom: '1px solid rgba(214, 198, 180, 0.4)',
+                padding: '18px 24px 14px',
+                borderBottom: '1px solid rgba(214, 198, 180, 0.35)',
                 display: 'flex',
-                alignItems: 'flex-start',
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 gap: 16,
+                backgroundColor: '#FFFFFF',
               }}
             >
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
                   <Sparkles size={16} color="#B88E65" />
                   <h2
                     style={{
@@ -2569,10 +3041,10 @@ export const PortalRoomStudioPage: React.FC = () => {
                       fontFamily: 'var(--font-display)',
                       color: '#1F1714',
                       margin: 0,
-                      letterSpacing: '0.02em',
+                      letterSpacing: '0.01em',
                     }}
                   >
-                    Curated Room Styles &amp; Interior Concepts
+                    Curated Architectural Room Styles
                   </h2>
                 </div>
                 <p
@@ -2583,67 +3055,115 @@ export const PortalRoomStudioPage: React.FC = () => {
                     fontFamily: 'var(--font-body)',
                   }}
                 >
-                  Apply pre-configured interior spaces with coordinated furniture, tailored lighting ambience, and optimized camera perspectives.
+                  Apply pre-configured interior plans with coordinated designer furniture, tailored lighting ambience, and camera viewpoints.
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsRoomStylesModalOpen(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 6,
-                  borderRadius: 6,
-                  color: '#7C675C',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(44, 34, 30, 0.08)';
-                  e.currentTarget.style.color = '#1F1714';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = '#7C675C';
-                }}
-              >
-                <X size={18} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                {placedItems.length > 0 && (
+                  <button
+                    onClick={() => {
+                      playWoodClick(0.95);
+                      setIsSaveStyleModalOpen(true);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      backgroundColor: '#1F1714',
+                      color: '#FAF7F2',
+                      padding: '7px 14px',
+                      borderRadius: 8,
+                      border: 'none',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      fontFamily: 'var(--font-display)',
+                      cursor: 'pointer',
+                      transition: 'all 140ms ease',
+                      boxShadow: '0 2px 8px rgba(31, 23, 20, 0.2)',
+                      whiteSpace: 'nowrap',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.backgroundColor = '#8A4B38';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.backgroundColor = '#1F1714';
+                    }}
+                  >
+                    <BookmarkPlus size={14} color="#E8C39E" />
+                    <span>+ Save Current Room ({placedItems.length})</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsRoomStylesModalOpen(false)}
+                  title="Close modal"
+                  style={{
+                    background: 'rgba(44, 34, 30, 0.05)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    color: '#5C4A3E',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 120ms ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(44, 34, 30, 0.1)';
+                    e.currentTarget.style.color = '#1F1714';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(44, 34, 30, 0.05)';
+                    e.currentTarget.style.color = '#5C4A3E';
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
             </div>
 
             {/* Category Tabs Filter */}
             <div
               style={{
-                padding: '12px 24px',
+                padding: '10px 24px',
                 borderBottom: '1px solid rgba(214, 198, 180, 0.25)',
                 display: 'flex',
                 gap: 6,
-                backgroundColor: 'rgba(247, 243, 235, 0.6)',
+                backgroundColor: 'rgba(247, 243, 235, 0.75)',
               }}
             >
               {['All', 'Living', 'Workspace', 'Bedroom', 'Hospitality', 'Custom'].map((cat) => {
                 const isActive = roomStyleFilter === cat;
+                const count =
+                  cat === 'All'
+                    ? allRoomStyles.length
+                    : cat === 'Custom'
+                    ? allRoomStyles.filter((s) => s.category === 'Custom' || s.isCustom).length
+                    : allRoomStyles.filter((s) => s.category === cat).length;
                 return (
                   <button
                     key={cat}
                     onClick={() => setRoomStyleFilter(cat)}
                     style={{
                       padding: '5px 12px',
-                      borderRadius: 6,
+                      borderRadius: 999,
                       border: '1px solid',
                       borderColor: isActive ? '#1F1714' : 'rgba(214, 198, 180, 0.5)',
-                      backgroundColor: isActive ? '#1F1714' : 'transparent',
+                      backgroundColor: isActive ? '#1F1714' : '#FFFFFF',
                       color: isActive ? '#FAF7F2' : '#5C4A3E',
                       fontSize: 11.5,
-                      fontWeight: isActive ? 600 : 500,
+                      fontWeight: isActive ? 700 : 500,
                       fontFamily: 'var(--font-display)',
                       cursor: 'pointer',
                       transition: 'all 120ms ease',
                     }}
                   >
-                    {cat === 'All' ? 'All Styles (6)' : cat}
+                    {cat} ({count})
                   </button>
                 );
               })}
@@ -2652,193 +3172,514 @@ export const PortalRoomStudioPage: React.FC = () => {
             {/* Styles Cards Grid */}
             <div
               style={{
-                padding: '20px 24px',
+                padding: '20px 24px 28px',
                 overflowY: 'auto',
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 16,
+                gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                gap: 18,
               }}
             >
-              {ROOM_STYLES.filter((s) => roomStyleFilter === 'All' || s.category === roomStyleFilter).map((style) => (
-                <div
-                  key={style.id}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: 12,
-                    border: '1px solid rgba(214, 198, 180, 0.55)',
-                    boxShadow: '0 2px 10px rgba(44, 34, 30, 0.04)',
-                    padding: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: 12,
-                    transition: 'all 150ms ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.borderColor = style.accentColor;
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(44, 34, 30, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'none';
-                    e.currentTarget.style.borderColor = 'rgba(214, 198, 180, 0.55)';
-                    e.currentTarget.style.boxShadow = '0 2px 10px rgba(44, 34, 30, 0.04)';
-                  }}
-                >
-                  <div>
-                    {/* Palette swatches & Badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                      <span
-                        style={{
-                          fontSize: 9,
-                          fontFamily: 'var(--font-mono)',
-                          fontWeight: 700,
-                          letterSpacing: '0.1em',
-                          textTransform: 'uppercase',
-                          color: style.accentColor,
-                          backgroundColor: `${style.accentColor}18`,
-                          border: `1px solid ${style.accentColor}35`,
-                          padding: '2px 7px',
-                          borderRadius: 4,
-                        }}
-                      >
-                        {style.badge}
-                      </span>
+              {allRoomStyles
+                .filter((s) =>
+                  roomStyleFilter === 'All'
+                    ? true
+                    : roomStyleFilter === 'Custom'
+                    ? s.category === 'Custom' || s.isCustom
+                    : s.category === roomStyleFilter
+                )
+                .map((style) => {
+                  const heroPieces = style.items.slice(0, 3);
+                  const remainingCount = style.items.length - heroPieces.length;
+                  const allItemsTooltip = style.items.map((it) => it.nameLabel).join(', ');
 
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        {style.palette.map((hex, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              width: 10,
-                              height: 10,
-                              borderRadius: '50%',
-                              backgroundColor: hex,
-                              border: '1px solid rgba(0,0,0,0.1)',
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Title & Tagline */}
-                    <h3
+                  return (
+                    <div
+                      key={style.id}
                       style={{
-                        fontSize: 14.5,
-                        fontWeight: 700,
-                        fontFamily: 'var(--font-display)',
-                        color: '#1F1714',
-                        margin: '0 0 4px',
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 12,
+                        border: '1px solid rgba(214, 198, 180, 0.5)',
+                        boxShadow: '0 2px 10px rgba(44, 34, 30, 0.04)',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        transition: 'all 150ms ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.borderColor = style.accentColor;
+                        e.currentTarget.style.boxShadow = '0 10px 24px rgba(44, 34, 30, 0.09)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'none';
+                        e.currentTarget.style.borderColor = 'rgba(214, 198, 180, 0.5)';
+                        e.currentTarget.style.boxShadow = '0 2px 10px rgba(44, 34, 30, 0.04)';
                       }}
                     >
-                      {style.name}
-                    </h3>
-                    <p
-                      style={{
-                        fontSize: 11,
-                        color: '#63534B',
-                        margin: '0 0 10px',
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {style.tagline}
-                    </p>
+                      <div>
+                        {/* Architectural Blueprint Visual Header */}
+                        <RoomStyleVisualBanner
+                          style={style}
+                          onDelete={style.isCustom ? (e) => handleDeleteCustomStyle(style.id, e) : undefined}
+                        />
 
-                    {/* Included Furniture Pieces Tags */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                      {style.items.length > 0 ? (
-                        style.items.map((item, idx) => (
-                          <span
-                            key={idx}
+                        {/* Card Content Body */}
+                        <div style={{ padding: '14px 16px 12px' }}>
+                          <h3
                             style={{
-                              fontSize: 10,
-                              fontFamily: 'var(--font-mono)',
-                              backgroundColor: '#F7F3EB',
-                              color: '#5C4A3E',
-                              padding: '2px 6px',
-                              borderRadius: 4,
-                              border: '1px solid rgba(214, 198, 180, 0.4)',
+                              fontSize: 14.5,
+                              fontWeight: 700,
+                              fontFamily: 'var(--font-display)',
+                              color: '#1F1714',
+                              margin: '0 0 4px',
+                              lineHeight: 1.3,
                             }}
                           >
-                            {item.nameLabel}
-                          </span>
-                        ))
-                      ) : (
-                        <span
+                            {style.name}
+                          </h3>
+
+                          <p
+                            style={{
+                              fontSize: 11.5,
+                              color: '#7C675C',
+                              lineHeight: 1.4,
+                              margin: '0 0 10px',
+                              minHeight: 32,
+                            }}
+                          >
+                            {style.tagline}
+                          </p>
+
+                          {/* Spatial Architecture Pill Summary */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700,
+                                color: '#1F1714',
+                                backgroundColor: 'rgba(208, 174, 146, 0.25)',
+                                padding: '2px 7px',
+                                borderRadius: 4,
+                              }}
+                            >
+                              {style.items.length} {style.items.length === 1 ? 'Piece' : 'Pieces'}
+                            </span>
+
+                            <span
+                              style={{
+                                fontSize: 10,
+                                fontFamily: 'var(--font-mono)',
+                                color: '#7C675C',
+                              }}
+                            >
+                              • {style.cameraView === 'walkin' ? 'Walk-In' : style.cameraView === 'overview' ? 'Dollhouse' : 'Top Plan'} • {style.ambience}
+                            </span>
+                          </div>
+
+                          {/* Compact Hero Furniture Chips */}
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, minHeight: 46 }}>
+                            {heroPieces.length > 0 ? (
+                              <>
+                                {heroPieces.map((item, idx) => (
+                                  <span
+                                    key={idx}
+                                    style={{
+                                      fontSize: 10,
+                                      fontFamily: 'var(--font-mono)',
+                                      backgroundColor: '#F9F6F0',
+                                      color: '#5C4A3E',
+                                      padding: '2px 7px',
+                                      borderRadius: 4,
+                                      border: '1px solid rgba(214, 198, 180, 0.45)',
+                                      whiteSpace: 'nowrap',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 4,
+                                    }}
+                                  >
+                                    <span>{item.nameLabel}</span>
+                                    {item.scaleFactor && Math.abs(item.scaleFactor - 1.0) > 0.05 && (
+                                      <span style={{ opacity: 0.65, fontSize: 9 }}>
+                                        ({Math.round(item.scaleFactor * 100)}%)
+                                      </span>
+                                    )}
+                                  </span>
+                                ))}
+                                {remainingCount > 0 && (
+                                  <span
+                                    title={allItemsTooltip}
+                                    style={{
+                                      fontSize: 10,
+                                      fontFamily: 'var(--font-mono)',
+                                      fontWeight: 600,
+                                      backgroundColor: '#F2ECE4',
+                                      color: '#8A4B38',
+                                      padding: '2px 7px',
+                                      borderRadius: 4,
+                                      border: '1px dashed rgba(138, 75, 56, 0.4)',
+                                      cursor: 'help',
+                                    }}
+                                  >
+                                    +{remainingCount} more
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  fontFamily: 'var(--font-mono)',
+                                  color: '#9C7862',
+                                  fontStyle: 'italic',
+                                  alignSelf: 'center',
+                                }}
+                              >
+                                Clean slate (empty room floor)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Footer: Confident Action Button */}
+                      <div style={{ padding: '0 16px 14px' }}>
+                        <button
+                          onClick={() => handleApplyRoomStyle(style)}
                           style={{
-                            fontSize: 10,
-                            fontFamily: 'var(--font-mono)',
-                            color: '#9C7862',
-                            fontStyle: 'italic',
+                            width: '100%',
+                            padding: '8px 14px',
+                            borderRadius: 7,
+                            border: style.id === 'blank' ? '1px solid rgba(192, 57, 43, 0.3)' : 'none',
+                            backgroundColor: style.id === 'blank' ? 'rgba(192, 57, 43, 0.06)' : '#1F1714',
+                            color: style.id === 'blank' ? '#C0392B' : '#FAF7F2',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            fontFamily: 'var(--font-display)',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                            transition: 'all 120ms ease',
+                            boxShadow: style.id === 'blank' ? 'none' : '0 2px 8px rgba(31, 23, 20, 0.15)',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (style.id === 'blank') {
+                              e.currentTarget.style.backgroundColor = '#C0392B';
+                              e.currentTarget.style.color = '#FAF7F2';
+                            } else {
+                              e.currentTarget.style.backgroundColor = style.accentColor;
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (style.id === 'blank') {
+                              e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.06)';
+                              e.currentTarget.style.color = '#C0392B';
+                            } else {
+                              e.currentTarget.style.backgroundColor = '#1F1714';
+                            }
                           }}
                         >
-                          Resets to 0 pieces (Empty studio)
-                        </span>
-                      )}
+                          {style.id === 'blank' ? <Trash2 size={13} /> : <Sparkles size={13} />}
+                          <span>{style.id === 'blank' ? 'Reset to Blank Canvas' : 'Load Room Plan →'}</span>
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Ambience note */}
-                    <div
-                      style={{
-                        fontSize: 10,
-                        color: '#8C7362',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 5,
-                        marginTop: 6,
-                      }}
-                    >
-                      <span>Mood:</span>
-                      <span style={{ fontWeight: 600, textTransform: 'capitalize', color: '#1F1714' }}>
-                        {style.ambience} light • {style.cameraView} perspective
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Apply Button */}
-                  <button
-                    onClick={() => handleApplyRoomStyle(style)}
-                    style={{
-                      width: '100%',
-                      padding: '7px 12px',
-                      borderRadius: 7,
-                      border: 'none',
-                      backgroundColor: style.id === 'blank' ? 'rgba(192, 57, 43, 0.08)' : '#1F1714',
-                      color: style.id === 'blank' ? '#C0392B' : '#FAF7F2',
-                      fontSize: 11.5,
-                      fontWeight: 600,
-                      fontFamily: 'var(--font-display)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      transition: 'all 120ms ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (style.id === 'blank') {
-                        e.currentTarget.style.backgroundColor = '#C0392B';
-                        e.currentTarget.style.color = '#FAF7F2';
-                      } else {
-                        e.currentTarget.style.backgroundColor = style.accentColor;
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (style.id === 'blank') {
-                        e.currentTarget.style.backgroundColor = 'rgba(192, 57, 43, 0.08)';
-                        e.currentTarget.style.color = '#C0392B';
-                      } else {
-                        e.currentTarget.style.backgroundColor = '#1F1714';
-                      }
-                    }}
-                  >
-                    {style.id === 'blank' ? <Trash2 size={12} /> : <Sparkles size={12} />}
-                    <span>{style.id === 'blank' ? 'Clear Studio (Blank Canvas)' : `Apply ${style.name}`}</span>
-                  </button>
-                </div>
-              ))}
+                  );
+                })}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Save Current Layout as Room Style Modal ── */}
+      {isSaveStyleModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 150,
+            backgroundColor: 'rgba(18, 14, 12, 0.7)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px 16px',
+          }}
+          onClick={() => setIsSaveStyleModalOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 480,
+              backgroundColor: '#FCFAF6',
+              borderRadius: 18,
+              border: '1px solid rgba(214, 198, 180, 0.65)',
+              boxShadow: '0 24px 64px -8px rgba(31, 23, 20, 0.35)',
+              padding: '26px 28px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 18,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <BookmarkPlus size={18} color="#8A4B38" />
+                  <h2
+                    style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      fontFamily: 'var(--font-display)',
+                      color: '#1F1714',
+                      margin: 0,
+                    }}
+                  >
+                    Save Current Layout
+                  </h2>
+                </div>
+                <p style={{ fontSize: 12, color: '#7C675C', margin: 0 }}>
+                  Save your furniture coordinates, angles, lighting &amp; camera into your reusable Room Styles collection.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setIsSaveStyleModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 4,
+                  borderRadius: 6,
+                  color: '#7C675C',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Layout Summary Pill */}
+            <div
+              style={{
+                backgroundColor: 'rgba(235, 215, 190, 0.35)',
+                borderRadius: 10,
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                border: '1px solid rgba(208, 174, 146, 0.35)',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#1F1714', fontFamily: 'var(--font-display)' }}>
+                  {placedItems.length} Handcrafted Pieces Placed
+                </div>
+                <div style={{ fontSize: 11, color: '#7C675C', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                  Ambience: {ambience.toUpperCase()} • Camera: {cameraView.toUpperCase()}
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: 10,
+                  fontFamily: 'var(--font-mono)',
+                  color: '#2E7D32',
+                  backgroundColor: '#E8F5E9',
+                  padding: '3px 8px',
+                  borderRadius: 999,
+                  fontWeight: 700,
+                }}
+              >
+                READY TO SAVE
+              </span>
+            </div>
+
+            {/* Form Fields */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#5C4A3E', letterSpacing: '0.05em', marginBottom: 6 }}>
+                  Style Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Master Residence Suite, Minimalist Penthouse..."
+                  value={saveStyleName}
+                  onChange={(e) => setSaveStyleName(e.target.value)}
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #D5C7B7',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: 13,
+                    fontFamily: 'var(--font-body)',
+                    color: '#1F1714',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveCurrentLayoutAsStyle();
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#5C4A3E', letterSpacing: '0.05em', marginBottom: 6 }}>
+                  Category
+                </label>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(['Living', 'Workspace', 'Bedroom', 'Hospitality', 'Custom'] as const).map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setSaveStyleCategory(cat)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        border: '1px solid',
+                        borderColor: saveStyleCategory === cat ? '#1F1714' : '#D5C7B7',
+                        backgroundColor: saveStyleCategory === cat ? '#1F1714' : '#FFFFFF',
+                        color: saveStyleCategory === cat ? '#FAF7F2' : '#5C4A3E',
+                        fontSize: 11,
+                        fontWeight: saveStyleCategory === cat ? 700 : 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#5C4A3E', letterSpacing: '0.05em', marginBottom: 6 }}>
+                  Tagline / Description
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Coordinated master bedroom and reading sanctuary"
+                  value={saveStyleTagline}
+                  onChange={(e) => setSaveStyleTagline(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px',
+                    borderRadius: 8,
+                    border: '1px solid #D5C7B7',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: 13,
+                    fontFamily: 'var(--font-body)',
+                    color: '#1F1714',
+                    boxSizing: 'border-box',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#5C4A3E', letterSpacing: '0.05em', marginBottom: 6 }}>
+                  Accent Color
+                </label>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {['#8A4B38', '#B88E65', '#4A5B68', '#4F7267', '#9E5D43', '#2E221D'].map((hex) => (
+                    <button
+                      key={hex}
+                      type="button"
+                      onClick={() => setSaveStyleColor(hex)}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: '50%',
+                        backgroundColor: hex,
+                        border: saveStyleColor === hex ? '3px solid #1F1714' : '1px solid rgba(0,0,0,0.15)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: saveStyleColor === hex ? '0 0 0 2px #FCFAF6' : 'none',
+                      }}
+                    >
+                      {saveStyleColor === hex && <Check size={12} color="#FFFFFF" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                onClick={() => setIsSaveStyleModalOpen(false)}
+                style={{
+                  padding: '9px 16px',
+                  borderRadius: 8,
+                  backgroundColor: 'transparent',
+                  border: '1px solid #D5C7B7',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#5C4A3E',
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveCurrentLayoutAsStyle}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '9px 20px',
+                  borderRadius: 8,
+                  backgroundColor: '#1F1714',
+                  color: '#FAF7F2',
+                  border: 'none',
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-display)',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(31, 23, 20, 0.25)',
+                }}
+              >
+                <Save size={14} />
+                <span>Save to Room Styles</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {saveSuccessToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 30,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 160,
+            backgroundColor: '#1F1714',
+            color: '#FAF7F2',
+            padding: '10px 20px',
+            borderRadius: 999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            fontSize: 12.5,
+            fontWeight: 600,
+            fontFamily: 'var(--font-display)',
+          }}
+        >
+          <Sparkles size={14} color="#E8C39E" />
+          <span>{saveSuccessToast}</span>
         </div>
       )}
     </div>
