@@ -673,7 +673,7 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
               </div>
               <div className="flex justify-between text-sm py-1 border-b border-brown-200/50">
                 <span className="text-brown-600">Total Settled:</span>
-                <span className="font-mono font-medium text-emerald-700 font-bold">
+                <span className="font-mono font-bold text-emerald-700">
                   ₹{Number(invoice.amountPaid || '0.00').toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
