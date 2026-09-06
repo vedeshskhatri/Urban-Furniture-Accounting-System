@@ -68,7 +68,7 @@ export const AdminTemplateManagementPage: React.FC = () => {
               <span>Admin Control Panel</span>
             </div>
             <h1 className="text-2xl font-bold font-display text-black">
-              Template Management
+              Template Settings
             </h1>
             <p className="text-xs text-gray-500">
               Manage the master business template library, activate/deactivate templates, and audit source metadata.

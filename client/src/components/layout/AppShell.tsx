@@ -70,11 +70,11 @@ export default function AppShell() {
 
   const isManager = currentUser?.role === 'manager';
   const navModules = isManager
-    ? ['Sales', 'Purchase', 'Report']
-    : ['Sales', 'Purchase', 'Account', 'Report'];
+    ? ['Sales', 'Purchase', 'Report', 'Tools']
+    : ['Sales', 'Purchase', 'Account', 'Report', 'Tools'];
 
   // Determine active module
-  const activeModule = ['sales', 'purchase', 'account', 'report'].find((m) =>
+  const activeModule = ['sales', 'purchase', 'account', 'report', 'tools'].find((m) =>
     location.pathname.startsWith(`/${m}`)
   );
 

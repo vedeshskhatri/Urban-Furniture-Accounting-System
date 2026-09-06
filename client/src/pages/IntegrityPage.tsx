@@ -128,7 +128,7 @@ export default function IntegrityPage() {
               margin: '12px 0 4px',
             }}
           >
-            Ten live checks against the database
+            System Integrity Report (10/10)
           </h1>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: 15, color: 'var(--brown-700)', margin: 0, maxWidth: 640 }}>
             The accounting equation, sequence integrity, stock reconciliation, payment over-allocation. Every row below is a

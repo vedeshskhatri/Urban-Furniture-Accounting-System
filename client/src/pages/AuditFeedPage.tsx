@@ -83,7 +83,7 @@ export default function AuditFeedPage() {
             margin: 0,
           }}
         >
-          Audit Log
+          Audit Log & Chatter Feed
         </h1>
       </div>
       <p style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--brown-700)', margin: '0 0 20px' }}>
