@@ -77,29 +77,44 @@ export class PurchaseOrderService {
       linesByPo[l.po_id].push({
         id: l.id,
         poId: l.po_id,
+        po_id: l.po_id,
         lineNo: l.line_no,
+        sr_no: l.line_no,
         productId: l.product_id,
+        product_id: l.product_id,
         productName: l.product_name,
+        product_name: l.product_name,
         productSku: l.product_sku,
         analyticAccountId: l.analytic_account_id,
+        analytic_account_id: l.analytic_account_id,
         analyticAccountName: l.analytic_account_name,
+        analytic_account_name: l.analytic_account_name,
         qty: String(l.qty),
         unitPrice: String(l.unit_price),
+        unit_price: String(l.unit_price),
         total: String(l.total),
-      });
+      } as any);
     }
 
-    return pos.map(p => ({
-      id: p.id,
-      number: p.number,
-      vendorId: p.vendor_id,
-      vendorName: p.vendor_name,
-      poDate: p.order_date instanceof Date ? p.order_date.toISOString().split('T')[0] : String(p.order_date),
-      status: p.status,
-      total: String(p.total),
-      lines: linesByPo[p.id] || [],
-      createdAt: p.created_at,
-    }));
+    return pos.map(p => {
+      const poDate = p.order_date instanceof Date ? p.order_date.toISOString().split('T')[0] : String(p.order_date);
+      return {
+        id: p.id,
+        number: p.number,
+        vendorId: p.vendor_id,
+        vendorName: p.vendor_name,
+        vendor_id: p.vendor_id,
+        vendor_name: p.vendor_name,
+        poDate,
+        po_date: poDate,
+        status: p.status,
+        total: String(p.total),
+        total_amount: String(p.total),
+        lines: linesByPo[p.id] || [],
+        createdAt: p.created_at,
+        created_at: p.created_at,
+      };
+    }) as any;
   }
 
   static async getById(id: number): Promise<PurchaseOrderDTO | null> {
@@ -129,28 +144,41 @@ export class PurchaseOrderService {
     const lines: POLineDTO[] = linesRes.rows.map(l => ({
       id: l.id,
       poId: l.po_id,
+      po_id: l.po_id,
       lineNo: l.line_no,
+      sr_no: l.line_no,
       productId: l.product_id,
+      product_id: l.product_id,
       productName: l.product_name,
+      product_name: l.product_name,
       productSku: l.product_sku,
       analyticAccountId: l.analytic_account_id,
+      analytic_account_id: l.analytic_account_id,
       analyticAccountName: l.analytic_account_name,
+      analytic_account_name: l.analytic_account_name,
       qty: String(l.qty),
       unitPrice: String(l.unit_price),
+      unit_price: String(l.unit_price),
       total: String(l.total),
-    }));
+    }) as any);
 
+    const poDate = po.order_date instanceof Date ? po.order_date.toISOString().split('T')[0] : String(po.order_date);
     return {
       id: po.id,
       number: po.number,
       vendorId: po.vendor_id,
       vendorName: po.vendor_name,
-      poDate: po.order_date instanceof Date ? po.order_date.toISOString().split('T')[0] : String(po.order_date),
+      vendor_id: po.vendor_id,
+      vendor_name: po.vendor_name,
+      poDate,
+      po_date: poDate,
       status: po.status,
       total: String(po.total),
+      total_amount: String(po.total),
       lines,
       createdAt: po.created_at,
-    };
+      created_at: po.created_at,
+    } as any;
   }
 
   static async create(input: CreatePOInput, userId?: number): Promise<PurchaseOrderDTO> {

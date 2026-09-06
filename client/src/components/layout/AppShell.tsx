@@ -61,6 +61,13 @@ export default function AppShell() {
     // Ignore JSON error
   }
 
+  // Customer contacts cannot access the internal admin/ERP side of the system (only client-facing portal)
+  if (currentUser?.role === 'contact') {
+    localStorage.removeItem('urban_logged_in');
+    localStorage.removeItem('urban_user');
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
   const isManager = currentUser?.role === 'manager';
   const navModules = isManager
     ? ['Sales', 'Purchase', 'Report', 'Tools']
