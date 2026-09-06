@@ -21,6 +21,9 @@ export const RegisterPaymentPage: React.FC = () => {
 
   const invoiceIdParam = searchParams.get('invoiceId');
   const customerIdParam = searchParams.get('customerId');
+  const fromParam = searchParams.get('from');
+  const isFromReceivables = fromParam === 'receivables';
+
   const initialInvoiceId = invoiceIdParam ? parseInt(invoiceIdParam, 10) : null;
   const initialCustomerId = customerIdParam ? parseInt(customerIdParam, 10) : 0;
 
@@ -196,9 +199,19 @@ export const RegisterPaymentPage: React.FC = () => {
         setSuccessMsg(
           `Payment ${res.data.data.number || 'receipt recorded'} successfully! ₹${payAmt.toFixed(2)} received and posted to General Ledger (DR ${method === 'bank' ? 'Bank' : 'Cash'}, CR Debtors).`
         );
+        // Clear open invoices state so amount due immediately reflects cleared
+        setOpenInvoices([]);
+        setAllocations({});
+        setAmount('0.00');
+
+        // Automatically return after 2.5 seconds based on origin
         setTimeout(() => {
-          navigate('/sales/invoices');
-        }, 1500);
+          if (isFromReceivables) {
+            navigate('/sales/receivables?refreshed=' + Date.now());
+          } else {
+            navigate('/sales/invoices?payment=success&settled=true');
+          }
+        }, 2500);
       } else {
         setError(res.data?.error?.message || 'Failed to record customer payment');
       }
@@ -215,25 +228,67 @@ export const RegisterPaymentPage: React.FC = () => {
       <div className="flex items-center justify-between py-3 mb-6 border-b border-brown-300">
         <div>
           <h1 className="text-2xl font-bold font-display text-brown-900">
-            Receipt
+            Customer Receipt
           </h1>
           <p className="text-xs text-brown-700">
             Inward cash/bank receipt settling outstanding receivables
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => navigate('/sales/invoices')}
-          className="px-3 py-1.5 text-xs font-semibold bg-surface border border-brown-300 rounded-[6px] text-brown-700 hover:bg-brown-100 transition-colors"
-        >
-          ← Back to Invoices
-        </button>
+        <div className="flex items-center gap-2">
+          {isFromReceivables ? (
+            <button
+              type="button"
+              onClick={() => navigate('/sales/receivables')}
+              className="px-3 py-1.5 text-xs font-semibold bg-surface border border-brown-300 rounded-[6px] text-brown-800 hover:bg-brown-100 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+            >
+              ← Back to Settle More Bills (Receivables)
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => navigate('/sales/receivables')}
+                className="px-3 py-1.5 text-xs font-semibold bg-surface border border-brown-300 rounded-[6px] text-brown-800 hover:bg-brown-100 transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+              >
+                ← Settle More Bills (Receivables)
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/sales/invoices')}
+                className="px-3 py-1.5 text-xs font-semibold bg-surface border border-brown-300 rounded-[6px] text-brown-700 hover:bg-brown-100 transition-colors cursor-pointer"
+              >
+                ← Invoices
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {error && <BlockingWarning message={error} />}
       {successMsg && (
-        <div className="p-4 bg-posted-bg border border-posted/30 text-posted rounded-md mb-6 text-sm font-medium">
-          ✓ {successMsg}
+        <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-950 rounded-[8px] mb-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              ✓
+            </span>
+            <div className="text-sm font-medium text-emerald-900">{successMsg}</div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => navigate('/sales/receivables?refreshed=' + Date.now())}
+              className="px-4 py-2 text-xs font-bold bg-brown-900 hover:bg-brown-800 text-cream rounded-[6px] transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <span>← Settle More Bills (Receivables)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/sales/invoices?payment=success&settled=true')}
+              className="px-3.5 py-2 text-xs font-semibold bg-surface border border-brown-300 hover:bg-brown-100 text-brown-800 rounded-[6px] transition-colors cursor-pointer"
+            >
+              View Invoices →
+            </button>
+          </div>
         </div>
       )}
 
@@ -487,8 +542,8 @@ export const RegisterPaymentPage: React.FC = () => {
         <div className="flex justify-end space-x-3 pt-4">
           <button
             type="button"
-            onClick={() => navigate('/sales/invoices')}
-            className="px-4 py-2 text-sm font-semibold text-brown-700 hover:text-brown-900"
+            onClick={() => navigate(isFromReceivables ? '/sales/receivables' : '/sales/invoices')}
+            className="px-4 py-2 text-sm font-semibold text-brown-700 hover:text-brown-900 cursor-pointer"
           >
             Cancel
           </button>
