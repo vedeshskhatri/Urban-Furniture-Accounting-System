@@ -550,6 +550,275 @@ const RoomStyleVisualBanner: React.FC<{
   );
 };
 
+// Complete static catalog of all 24 handcrafted 3D models stored in client/public/Models/
+// Guarantees immediate zero-lag availability on any device even if the API or network is slow/offline
+export const STATIC_CATALOG_MODELS: ShowroomModel[] = [
+  {
+    id: 'Bed Double by Kenney - wcmbCZ63mg.glb',
+    filename: 'Bed Double by Kenney - wcmbCZ63mg.glb',
+    name: 'Bed Double (Kenney)',
+    category: 'Beds',
+    defaultScale: 1.2,
+    defaultY: 0,
+    sizeBytes: 32028,
+    sizeKB: '31.3',
+    url: '/Models/Bed Double by Kenney - wcmbCZ63mg.glb',
+  },
+  {
+    id: 'Bed Double by Quaternius - BuRay4fVFr.glb',
+    filename: 'Bed Double by Quaternius - BuRay4fVFr.glb',
+    name: 'Bed Double Platform',
+    category: 'Beds',
+    defaultScale: 1.2,
+    defaultY: 0,
+    sizeBytes: 258208,
+    sizeKB: '252.2',
+    url: '/Models/Bed Double by Quaternius - BuRay4fVFr.glb',
+  },
+  {
+    id: 'Bed Single by Quaternius - ianC28eMOF.glb',
+    filename: 'Bed Single by Quaternius - ianC28eMOF.glb',
+    name: 'Bed Single Minimalist',
+    category: 'Beds',
+    defaultScale: 1.2,
+    defaultY: 0,
+    sizeBytes: 23080,
+    sizeKB: '22.5',
+    url: '/Models/Bed Single by Quaternius - ianC28eMOF.glb',
+  },
+  {
+    id: 'Bunk Bed by Zsky - CuUYyXA9ki.glb',
+    filename: 'Bunk Bed by Zsky - CuUYyXA9ki.glb',
+    name: 'Bunk Bed Modern',
+    category: 'Beds',
+    defaultScale: 1.2,
+    defaultY: 0,
+    sizeBytes: 117160,
+    sizeKB: '114.4',
+    url: '/Models/Bunk Bed by Zsky - CuUYyXA9ki.glb',
+  },
+  {
+    id: 'Chair by Poly by Google - 13AL0KYItKD.glb',
+    filename: 'Chair by Poly by Google - 13AL0KYItKD.glb',
+    name: 'Sculptural Accent Chair',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 3138140,
+    sizeKB: '3064.6',
+    url: '/Models/Chair by Poly by Google - 13AL0KYItKD.glb',
+  },
+  {
+    id: 'Chair by Quaternius - iMNqRzPwwe.glb',
+    filename: 'Chair by Quaternius - iMNqRzPwwe.glb',
+    name: 'Linen Dining Chair',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 13360,
+    sizeKB: '13.0',
+    url: '/Models/Chair by Quaternius - iMNqRzPwwe.glb',
+  },
+  {
+    id: 'Couch Large by Quaternius - 6MoOyPtetL.glb',
+    filename: 'Couch Large by Quaternius - 6MoOyPtetL.glb',
+    name: 'Couch Large Lounger',
+    category: 'Seating',
+    defaultScale: 1.4,
+    defaultY: 0,
+    sizeBytes: 30800,
+    sizeKB: '30.1',
+    url: '/Models/Couch Large by Quaternius - 6MoOyPtetL.glb',
+  },
+  {
+    id: 'Couch Medium by Quaternius - mWgQ94zhDZ.glb',
+    filename: 'Couch Medium by Quaternius - mWgQ94zhDZ.glb',
+    name: 'Couch Medium Classic',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 22940,
+    sizeKB: '22.4',
+    url: '/Models/Couch Medium by Quaternius - mWgQ94zhDZ.glb',
+  },
+  {
+    id: 'Couch Small by Quaternius - X9msj0gtb5.glb',
+    filename: 'Couch Small by Quaternius - X9msj0gtb5.glb',
+    name: 'Couch Small Loveseat',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 14940,
+    sizeKB: '14.6',
+    url: '/Models/Couch Small by Quaternius - X9msj0gtb5.glb',
+  },
+  {
+    id: 'Couch Small by Quaternius - ZOPP3KzNIk.glb',
+    filename: 'Couch Small by Quaternius - ZOPP3KzNIk.glb',
+    name: 'Couch Small Settee',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 19048,
+    sizeKB: '18.6',
+    url: '/Models/Couch Small by Quaternius - ZOPP3KzNIk.glb',
+  },
+  {
+    id: 'Office Chair by CMHT Oculus - dCEsSsJJ1Md.glb',
+    filename: 'Office Chair by CMHT Oculus - dCEsSsJJ1Md.glb',
+    name: 'Ergonomic Task Chair',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 61668,
+    sizeKB: '60.2',
+    url: '/Models/Office Chair by CMHT Oculus - dCEsSsJJ1Md.glb',
+  },
+  {
+    id: 'Office Chair by Quaternius - UfKvrZBK6C.glb',
+    filename: 'Office Chair by Quaternius - UfKvrZBK6C.glb',
+    name: 'Executive Swivel Chair',
+    category: 'Seating',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 115760,
+    sizeKB: '113.0',
+    url: '/Models/Office Chair by Quaternius - UfKvrZBK6C.glb',
+  },
+  {
+    id: 'Desk by CreativeTrio - YJyJam67hJ.glb',
+    filename: 'Desk by CreativeTrio - YJyJam67hJ.glb',
+    name: 'Studio Workstation Desk',
+    category: 'Tables',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 19932,
+    sizeKB: '19.5',
+    url: '/Models/Desk by CreativeTrio - YJyJam67hJ.glb',
+  },
+  {
+    id: 'Desk by Quaternius - V86Go2rlnq.glb',
+    filename: 'Desk by Quaternius - V86Go2rlnq.glb',
+    name: 'Solid Oak Desk',
+    category: 'Tables',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 135916,
+    sizeKB: '132.7',
+    url: '/Models/Desk by Quaternius - V86Go2rlnq.glb',
+  },
+  {
+    id: 'Desk by dook - EtJlOllzbf.glb',
+    filename: 'Desk by dook - EtJlOllzbf.glb',
+    name: 'Executive Writing Desk',
+    category: 'Tables',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 2080236,
+    sizeKB: '2031.5',
+    url: '/Models/Desk by dook - EtJlOllzbf.glb',
+  },
+  {
+    id: 'Night Stand by Quaternius - 9LI73c5uFA.glb',
+    filename: 'Night Stand by Quaternius - 9LI73c5uFA.glb',
+    name: 'Bedside Night Stand',
+    category: 'Tables',
+    defaultScale: 0.9,
+    defaultY: 0,
+    sizeBytes: 11148,
+    sizeKB: '10.9',
+    url: '/Models/Night Stand by Quaternius - 9LI73c5uFA.glb',
+  },
+  {
+    id: 'Table Round Small by Quaternius - oEArSZykyi.glb',
+    filename: 'Table Round Small by Quaternius - oEArSZykyi.glb',
+    name: 'Round Coffee Table',
+    category: 'Tables',
+    defaultScale: 0.9,
+    defaultY: 0,
+    sizeBytes: 25236,
+    sizeKB: '24.6',
+    url: '/Models/Table Round Small by Quaternius - oEArSZykyi.glb',
+  },
+  {
+    id: 'Bookcase with Books by Quaternius - tACDGJ4CGW.glb',
+    filename: 'Bookcase with Books by Quaternius - tACDGJ4CGW.glb',
+    name: 'Library Bookcase with Books',
+    category: 'Storage',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 589464,
+    sizeKB: '575.6',
+    url: '/Models/Bookcase with Books by Quaternius - tACDGJ4CGW.glb',
+  },
+  {
+    id: 'Bookshelf by CreativeTrio - 30Iealxb0p.glb',
+    filename: 'Bookshelf by CreativeTrio - 30Iealxb0p.glb',
+    name: 'Display Bookshelf',
+    category: 'Storage',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 24780,
+    sizeKB: '24.2',
+    url: '/Models/Bookshelf by CreativeTrio - 30Iealxb0p.glb',
+  },
+  {
+    id: 'Drawer by Quaternius - G1H0wnCHQf.glb',
+    filename: 'Drawer by Quaternius - G1H0wnCHQf.glb',
+    name: 'Oak Linen Chest Drawer',
+    category: 'Storage',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 15996,
+    sizeKB: '15.6',
+    url: '/Models/Drawer by Quaternius - G1H0wnCHQf.glb',
+  },
+  {
+    id: 'Shelf Small by Quaternius - TfdgUV2RYe.glb',
+    filename: 'Shelf Small by Quaternius - TfdgUV2RYe.glb',
+    name: 'Compact Floating Shelf',
+    category: 'Storage',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 6668,
+    sizeKB: '6.5',
+    url: '/Models/Shelf Small by Quaternius - TfdgUV2RYe.glb',
+  },
+  {
+    id: 'Shelf by Nick Slough - Wtd7rX7DGl.glb',
+    filename: 'Shelf by Nick Slough - Wtd7rX7DGl.glb',
+    name: 'Architectural Tall Shelf',
+    category: 'Storage',
+    defaultScale: 1.1,
+    defaultY: 0,
+    sizeBytes: 303212,
+    sizeKB: '296.1',
+    url: '/Models/Shelf by Nick Slough - Wtd7rX7DGl.glb',
+  },
+  {
+    id: 'Standing lamp by jeremy - 7AqWZQIaCQf.glb',
+    filename: 'Standing lamp by jeremy - 7AqWZQIaCQf.glb',
+    name: 'Standing Floor Lamp',
+    category: 'Lighting',
+    defaultScale: 0.9,
+    defaultY: 0,
+    sizeBytes: 23680,
+    sizeKB: '23.1',
+    url: '/Models/Standing lamp by jeremy - 7AqWZQIaCQf.glb',
+  },
+  {
+    id: 'Ceiling Light by Quaternius - sRNcgQFbLB.glb',
+    filename: 'Ceiling Light by Quaternius - sRNcgQFbLB.glb',
+    name: 'Pendant Ceiling Light',
+    category: 'Lighting',
+    defaultScale: 1.0,
+    defaultY: 0,
+    sizeBytes: 8840,
+    sizeKB: '8.6',
+    url: '/Models/Ceiling Light by Quaternius - sRNcgQFbLB.glb',
+  },
+];
+
 export const PortalRoomStudioPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -609,8 +878,8 @@ export const PortalRoomStudioPage: React.FC = () => {
     endTarget: new THREE.Vector3(),
   });
 
-  // Data states
-  const [catalogModels, setCatalogModels] = useState<ShowroomModel[]>([]);
+  // Data states - initialized with instant static catalog models for zero network lag
+  const [catalogModels, setCatalogModels] = useState<ShowroomModel[]>(STATIC_CATALOG_MODELS);
   const [catalogueProducts, setCatalogueProducts] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -627,6 +896,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<'presets' | 'lighting' | null>(null);
   const [isRoomStylesModalOpen, setIsRoomStylesModalOpen] = useState<boolean>(false);
   const [roomStyleFilter, setRoomStyleFilter] = useState<string>('All');
+  const [roomLoading, setRoomLoading] = useState<boolean>(true);
   const [loadingModel, setLoadingModel] = useState<boolean>(false);
   const [isDraggingOverCanvas, setIsDraggingOverCanvas] = useState<boolean>(false);
 
@@ -655,12 +925,12 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const { isPlaying: ambientSoundActive, toggle: toggleAmbientMusic } = useAmbientMusic();
 
-  // 1. Fetch available models from API & Catalogue products
+  // 1. Fetch available models from API & Catalogue products (supplements static fallback)
   useEffect(() => {
     fetch('/api/portal/models')
       .then((res) => res.json())
       .then((json) => {
-        if (json.data && Array.isArray(json.data)) {
+        if (json.data && Array.isArray(json.data) && json.data.length > 0) {
           // Normalize URLs to uppercase /Models/ for consistency
           const normalized = json.data.map((m: ShowroomModel) => ({
             ...m,
@@ -669,7 +939,7 @@ export const PortalRoomStudioPage: React.FC = () => {
           setCatalogModels(normalized);
         }
       })
-      .catch((err) => console.error('Failed to load models:', err));
+      .catch((err) => console.warn('API models fetch note (using static showroom catalog fallback):', err));
 
     api.get('/api/portal/catalogue')
       .then((res) => {
@@ -828,6 +1098,19 @@ export const PortalRoomStudioPage: React.FC = () => {
     scene.add(grid);
     gridHelperRef.current = grid;
 
+    // ── Instant Architectural Fallback Floor (Renders in 0ms so users never see a blank void) ──
+    const fallbackFloorGeo = new THREE.PlaneGeometry(9.6, 9.6);
+    const fallbackFloorMat = new THREE.MeshStandardMaterial({
+      color: 0xF2EAE0,
+      roughness: 0.55,
+      metalness: 0.02,
+    });
+    const fallbackFloor = new THREE.Mesh(fallbackFloorGeo, fallbackFloorMat);
+    fallbackFloor.rotation.x = -Math.PI / 2;
+    fallbackFloor.position.y = -0.001;
+    fallbackFloor.receiveShadow = true;
+    scene.add(fallbackFloor);
+
     // ── Load Blank Room 3D Model (/Models/room_blank.compressed.glb) ──
     const roomLoader = new GLTFLoader();
     roomLoader.setDRACOLoader(dracoLoader);
@@ -912,10 +1195,15 @@ export const PortalRoomStudioPage: React.FC = () => {
           child.matrixAutoUpdate = false;
         });
 
+        fallbackFloor.visible = false;
         scene.add(roomRoot);
+        setRoomLoading(false);
       },
       undefined,
-      (err) => console.warn('Room structure model load warning:', err)
+      (err) => {
+        console.warn('Room structure model load warning (fallback floor active):', err);
+        setRoomLoading(false);
+      }
     );
 
     // ── Interactive Direct Dragging on Floor Canvas (Using zero-alloc shared math) ──
@@ -1278,7 +1566,9 @@ export const PortalRoomStudioPage: React.FC = () => {
       if (!sceneRef.current) return;
 
       const instanceId = `item-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-      const modelUrl = model.url.replace(/^\/models\//i, '/Models/');
+      const cleanUrl = model.url.replace(/^\/models\//i, '/Models/');
+      // Safely encode URLs with spaces and special characters for RFC compliance in all browsers
+      const safeLoadUrl = encodeURI(decodeURI(cleanUrl));
 
       // Default position: in front of the camera or staggered
       const pos: [number, number, number] = customPos || [
@@ -1290,7 +1580,7 @@ export const PortalRoomStudioPage: React.FC = () => {
       const factor = customScaleFactor || 1.0;
 
       // Check if model prototype is already cached in memory
-      const cached = modelCacheRef.current.get(modelUrl);
+      const cached = modelCacheRef.current.get(cleanUrl) || modelCacheRef.current.get(safeLoadUrl);
       if (cached) {
         const group = new THREE.Group();
         const inner = SkeletonUtils.clone(cached.scene);
@@ -1310,7 +1600,7 @@ export const PortalRoomStudioPage: React.FC = () => {
           modelId: model.id,
           name: model.name,
           category: model.category,
-          url: modelUrl,
+          url: cleanUrl,
           position: [pos[0], 0, pos[2]],
           rotationY: initialRot,
           scale: finalScale,
@@ -1330,7 +1620,7 @@ export const PortalRoomStudioPage: React.FC = () => {
       }
 
       loader.load(
-        modelUrl,
+        safeLoadUrl,
         (gltf) => {
           const group = new THREE.Group();
           const inner = gltf.scene;
@@ -1356,7 +1646,11 @@ export const PortalRoomStudioPage: React.FC = () => {
           inner.position.set(-rawCenter.x, -rawBox.min.y, -rawCenter.z);
 
           // Store cloned prototype in cache for 0ms future additions
-          modelCacheRef.current.set(modelUrl, {
+          modelCacheRef.current.set(cleanUrl, {
+            scene: inner.clone(true),
+            baseScale: scale,
+          });
+          modelCacheRef.current.set(safeLoadUrl, {
             scene: inner.clone(true),
             baseScale: scale,
           });
@@ -1378,7 +1672,7 @@ export const PortalRoomStudioPage: React.FC = () => {
             modelId: model.id,
             name: model.name,
             category: model.category,
-            url: modelUrl,
+            url: cleanUrl,
             position: [pos[0], 0, pos[2]],
             rotationY: initialRot,
             scale: finalScale,
@@ -1401,7 +1695,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   );
 
   // 7. Handle Canvas Drag & Drop from Bottom Tray (Zero allocations)
-  const handleCanvasDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleCanvasDragOver = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 
@@ -1434,7 +1728,7 @@ export const PortalRoomStudioPage: React.FC = () => {
     }
   };
 
-  const handleCanvasDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleCanvasDrop = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     isDraggingOverRef.current = false;
     setIsDraggingOverCanvas(false);
@@ -1458,7 +1752,13 @@ export const PortalRoomStudioPage: React.FC = () => {
       targetZ = Math.max(-4.7, Math.min(4.7, sharedPlaneIntersect.z));
     }
 
-    const model = catalogModels.find((m) => m.id === modelId || m.filename === modelId);
+    const model = catalogModels.find(
+      (m) =>
+        m.id === modelId ||
+        m.filename === modelId ||
+        m.name === modelId ||
+        m.url.includes(modelId)
+    );
     if (model) {
       handleAddFurniture(model, [targetX, 0, targetZ]);
     }
@@ -1891,7 +2191,12 @@ export const PortalRoomStudioPage: React.FC = () => {
           cursor: isDraggingOverCanvas ? 'copy' : 'grab',
         }}
       >
-        <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
+        <canvas
+          ref={canvasRef}
+          onDragOver={handleCanvasDragOver}
+          onDrop={handleCanvasDrop}
+          style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
+        />
       </div>
 
       {/* ── Top Floating Minimalist Bar ── */}
@@ -2868,6 +3173,41 @@ export const PortalRoomStudioPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* ── Room Architecture Loading Badge ── */}
+      {roomLoading && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 72,
+            left: 20,
+            backgroundColor: 'rgba(255, 255, 255, 0.96)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(208, 174, 146, 0.45)',
+            borderRadius: 999,
+            padding: '5px 14px',
+            fontSize: 11,
+            fontWeight: 600,
+            fontFamily: 'var(--font-display)',
+            color: 'var(--brown-900)',
+            boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 7,
+            zIndex: 30,
+          }}
+        >
+          <div
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: '50%',
+              backgroundColor: '#8A4B38',
+            }}
+          />
+          <span>Architectural Studio Ready • Enhancing Textures...</span>
+        </div>
+      )}
 
       {/* Subtle Loading indicator */}
       {loadingModel && (
