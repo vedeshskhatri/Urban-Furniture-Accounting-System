@@ -213,7 +213,7 @@ portalRouter.post('/invoices/:id/razorpay/create-order', requireAuth, requirePor
       return sendError(res, 'NOT_FOUND', 'Invoice not found or unauthorized', 404);
     }
 
-    const amount = req.body.amount || invoice.amountDue;
+    const amount = req.body?.amount || invoice.amountDue;
     const { RazorpayService } = await import('../services/razorpayService');
     const order = await RazorpayService.createOrder(amount, `port_inv_${invoice.id}_${Date.now()}`, {
       invoiceId: invoice.id,

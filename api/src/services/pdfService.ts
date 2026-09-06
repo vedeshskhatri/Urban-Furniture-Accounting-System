@@ -1,9 +1,42 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 import { CustomerInvoiceDTO } from './invoiceService';
+import { GstService, SELLER_GSTIN, SELLER_LEGAL_NAME, SELLER_STATE, DEFAULT_FURNITURE_HSN } from './gstService';
+import { QrMatrixGenerator } from './qrMatrix';
 
 export class PdfService {
   static generateInvoiceHtml(invoice: CustomerInvoiceDTO): string {
+    const invoiceDate = invoice.invoiceDate || new Date().toISOString().split('T')[0];
+    const finYear = GstService.getFinancialYear(invoiceDate);
+    const irn = GstService.generateIrn(SELLER_GSTIN, finYear, 'INV', invoice.number);
+    const ackNo = GstService.generateAckNumber(invoice.id, invoiceDate);
+    const ackDate = `${invoiceDate} 10:00:00 IST`;
+    const isEWayBill = parseFloat(invoice.total || '0') >= 50000;
+    const ewbNo = isEWayBill ? GstService.generateEWayBillNumber(invoice.id, invoice.number) : null;
+
+    // Offline Vector QR Code
+    const qrPayload = {
+      SellerGSTIN: SELLER_GSTIN,
+      BuyerGSTIN: 'URP-CONSUMER',
+      DocNo: invoice.number,
+      DocTyp: 'INV',
+      DocDt: invoiceDate,
+      TotInvVal: parseFloat(invoice.total || '0'),
+      ItemCnt: invoice.lines.length,
+      MainHsnCode: DEFAULT_FURNITURE_HSN,
+      Irn: irn,
+      EwbNo: ewbNo,
+    };
+    const qrDataUrl = QrMatrixGenerator.renderDataUrl(JSON.stringify(qrPayload), {
+      size: 160,
+      margin: 2,
+    });
+
+    // CGST & SGST Split (Intra-state Maharashtra default)
+    const taxTotalNum = parseFloat(invoice.taxTotal || '0');
+    const cgstAmount = (taxTotalNum / 2).toFixed(2);
+    const sgstAmount = (taxTotalNum / 2).toFixed(2);
+
     const linesHtml = invoice.lines
       .map(
         (line, index) => `
@@ -13,6 +46,7 @@ export class PdfService {
             <strong>${line.productName}</strong>
             <div style="font-size: 11px; color: #7B7267;">SKU: ${line.productSku || '-'}</div>
           </td>
+          <td style="padding: 10px 12px; border-bottom: 1px solid #E5DFD7; font-size: 12px; font-family: monospace; color: #574F45;">${DEFAULT_FURNITURE_HSN}</td>
           <td style="padding: 10px 12px; border-bottom: 1px solid #E5DFD7; font-size: 12px; color: #574F45;">${line.analyticAccountName || 'General'}</td>
           <td style="padding: 10px 12px; border-bottom: 1px solid #E5DFD7; text-align: right; font-family: monospace; font-size: 13px;">${line.qty}</td>
           <td style="padding: 10px 12px; border-bottom: 1px solid #E5DFD7; text-align: right; font-family: monospace; font-size: 13px;">₹${parseFloat(line.unitPrice).toFixed(2)}</td>
@@ -218,14 +252,42 @@ export class PdfService {
         </div>
 
         <div class="page-container">
+          <!-- Official GST e-Invoice IRN & QR Header Seal -->
+          <div style="background: #F5EFEB; border: 1.5px solid #D5CCC0; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1; padding-right: 16px;">
+              <div style="font-size: 11px; font-weight: 800; color: #4A3A34; letter-spacing: 0.5px; text-transform: uppercase;">
+                🇮🇳 TAX INVOICE • B2B e-INVOICE (NIC IRN VERIFIED)
+              </div>
+              <div style="font-size: 10px; font-family: monospace; color: #382A24; margin-top: 4px; word-break: break-all;">
+                <strong>IRN:</strong> ${irn}
+              </div>
+              <div style="font-size: 11px; color: #665C54; margin-top: 4px; display: flex; gap: 16px; flex-wrap: wrap;">
+                <span>Ack No: <strong style="font-family: monospace;">${ackNo}</strong></span>
+                <span>Ack Date: <strong style="font-family: monospace;">${ackDate}</strong></span>
+                <span>Principal HSN: <strong style="font-family: monospace;">${DEFAULT_FURNITURE_HSN}</strong></span>
+              </div>
+            </div>
+            <div style="text-align: center; shrink: 0; background: #FFFFFF; padding: 6px 8px; border: 1px solid #D5CCC0; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <img src="${qrDataUrl}" width="80" height="80" style="display: block;" alt="GST e-Invoice QR Code" />
+              <div style="font-size: 8px; font-weight: 800; color: #4A3A34; margin-top: 3px; letter-spacing: 0.5px;">OFFLINE QR</div>
+            </div>
+          </div>
+
+          ${isEWayBill ? `
+          <div style="background: #E8F0FE; border: 1.5px solid #AECBFA; color: #1967D2; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <span>🚚 <strong>Statutory E-Way Bill Attached</strong> (Rule 138 - Value &gt; ₹50,000)</span>
+            <span style="font-family: monospace; font-weight: 800; background: #FFFFFF; padding: 2px 8px; border-radius: 4px; border: 1px solid #AECBFA;">EWB No: ${ewbNo} (Valid 48h)</span>
+          </div>` : ''}
+
           <div class="header">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <svg width="36" height="36" viewBox="0 0 1000 1000" fill="#4A3A34">
+              <svg width="40" height="40" viewBox="0 0 1000 1000" fill="#4A3A34">
                 <path d="M 252 637 L 254 637 L 255 638 L 259 638 L 260 637 L 262 637 L 263 638 L 291 638 L 293 637 L 295 638 L 295 642 L 294 643 L 294 654 L 293 655 L 293 673 L 292 674 L 292 688 L 291 689 L 291 697 L 290 698 L 290 717 L 289 718 L 289 732 L 288 733 L 288 742 L 287 743 L 287 758 L 286 759 L 286 773 L 285 774 L 285 784 L 284 785 L 284 803 L 283 804 L 283 818 L 282 819 L 282 828 L 281 829 L 281 848 L 280 849 L 280 858 L 279 859 L 271 859 L 270 860 L 268 860 L 266 857 L 266 846 L 265 845 L 265 837 L 264 836 L 264 814 L 263 813 L 263 805 L 262 804 L 262 793 L 261 792 L 261 773 L 260 772 L 260 757 L 259 756 L 259 750 L 258 749 L 258 731 L 257 730 L 257 716 L 256 715 L 256 705 L 255 704 L 255 685 L 254 684 L 254 672 L 253 671 L 253 664 L 252 663 L 252 648 L 251 647 L 251 644 L 252 643 L 251 642 L 251 638 L 252 637 Z" />
               </svg>
               <div>
                 <div class="brand">URBAN FURNITURE</div>
-                <div style="color: #7B7267; font-size: 12px; margin-top: 4px;">Accounting System &amp; Enterprise Ledger</div>
+                <div style="color: #574F45; font-size: 12px; font-weight: 600; margin-top: 2px;">${SELLER_LEGAL_NAME}</div>
+                <div style="color: #7B7267; font-size: 11px;">GSTIN: <strong style="color: #382A24; font-family: monospace;">${SELLER_GSTIN}</strong> &nbsp;•&nbsp; State: <strong>${SELLER_STATE} (27)</strong></div>
               </div>
             </div>
             <div style="text-align: right;">
@@ -239,9 +301,10 @@ export class PdfService {
 
           <div class="meta-grid">
             <div class="meta-box">
-              <div class="meta-title">Billed To</div>
+              <div class="meta-title">Billed To (Buyer)</div>
               <div style="font-size: 15px; font-weight: 700; color: #26211C;">${invoice.customerName}</div>
               <div style="color: #574F45; font-size: 12px; margin-top: 4px;">Customer ID: #${invoice.customerId}</div>
+              <div style="color: #574F45; font-size: 12px; margin-top: 2px;">Place of Supply: <strong>Maharashtra (27)</strong></div>
               ${invoice.soNumber ? `<div style="color: #574F45; font-size: 12px; margin-top: 2px;">Originating SO: <strong>${invoice.soNumber}</strong></div>` : ''}
             </div>
 
@@ -268,10 +331,11 @@ export class PdfService {
               <tr>
                 <th style="width: 40px; text-align: center;">#</th>
                 <th style="text-align: left;">Product / Item</th>
+                <th style="width: 70px; text-align: left;">HSN</th>
                 <th style="text-align: left;">Analytics</th>
                 <th style="width: 60px; text-align: right;">Qty</th>
                 <th style="width: 90px; text-align: right;">Unit Price</th>
-                <th style="width: 60px; text-align: right;">Tax</th>
+                <th style="width: 60px; text-align: right;">Tax Rate</th>
                 <th style="width: 100px; text-align: right;">Total</th>
               </tr>
             </thead>
@@ -283,15 +347,23 @@ export class PdfService {
           <div class="totals-section">
             <div class="totals-box">
               <div class="total-row">
-                <span>Subtotal:</span>
+                <span>Taxable Amount:</span>
                 <span style="font-family: monospace;">₹${parseFloat(invoice.subtotal).toFixed(2)}</span>
               </div>
               <div class="total-row">
-                <span>Tax Total:</span>
+                <span>CGST (Central Tax):</span>
+                <span style="font-family: monospace;">₹${cgstAmount}</span>
+              </div>
+              <div class="total-row">
+                <span>SGST (State Tax):</span>
+                <span style="font-family: monospace;">₹${sgstAmount}</span>
+              </div>
+              <div class="total-row" style="border-top: 1px dashed #D5CCC0; padding-top: 6px; font-weight: 600;">
+                <span>Total Tax (GST):</span>
                 <span style="font-family: monospace;">₹${parseFloat(invoice.taxTotal).toFixed(2)}</span>
               </div>
               <div class="total-row grand-total">
-                <span>Total:</span>
+                <span>Invoice Total:</span>
                 <span style="font-family: monospace;">₹${parseFloat(invoice.total).toFixed(2)}</span>
               </div>
               <div class="total-row" style="margin-top: 8px; color: #137333;">

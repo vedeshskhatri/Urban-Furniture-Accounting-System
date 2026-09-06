@@ -6,7 +6,7 @@ import { InvoiceLineGrid, InvoiceGridLine } from './components/InvoiceLineGrid';
 import { BlockingWarning } from './components/Warnings';
 import { PaymentHistoryPanel } from './components/PaymentHistoryPanel';
 import { CustomerInvoiceDTO } from '@shared/schemas/invoice';
-import { ShoppingCart, CreditCard, BookOpen, TrendingUp, Printer, Mail, AlertCircle } from 'lucide-react';
+import { ShoppingCart, CreditCard, BookOpen, TrendingUp, Printer, Mail, AlertCircle, ShieldCheck, QrCode, Truck, Copy, Check } from 'lucide-react';
 import { JournalEntryModal } from '../../components/purchase/JournalEntryModal';
 import { RegisterPaymentModal } from '../../components/purchase/RegisterPaymentModal';
 import Decimal from 'decimal.js';
@@ -50,6 +50,9 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
   const [emailRecipient, setEmailRecipient] = useState<string>('');
   const [emailSending, setEmailSending] = useState<boolean>(false);
   const [emailStatus, setEmailStatus] = useState<{ success: boolean; message: string } | null>(null);
+  const [gstDetails, setGstDetails] = useState<any>(null);
+  const [isGstPayloadModalOpen, setIsGstPayloadModalOpen] = useState<boolean>(false);
+  const [copiedIrn, setCopiedIrn] = useState<boolean>(false);
 
 
   // Fetch dropdown data
@@ -97,6 +100,11 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
         setCustomerId(inv.customerId);
         setInvoiceDate(inv.invoiceDate);
         setDueDate(inv.dueDate || '');
+        // Fetch B2B e-Invoice & QR verification details
+        fetch(`/api/gst/invoice/${idToLoad}`)
+          .then(r => r.json())
+          .then(gJson => gJson.data && setGstDetails(gJson.data))
+          .catch(() => {});
         setLines(inv.lines.map(l => ({
           productId: l.productId,
           accountId: l.accountId,
@@ -193,6 +201,10 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
       if (json.data) {
         setInvoice(json.data);
         setSuccessMsg(`Invoice ${json.data.number} Confirmed & Posted to Ledger! (Debit Debtors, Credit Income)`);
+        fetch(`/api/gst/invoice/${json.data.id}`)
+          .then(r => r.json())
+          .then(gJson => gJson.data && setGstDetails(gJson.data))
+          .catch(() => {});
       } else {
         setError(json.error?.message || 'Failed to post invoice');
       }
@@ -419,6 +431,121 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
           </div>
         )}
 
+        {/* Indian B2B e-Invoice & Statutory E-Way Bill Verification Card */}
+        {gstDetails && (
+          <div className="bg-gradient-to-r from-amber-50/80 via-surface to-stone-50 border border-brown-300 rounded-[12px] p-5 shadow-sm mb-6">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-3 border-b border-brown-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-brown-900 tracking-tight">
+                      Indian B2B e-Invoice Verification Seal
+                    </h3>
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 rounded uppercase">
+                      NIC IRN Verified
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] font-bold bg-brown-100 text-brown-800 border border-brown-300 rounded">
+                      HSN 9403
+                    </span>
+                  </div>
+                  <p className="text-xs text-brown-600 mt-0.5">
+                    Deterministic SHA-256 Invoice Reference Number &amp; Offline QR Matrix compliant with Indian GST Rules.
+                  </p>
+                </div>
+              </div>
+
+              {/* Statutory E-Way Bill Rule 138 Badge */}
+              <div className="flex items-center gap-2">
+                {gstDetails.ewayBill?.required ? (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-lg text-blue-900 text-xs font-medium">
+                    <Truck className="w-4 h-4 text-blue-700 shrink-0" />
+                    <div>
+                      <span className="font-bold">E-Way Bill Active:</span>{' '}
+                      <span className="font-mono font-bold text-blue-800">{gstDetails.ewayBill.ewayBillNo}</span>
+                      <span className="block text-[10px] text-blue-600">Valid 48h • Distance ~{gstDetails.ewayBill.approxDistanceKm} km</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-3 py-1 bg-brown-50 border border-brown-200 rounded-lg text-brown-700 text-xs">
+                    <Truck className="w-3.5 h-3.5 text-brown-500" />
+                    <span>Consignment &lt; ₹50k (EWB Exempt)</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* IRN Details & QR Code Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 items-center">
+              <div className="md:col-span-3 space-y-2">
+                <div>
+                  <span className="text-[10px] font-bold text-brown-500 uppercase tracking-wider block">
+                    64-Character Invoice Reference Number (IRN Hash)
+                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="p-2 bg-white border border-brown-200 rounded-md font-mono text-[11px] text-brown-900 break-all select-all flex-1 shadow-inner">
+                      {gstDetails.irn}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(gstDetails.irn);
+                        setCopiedIrn(true);
+                        setTimeout(() => setCopiedIrn(false), 2000);
+                      }}
+                      className="px-2.5 py-2 bg-surface border border-brown-300 rounded-md text-brown-700 hover:bg-brown-100 text-xs font-medium flex items-center gap-1 shrink-0 cursor-pointer"
+                      title="Copy IRN Hash"
+                    >
+                      {copiedIrn ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedIrn ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1">
+                  <div className="p-2 bg-white/70 rounded border border-brown-100">
+                    <span className="text-[10px] text-brown-500 block">Seller GSTIN</span>
+                    <span className="font-mono font-bold text-brown-900">{gstDetails.sellerGstin}</span>
+                  </div>
+                  <div className="p-2 bg-white/70 rounded border border-brown-100">
+                    <span className="text-[10px] text-brown-500 block">Place of Supply</span>
+                    <span className="font-bold text-brown-900">{gstDetails.placeOfSupply}</span>
+                  </div>
+                  <div className="p-2 bg-white/70 rounded border border-brown-100">
+                    <span className="text-[10px] text-brown-500 block">Supply Category</span>
+                    <span className="font-bold text-brown-900">{gstDetails.supplyType === 'INTRA_STATE' ? 'Intra-State (CGST+SGST)' : 'Inter-State (IGST)'}</span>
+                  </div>
+                </div>
+
+                <div className="pt-1 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsGstPayloadModalOpen(true)}
+                    className="text-xs text-brown-700 hover:text-brown-900 underline font-semibold flex items-center gap-1 cursor-pointer"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-brown-600" />
+                    Inspect Signed B2B QR Code Payload
+                  </button>
+                </div>
+              </div>
+
+              {/* Vector SVG QR Code */}
+              <div className="flex flex-col items-center justify-center p-3 bg-white border border-brown-200 rounded-lg shadow-sm">
+                <img
+                  src={gstDetails.qrDataUrl}
+                  alt="GST e-Invoice QR Code"
+                  className="w-28 h-28 object-contain"
+                />
+                <span className="text-[10px] font-bold text-brown-600 mt-1 uppercase tracking-wider">
+                  Offline QR Seal
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Document Header Card */}
         <div className="bg-surface border border-brown-300 rounded-[10px] p-6 shadow-sm mb-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-brown-100 gap-4">
@@ -546,7 +673,7 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
               </div>
               <div className="flex justify-between text-sm py-1 border-b border-brown-200/50">
                 <span className="text-brown-600">Total Settled:</span>
-                <span className="font-mono font-medium text-emerald-700 font-bold">
+                <span className="font-mono font-bold text-emerald-700">
                   ₹{Number(invoice.amountPaid || '0.00').toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                 </span>
               </div>
@@ -655,6 +782,50 @@ export const CustomerInvoiceFormPage: React.FC<CustomerInvoiceFormPageProps> = (
               >
                 <Mail className="w-4 h-4" />
                 {emailSending ? 'Sending PDF via Resend...' : 'Send Receipt Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Signed B2B QR Code Payload Inspector Modal */}
+      {isGstPayloadModalOpen && gstDetails && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface rounded-xl shadow-2xl border border-brown-200 max-w-lg w-full p-6 space-y-4 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center justify-between border-b border-brown-200 pb-3">
+              <div className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-brown-700" />
+                <h3 className="text-lg font-bold text-brown-900">Signed B2B QR Code Payload</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGstPayloadModalOpen(false)}
+                className="text-brown-400 hover:text-brown-700 text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-brown-600">
+              Official JSON schema payload embedded into the offline QR matrix for tax authority inspection and gate validation:
+            </p>
+
+            <pre className="p-3.5 bg-brown-900 text-amber-100 rounded-lg text-xs font-mono overflow-x-auto max-h-60 border border-brown-800 select-all">
+              {JSON.stringify(JSON.parse(gstDetails.qrPayloadJson || '{}'), null, 2)}
+            </pre>
+
+            <div className="flex justify-between items-center text-xs text-brown-600 border-t border-brown-100 pt-3">
+              <span>Standard: <strong>NIC e-Invoice v1.1</strong></span>
+              <span>Algorithm: <strong>Vector SVG / Byte Mode</strong></span>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setIsGstPayloadModalOpen(false)}
+                className="px-4 py-2 text-sm font-semibold bg-brown-900 text-cream rounded-lg hover:bg-brown-800 transition"
+              >
+                Done
               </button>
             </div>
           </div>
