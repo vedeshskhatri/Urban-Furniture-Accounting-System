@@ -27,6 +27,7 @@ auditRouter.get('/', requireAdmin, async (req: Request, res: Response) => {
       action: req.query.action ? String(req.query.action) : undefined,
       from: req.query.from ? String(req.query.from) : undefined,
       to: req.query.to ? String(req.query.to) : undefined,
+      search: req.query.search ? String(req.query.search) : undefined,
       limit: toInt(req.query.limit),
       offset: toInt(req.query.offset),
     });

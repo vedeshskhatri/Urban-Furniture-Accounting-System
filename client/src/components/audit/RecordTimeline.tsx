@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { History } from 'lucide-react';
+import { History, ChevronDown, ChevronRight } from 'lucide-react';
 import { AuditApi, AuditRow } from '../../api/audit.api';
-import { actionMeta, clockTime, relativeTime } from '../../lib/audit';
+import { actionMeta, clockTime, diffFields, fmtValue, relativeTime } from '../../lib/audit';
 
 /** Friendly recordType -> audit_log.table_name */
 const TYPE_TO_TABLE: Record<string, string> = {
@@ -47,6 +47,15 @@ export default function RecordTimeline({
   const table = TYPE_TO_TABLE[recordType] ?? recordType;
   const id = typeof recordId === 'string' ? parseInt(recordId, 10) : recordId;
   const enabled = Boolean(id && !Number.isNaN(id));
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+  const toggle = (rowId: number) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(rowId) ? next.delete(rowId) : next.add(rowId);
+      return next;
+    });
+  };
 
   const { data, isLoading } = useQuery<AuditRow[]>({
     queryKey: ['audit-timeline', table, id],
@@ -71,21 +80,39 @@ export default function RecordTimeline({
         padding: compact ? '12px 14px' : '16px 18px',
       }}
     >
-      <header style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-        <History size={15} color="var(--brown-700)" />
-        <h3
-          style={{
-            margin: 0,
-            fontFamily: 'var(--font-display)',
-            fontWeight: 700,
-            fontSize: 13,
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            color: 'var(--brown-900)',
-          }}
-        >
-          History
-        </h3>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <History size={15} color="var(--brown-700)" />
+          <h3
+            style={{
+              margin: 0,
+              fontFamily: 'var(--font-display)',
+              fontWeight: 700,
+              fontSize: 13,
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              color: 'var(--brown-900)',
+            }}
+          >
+            Record Audit Trail
+          </h3>
+        </div>
+        {data && data.length > 0 && (
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              fontWeight: 600,
+              background: 'var(--cream)',
+              border: '1px solid var(--brown-300)',
+              borderRadius: 999,
+              padding: '2px 8px',
+              color: 'var(--brown-700)',
+            }}
+          >
+            {data.length} event{data.length === 1 ? '' : 's'}
+          </span>
+        )}
       </header>
 
       {!enabled || (data && data.length === 0) ? (
@@ -99,6 +126,9 @@ export default function RecordTimeline({
             const Icon = meta.icon;
             const rel = RELATED_DOC(row);
             const last = i === (data?.length ?? 0) - 1;
+            const changes = diffFields(row.before_data, row.after_data);
+            const isOpen = expanded.has(row.id);
+
             return (
               <li key={row.id} style={{ display: 'flex', gap: 12, paddingBottom: last ? 0 : 16, position: 'relative' }}>
                 {/* rail */}
@@ -145,7 +175,58 @@ export default function RecordTimeline({
                       ) : (
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--brown-700)' }}>{rel.label}</span>
                       ))}
+
+                    {changes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => toggle(row.id)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--brown-700)',
+                          fontSize: 11,
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          marginLeft: 'auto',
+                        }}
+                      >
+                        {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                        {changes.filter((c) => c.changed).length > 0
+                          ? `${changes.filter((c) => c.changed).length} changed`
+                          : 'Snapshot'}
+                      </button>
+                    )}
                   </div>
+
+                  {isOpen && changes.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        padding: '8px 10px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'var(--cream)',
+                        border: '1px solid var(--brown-300)',
+                        fontSize: 11,
+                      }}
+                    >
+                      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                        <tbody>
+                          {changes.slice(0, 10).map((c) => (
+                            <tr key={c.key} style={{ borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                              <td style={{ padding: '3px 6px', fontFamily: 'var(--font-mono)', color: 'var(--brown-900)' }}>{c.key}</td>
+                              <td style={{ padding: '3px 6px', fontFamily: 'var(--font-mono)', color: 'var(--brown-700)' }}>{fmtValue(c.before)}</td>
+                              <td style={{ padding: '3px 6px', fontFamily: 'var(--font-mono)', color: c.changed ? 'var(--posted)' : 'var(--brown-700)', fontWeight: c.changed ? 600 : 400 }}>
+                                {fmtValue(c.after)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </li>
             );

@@ -54,6 +54,45 @@ export function tableLabel(table: string): string {
   return TABLE_LABELS[table] ?? table;
 }
 
+export function recordLink(table: string, id: number): string | null {
+  switch (table) {
+    case 'customer_invoices':
+      return `/sales/invoices/${id}`;
+    case 'sales_orders':
+      return `/sales/orders/${id}`;
+    case 'vendor_bills':
+      return `/purchase/bills/${id}`;
+    case 'purchase_orders':
+      return `/purchase/orders/${id}`;
+    case 'journal_entries':
+      return `/account/journal-entries/${id}`;
+    case 'budgets':
+      return `/account/budgets/${id}`;
+    case 'products':
+      return `/account/products/${id}`;
+    case 'contacts':
+      return `/account/contacts/${id}`;
+    case 'accounts':
+      return `/account/coa/${id}`;
+    case 'journals':
+      return `/account/journals/${id}`;
+    case 'analytic_accounts':
+      return `/account/analytics/${id}`;
+    default:
+      return null;
+  }
+}
+
+export type AuditCategory = 'all' | 'commercial' | 'orders' | 'finance' | 'master' | 'security';
+
+export const CATEGORY_TABLES: Record<Exclude<AuditCategory, 'all'>, string[]> = {
+  commercial: ['customer_invoices', 'vendor_bills'],
+  orders: ['sales_orders', 'purchase_orders'],
+  finance: ['journal_entries', 'payments', 'budgets', 'accounts'],
+  master: ['products', 'contacts', 'journals', 'analytic_accounts'],
+  security: ['users'],
+};
+
 export function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
   const secs = Math.round((Date.now() - then) / 1000);

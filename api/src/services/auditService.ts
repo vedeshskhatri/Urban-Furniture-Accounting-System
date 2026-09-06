@@ -31,6 +31,7 @@ export interface AuditFilters {
   action?: string;
   from?: string;
   to?: string;
+  search?: string;
   limit?: number;
   offset?: number;
 }
@@ -81,7 +82,7 @@ export class AuditService {
   }
 
   /**
-   * Global audit feed with filters + pagination. Returns { rows, total }.
+   * Global audit feed with filters + pagination + text search. Returns { rows, total }.
    */
   static async query(filters: AuditFilters, scope?: Record<string, any>): Promise<{ rows: any[]; total: number }> {
     if (scope && scope.allowed === false) {
@@ -90,6 +91,7 @@ export class AuditService {
 
     const limit = Math.min(filters.limit ?? 50, 200);
     const offset = filters.offset ?? 0;
+    const searchPattern = filters.search ? `%${filters.search.trim()}%` : null;
 
     const where = `
       WHERE ($1::text IS NULL OR al.table_name = $1::text)
@@ -98,6 +100,15 @@ export class AuditService {
         AND ($4::text IS NULL OR al.action = $4::text)
         AND ($5::timestamptz IS NULL OR al.created_at >= $5::timestamptz)
         AND ($6::timestamptz IS NULL OR al.created_at <= $6::timestamptz)
+        AND ($7::text IS NULL OR (
+          al.table_name ILIKE $7
+          OR al.record_id::text ILIKE $7
+          OR al.action ILIKE $7
+          OR u.full_name ILIKE $7
+          OR u.login_id ILIKE $7
+          OR al.after_data::text ILIKE $7
+          OR al.before_data::text ILIKE $7
+        ))
     `;
     const whereParams = [
       filters.table ?? null,
@@ -106,6 +117,7 @@ export class AuditService {
       filters.action ?? null,
       filters.from ?? null,
       filters.to ?? null,
+      searchPattern,
     ];
 
     const rowsRes = await pool.query(
@@ -125,13 +137,18 @@ export class AuditService {
       LEFT JOIN users u ON u.id = al.user_id
       ${where}
       ORDER BY al.created_at DESC, al.id DESC
-      LIMIT $7 OFFSET $8;
+      LIMIT $8 OFFSET $9;
       `,
       [...whereParams, limit, offset]
     );
 
     const countRes = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM audit_log al ${where};`,
+      `
+      SELECT COUNT(*)::int AS total
+      FROM audit_log al
+      LEFT JOIN users u ON u.id = al.user_id
+      ${where};
+      `,
       whereParams
     );
 
@@ -166,9 +183,14 @@ export class AuditService {
   }
 
   /**
-   * Distinct tables / actions / users present, for populating the filter bar.
+   * Distinct tables / actions / users present, for populating the filter bar and KPI summary.
    */
-  static async getFacets(): Promise<{ tables: string[]; actions: string[]; users: Array<{ id: number; name: string }> }> {
+  static async getFacets(): Promise<{
+    tables: string[];
+    actions: string[];
+    users: Array<{ id: number; name: string }>;
+    stats: { total: number; today: number; security: number; commercial: number };
+  }> {
     const res = await pool.query(`
       SELECT
         ARRAY(SELECT DISTINCT table_name FROM audit_log ORDER BY table_name) AS tables,
@@ -179,10 +201,25 @@ export class AuditService {
       FROM audit_log al JOIN users u ON u.id = al.user_id
       ORDER BY name;
     `);
+    const statsRes = await pool.query<{
+      total: number;
+      today: number;
+      security: number;
+      commercial: number;
+    }>(`
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE)::int AS today,
+        COUNT(*) FILTER (WHERE action IN ('login_failed', 'reverse', 'cancel', 'delete'))::int AS security,
+        COUNT(*) FILTER (WHERE table_name IN ('customer_invoices', 'vendor_bills', 'sales_orders', 'purchase_orders'))::int AS commercial
+      FROM audit_log;
+    `);
+
     return {
       tables: res.rows[0]?.tables ?? [],
       actions: res.rows[0]?.actions ?? [],
       users: usersRes.rows,
+      stats: statsRes.rows[0] ?? { total: 0, today: 0, security: 0, commercial: 0 },
     };
   }
 
