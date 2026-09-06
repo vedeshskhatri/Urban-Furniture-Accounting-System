@@ -936,6 +936,66 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [quoteSuccess, setQuoteSuccess] = useState<any | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
 
+  // Step-by-step Back Handler ("one by one back")
+  const handleStudioBack = useCallback(() => {
+    // 1. If Quote proposal modal is open, close it first
+    if (quoteSuccess) {
+      setQuoteSuccess(null);
+      return;
+    }
+    // 2. If Save Style modal is open, close it
+    if (isSaveStyleModalOpen) {
+      setIsSaveStyleModalOpen(false);
+      return;
+    }
+    // 3. If Room Styles modal is open, close it
+    if (isRoomStylesModalOpen) {
+      setIsRoomStylesModalOpen(false);
+      return;
+    }
+    // 4. If an active menu (presets or lighting) is open, close it
+    if (activeMenu) {
+      setActiveMenu(null);
+      return;
+    }
+    // 5. If a furniture item is selected, deselect it
+    if (selectedInstanceId) {
+      setSelectedInstanceId(null);
+      return;
+    }
+    // 6. Otherwise navigate back in history one step
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/portal/catalogue');
+    }
+  }, [quoteSuccess, isSaveStyleModalOpen, isRoomStylesModalOpen, activeMenu, selectedInstanceId, navigate]);
+
+  // Intercept browser back button when any modal / drawer / item is open in 3D Studio
+  useEffect(() => {
+    const isAnySubStateOpen = Boolean(
+      quoteSuccess ||
+      isSaveStyleModalOpen ||
+      isRoomStylesModalOpen ||
+      activeMenu ||
+      selectedInstanceId
+    );
+
+    if (isAnySubStateOpen) {
+      window.history.pushState({ studioModal: true }, '');
+      const handlePop = () => {
+        if (quoteSuccess) { setQuoteSuccess(null); return; }
+        if (isSaveStyleModalOpen) { setIsSaveStyleModalOpen(false); return; }
+        if (isRoomStylesModalOpen) { setIsRoomStylesModalOpen(false); return; }
+        if (activeMenu) { setActiveMenu(null); return; }
+        if (selectedInstanceId) { setSelectedInstanceId(null); return; }
+      };
+      window.addEventListener('popstate', handlePop);
+      return () => {
+        window.removeEventListener('popstate', handlePop);
+      };
+    }
+  }, [quoteSuccess, isSaveStyleModalOpen, isRoomStylesModalOpen, activeMenu, selectedInstanceId]);
 
   // 1. Fetch available models from API & Catalogue products (supplements static fallback)
   useEffect(() => {
@@ -2491,33 +2551,33 @@ export const PortalRoomStudioPage: React.FC = () => {
           }}
         >
           <button
-            onClick={() => navigate('/portal/catalogue')}
+            onClick={handleStudioBack}
             style={{
               background: 'none',
-              border: 'none',
               cursor: 'pointer',
-              color: '#5C4A3E',
+              color: '#1F1714',
               display: 'flex',
               alignItems: 'center',
               gap: 5,
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: 700,
               fontFamily: 'var(--font-display)',
-              padding: '2px 4px',
-              borderRadius: 5,
+              padding: '3px 8px',
+              borderRadius: 6,
+              backgroundColor: 'rgba(235, 215, 190, 0.45)',
+              border: '1px solid rgba(208, 174, 146, 0.5)',
               transition: 'all 120ms ease',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(44, 34, 30, 0.06)';
-              e.currentTarget.style.color = '#1F1714';
+              e.currentTarget.style.backgroundColor = 'rgba(235, 215, 190, 0.8)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-              e.currentTarget.style.color = '#5C4A3E';
+              e.currentTarget.style.backgroundColor = 'rgba(235, 215, 190, 0.45)';
             }}
+            title="Step back to previous screen or close open panel"
           >
-            <ArrowLeft size={13} />
-            Catalogue
+            <ArrowLeft size={13} strokeWidth={2.5} />
+            Back
           </button>
           <div style={{ width: 1, height: 14, backgroundColor: 'rgba(208, 174, 146, 0.5)' }} />
           <span

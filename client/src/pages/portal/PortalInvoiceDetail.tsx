@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -129,6 +129,51 @@ export const PortalInvoiceDetail: React.FC = () => {
   const [certModalOpen, setCertModalOpen] = useState(false);
   const [certLoading, setCertLoading] = useState(false);
   const [certificate, setCertificate] = useState<any | null>(null);
+
+  // Step-by-step Back Handler ("one by one back")
+  const handleBack = useCallback(() => {
+    // 1. If certificate modal is open, close it
+    if (certModalOpen) {
+      setCertModalOpen(false);
+      return;
+    }
+    // 2. If payment inline-panel is open, close it
+    if (panelOpen) {
+      setPanelOpen(false);
+      setPayStep('form');
+      setPayError(null);
+      return;
+    }
+    // 3. Otherwise navigate back in history one step
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/portal/invoices');
+    }
+  }, [certModalOpen, panelOpen, navigate]);
+
+  // Intercept browser back button when certificate modal or payment panel is open
+  useEffect(() => {
+    if (certModalOpen || panelOpen) {
+      window.history.pushState({ invoiceModal: true }, '');
+      const handlePop = () => {
+        if (certModalOpen) {
+          setCertModalOpen(false);
+          return;
+        }
+        if (panelOpen) {
+          setPanelOpen(false);
+          setPayStep('form');
+          setPayError(null);
+          return;
+        }
+      };
+      window.addEventListener('popstate', handlePop);
+      return () => {
+        window.removeEventListener('popstate', handlePop);
+      };
+    }
+  }, [certModalOpen, panelOpen]);
 
   const handleOpenCertificate = async () => {
     playWoodClick(1.1);
@@ -325,10 +370,10 @@ export const PortalInvoiceDetail: React.FC = () => {
           <p style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, margin: '0 0 8px' }}>Access Error</p>
           <p style={{ fontSize: 13, margin: '0 0 16px' }}>{error || 'Invoice not found or unauthorized'}</p>
           <button
-            onClick={() => navigate('/portal/invoices')}
+            onClick={handleBack}
             style={{ padding: '6px 14px', background: 'var(--surface)', border: '1px solid var(--brown-300)', borderRadius: 'var(--radius-sm)', fontSize: 12, fontFamily: 'var(--font-body)', fontWeight: 600, color: 'var(--brown-900)', cursor: 'pointer' }}
           >
-            ← Back to Invoices
+            ← Back
           </button>
         </div>
       </div>
@@ -366,10 +411,10 @@ export const PortalInvoiceDetail: React.FC = () => {
         {/* Left: back + invoice number + status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
           <button
-            onClick={() => navigate('/portal/invoices')}
+            onClick={handleBack}
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--brown-700)', fontFamily: 'var(--font-body)', display: 'flex', alignItems: 'center', gap: 4 }}
           >
-            ← Invoices
+            ← Back
           </button>
           <div style={{ width: 1, height: 16, background: 'var(--brown-300)' }} />
           <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, fontSize: 15, color: 'var(--brown-900)' }}>

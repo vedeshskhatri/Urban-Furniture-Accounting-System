@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import api from '../../lib/axios';
@@ -53,6 +53,35 @@ export const PortalBillDetail: React.FC = () => {
   const [paySubmitting, setPaySubmitting] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [paySuccess, setPaySuccess] = useState<string | null>(null);
+
+  // Step-by-step Back Handler ("one by one back")
+  const handleBack = useCallback(() => {
+    // 1. If payment modal is open, close it
+    if (showPayModal) {
+      setShowPayModal(false);
+      return;
+    }
+    // 2. Otherwise navigate back in history one step
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/portal/bills');
+    }
+  }, [showPayModal, navigate]);
+
+  // Intercept browser back button when payment modal is open
+  useEffect(() => {
+    if (showPayModal) {
+      window.history.pushState({ billPayModal: true }, '');
+      const handlePop = () => {
+        setShowPayModal(false);
+      };
+      window.addEventListener('popstate', handlePop);
+      return () => {
+        window.removeEventListener('popstate', handlePop);
+      };
+    }
+  }, [showPayModal]);
 
   const fetchBill = () => {
     setLoading(true);
@@ -132,10 +161,10 @@ export const PortalBillDetail: React.FC = () => {
           <h2 className="font-bold text-base mb-1 font-display">Access Error</h2>
           <p className="text-sm">{error || 'Vendor bill not found or unauthorized'}</p>
           <button
-            onClick={() => navigate('/portal/bills')}
+            onClick={handleBack}
             className="mt-4 px-4 py-1.5 bg-surface hover:bg-brown-100 text-brown-900 border border-brown-300 rounded-[8px] text-xs font-semibold cursor-pointer"
           >
-            ← Back to Bills
+            ← Back
           </button>
         </div>
       </div>
@@ -149,10 +178,10 @@ export const PortalBillDetail: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 no-print print:hidden">
         <button
-          onClick={() => navigate('/portal/bills')}
+          onClick={handleBack}
           className="text-xs font-semibold text-brown-700 hover:text-brown-900 flex items-center gap-1 transition-colors font-body cursor-pointer"
         >
-          ← Return to Bills
+          ← Back
         </button>
 
         <div className="flex items-center space-x-3">

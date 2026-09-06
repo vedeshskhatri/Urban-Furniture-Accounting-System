@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -133,6 +133,48 @@ export const PortalProductViewerPage: React.FC = () => {
   const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const [quoteSuccess, setQuoteSuccess] = useState<any | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+
+  // Step-by-step Back Handler ("one by one back")
+  const handleBack = useCallback(() => {
+    playWoodClick(0.9);
+    // 1. If quote modal is open, close it
+    if (quoteSuccess) {
+      setQuoteSuccess(null);
+      return;
+    }
+    // 2. If AR modal is open, close it
+    if (showArModal) {
+      setShowArModal(false);
+      return;
+    }
+    // 3. Otherwise navigate back in history one step
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/portal/catalogue');
+    }
+  }, [quoteSuccess, showArModal, navigate]);
+
+  // Intercept browser back button when AR modal or Quote modal is open
+  useEffect(() => {
+    if (quoteSuccess || showArModal) {
+      window.history.pushState({ productModal: true }, '');
+      const handlePop = () => {
+        if (quoteSuccess) {
+          setQuoteSuccess(null);
+          return;
+        }
+        if (showArModal) {
+          setShowArModal(false);
+          return;
+        }
+      };
+      window.addEventListener('popstate', handlePop);
+      return () => {
+        window.removeEventListener('popstate', handlePop);
+      };
+    }
+  }, [quoteSuccess, showArModal]);
 
   useEffect(() => {
     if (!id) return;
@@ -507,10 +549,7 @@ export const PortalProductViewerPage: React.FC = () => {
       {/* Top Breadcrumb & Controls */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <button
-          onClick={() => {
-            playWoodClick(0.9);
-            navigate('/portal/catalogue');
-          }}
+          onClick={handleBack}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -525,8 +564,9 @@ export const PortalProductViewerPage: React.FC = () => {
             color: 'var(--brown-900)',
             cursor: 'pointer',
           }}
+          title="Step back to previous screen or close open panel"
         >
-          <ArrowLeft size={14} /> Back to Catalogue
+          <ArrowLeft size={14} /> Back
         </button>
 
         {hasModel && (

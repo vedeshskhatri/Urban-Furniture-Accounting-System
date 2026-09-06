@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation, Link } from 'react-router-dom';
 import { usePortalAuth } from './PortalAuthGuard';
 import { ChairIcon } from '../../components/ui/BrandLogo';
 import {
@@ -10,6 +10,7 @@ import {
   LogOut,
   LogIn,
   ArrowUpRight,
+  ArrowLeft,
   ShieldCheck,
   Compass,
   Search,
@@ -20,6 +21,7 @@ import { GlobalCommandPalette } from '../../components/common/GlobalCommandPalet
 export const PortalLayout: React.FC = () => {
   const { user, logout } = usePortalAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
 
   /* True when internal staff member has authenticated on the main app */
@@ -124,6 +126,47 @@ export const PortalLayout: React.FC = () => {
               </div>
             </Link>
           </div>
+
+          {/* Step-by-Step Back Button */}
+          {location.pathname !== '/portal' && location.pathname !== '/portal/' && location.pathname !== '/portal/dashboard' && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/portal');
+                }
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 7,
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: 'var(--font-display)',
+                color: '#1F1714',
+                backgroundColor: 'rgba(235, 215, 190, 0.45)',
+                border: '1px solid rgba(208, 174, 146, 0.6)',
+                cursor: 'pointer',
+                transition: 'all 120ms ease',
+                flexShrink: 0,
+                zIndex: 2,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(235, 215, 190, 0.8)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(235, 215, 190, 0.45)';
+              }}
+              title="Go back to previous screen"
+            >
+              <ArrowLeft size={13} strokeWidth={2.5} />
+              <span>Back</span>
+            </button>
+          )}
 
           {/* Center: Navigation Headings */}
           <nav

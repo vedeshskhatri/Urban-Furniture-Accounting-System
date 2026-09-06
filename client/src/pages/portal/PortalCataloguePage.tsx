@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -85,6 +85,26 @@ export const PortalCataloguePage: React.FC = () => {
 
   const itemsPerPage = gridDensity === 'dense' ? 16 : 12;
 
+  const closeQuickView = useCallback(() => {
+    if (window.history.state?.catalogueQuickView) {
+      window.history.back();
+    } else {
+      setQuickViewProduct(null);
+    }
+  }, []);
+
+  // Listen for browser back (popstate) to close Quick View before page navigation
+  useEffect(() => {
+    if (!quickViewProduct) return;
+    const handlePopState = () => {
+      setQuickViewProduct(null);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [quickViewProduct]);
+
   // Keyboard shortcut for Cmd+K / search focus
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -97,12 +117,12 @@ export const PortalCataloguePage: React.FC = () => {
           searchInputRef.current?.focus();
         }
       } else if (e.key === 'Escape' && quickViewProduct) {
-        setQuickViewProduct(null);
+        closeQuickView();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [quickViewProduct]);
+  }, [quickViewProduct, closeQuickView]);
 
   useEffect(() => {
     setLoading(true);
@@ -238,6 +258,7 @@ export const PortalCataloguePage: React.FC = () => {
   const handleOpenQuickView = (e: React.MouseEvent, product: CatalogueProduct) => {
     e.stopPropagation();
     playWoodClick(0.9);
+    window.history.pushState({ catalogueQuickView: true }, '');
     setQuickViewProduct(product);
     setSelectedQuickFinish('Light Oak');
   };
@@ -1141,7 +1162,7 @@ export const PortalCataloguePage: React.FC = () => {
       {/* ── Interactive Quick View Modal ── */}
       {quickViewProduct && (
         <div
-          onClick={() => setQuickViewProduct(null)}
+          onClick={closeQuickView}
           style={{
             position: 'fixed',
             inset: 0,
@@ -1173,7 +1194,7 @@ export const PortalCataloguePage: React.FC = () => {
           >
             {/* Close Button */}
             <button
-              onClick={() => setQuickViewProduct(null)}
+              onClick={closeQuickView}
               style={{
                 position: 'absolute',
                 top: 14,
