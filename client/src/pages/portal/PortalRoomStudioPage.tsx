@@ -423,9 +423,10 @@ const RoomStyleVisualBanner: React.FC<{
         {/* Custom saved style representation */}
         {style.isCustom && (
           <g transform="translate(150, 52)">
-            {style.items.slice(0, 8).map((item, idx) => {
-              const cx = Math.max(-80, Math.min(80, item.position[0] * 30));
-              const cy = Math.max(-25, Math.min(25, item.position[2] * 16));
+            {style.items.slice(0, 24).map((item, idx) => {
+              const cx = Math.max(-105, Math.min(105, item.position[0] * 22));
+              const cy = Math.max(-28, Math.min(28, item.position[2] * 14));
+              const rotDeg = ((item.rotationY || 0) * 180) / Math.PI;
               return (
                 <rect
                   key={idx}
@@ -437,6 +438,7 @@ const RoomStyleVisualBanner: React.FC<{
                   fill={furnitureFill}
                   stroke={accentFill}
                   strokeWidth="0.8"
+                  transform={`rotate(${rotDeg}, ${cx}, ${cy})`}
                 />
               );
             })}
@@ -919,7 +921,7 @@ export const PortalRoomStudioPage: React.FC = () => {
       return [];
     }
   });
-  const allRoomStyles = [...ROOM_STYLES, ...customRoomStyles];
+  const allRoomStyles = [...customRoomStyles, ...ROOM_STYLES];
 
   // Save Style Modal States
   const [isSaveStyleModalOpen, setIsSaveStyleModalOpen] = useState<boolean>(false);
@@ -1593,7 +1595,8 @@ export const PortalRoomStudioPage: React.FC = () => {
       customRot?: number,
       customScaleFactor?: number,
       customExactScale?: number,
-      customFinish?: 'oak' | 'teak' | 'walnut' | 'charcoal'
+      customFinish?: 'oak' | 'teak' | 'walnut' | 'charcoal',
+      skipSelect?: boolean
     ) => {
       if (!sceneRef.current) return;
 
@@ -1657,7 +1660,9 @@ export const PortalRoomStudioPage: React.FC = () => {
         };
 
         setPlacedItems((prev) => [...prev, newItem]);
-        setSelectedInstanceId(instanceId);
+        if (!skipSelect) {
+          setSelectedInstanceId(instanceId);
+        }
         return;
       }
 
@@ -1746,7 +1751,9 @@ export const PortalRoomStudioPage: React.FC = () => {
           };
 
           setPlacedItems((prev) => [...prev, newItem]);
-          setSelectedInstanceId(instanceId);
+          if (!skipSelect) {
+            setSelectedInstanceId(instanceId);
+          }
           setLoadingModel(false);
         },
         undefined,
@@ -2156,24 +2163,26 @@ export const PortalRoomStudioPage: React.FC = () => {
 
     // 3. Place each curated furniture item with exact model, size/scale, position, and rotation
     style.items.forEach((item) => {
-      // 1. Try finding by exact modelId
+      // 1. Try finding by exact modelId (handles built-in models & persistent imported models)
       let model = item.modelId
         ? catalogModels.find((m) => m.id === item.modelId)
         : null;
 
-      // 2. Try finding by exact url
-      if (!model && item.url) {
+      // 2. Try finding by exact url (skipping temporary blob URLs)
+      if (!model && item.url && !item.url.startsWith('blob:')) {
         const itemUrlClean = item.url.replace(/^\/models\//i, '/Models/');
         model = catalogModels.find(
           (m) => m.url.replace(/^\/models\//i, '/Models/') === itemUrlClean
         );
       }
 
-      // 3. Try finding by query (filename / name)
-      if (!model) {
+      // 3. Try finding by query (modelId, filename, or name)
+      if (!model && item.query) {
         const q = item.query.toLowerCase();
         model = catalogModels.find(
-          (m) => m.filename.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)
+          (m) => m.id.toLowerCase() === q ||
+                 m.filename.toLowerCase().includes(q) ||
+                 m.name.toLowerCase().includes(q)
         );
       }
 
@@ -2181,7 +2190,7 @@ export const PortalRoomStudioPage: React.FC = () => {
       if (!model && item.fallbackQuery) {
         const fb = item.fallbackQuery.toLowerCase();
         model = catalogModels.find(
-          (m) => m.filename.toLowerCase().includes(fb) || m.name.toLowerCase().includes(fb)
+          (m) => m.name.toLowerCase().includes(fb) || m.filename.toLowerCase().includes(fb)
         );
       }
 
@@ -2192,7 +2201,8 @@ export const PortalRoomStudioPage: React.FC = () => {
           item.rotationY,
           item.scaleFactor,
           item.scale,
-          item.finish
+          item.finish,
+          true // skipSelect to avoid selecting random piece on full room load
         );
       }
     });
@@ -2233,18 +2243,24 @@ export const PortalRoomStudioPage: React.FC = () => {
       palette: ['#1F1714', saveStyleColor, '#D0AE92', '#FAF6F0'],
       isCustom: true,
       createdAt: new Date().toISOString(),
-      items: placedItems.map((item) => ({
-        query: item.url.split('/').pop()?.replace('.glb', '') || item.name,
-        fallbackQuery: item.name,
-        position: [item.position[0], item.position[1], item.position[2]],
-        rotationY: item.rotationY,
-        nameLabel: item.name,
-        scaleFactor: item.scaleFactor || 1.0,
-        scale: item.scale,
-        modelId: item.modelId,
-        url: item.url,
-        finish: item.finish,
-      })),
+      items: placedItems.map((item) => {
+        const isBlob = item.url.startsWith('blob:');
+        const cleanFilename = isBlob
+          ? ''
+          : (item.url.split('/').pop()?.replace(/\.glb$/i, '') || '');
+        return {
+          query: item.modelId || cleanFilename || item.name,
+          fallbackQuery: item.name,
+          position: [item.position[0], item.position[1], item.position[2]] as [number, number, number],
+          rotationY: item.rotationY,
+          nameLabel: item.name,
+          scaleFactor: item.scaleFactor || 1.0,
+          scale: item.scale,
+          modelId: item.modelId,
+          url: item.url,
+          finish: item.finish,
+        };
+      }),
     };
 
     const updated = [newStyle, ...customRoomStyles];
@@ -2361,7 +2377,8 @@ export const PortalRoomStudioPage: React.FC = () => {
                 item.rotationY,
                 item.scaleFactor,
                 item.scale,
-                item.finish
+                item.finish,
+                true // skipSelect on restore
               );
               restoredCount++;
             }
@@ -2644,6 +2661,70 @@ export const PortalRoomStudioPage: React.FC = () => {
             >
               {allRoomStyles.length}
             </span>
+          </button>
+
+          {/* Direct Trigger: Save to Room Styles */}
+          <button
+            onClick={() => {
+              playWoodClick(0.95);
+              if (placedItems.length === 0) {
+                setSaveSuccessToast('Place at least 1 furniture piece first to save as a Room Style');
+                setTimeout(() => setSaveSuccessToast(null), 3200);
+                return;
+              }
+              if (!saveStyleName) {
+                setSaveStyleName(`Custom Studio Layout (${placedItems.length} pcs)`);
+              }
+              if (!saveStyleTagline) {
+                setSaveStyleTagline(`${placedItems.length} handcrafted pieces with bespoke orientation & finishes`);
+              }
+              setIsSaveStyleModalOpen(true);
+            }}
+            title="Save current furniture arrangement, orientations & finishes into reusable Room Styles"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              backgroundColor: '#8A4B38',
+              color: '#FAF7F2',
+              padding: '6px 13px',
+              borderRadius: 8,
+              border: 'none',
+              boxShadow: '0 2px 10px rgba(138, 75, 56, 0.3)',
+              fontSize: 12,
+              fontWeight: 700,
+              fontFamily: 'var(--font-display)',
+              cursor: 'pointer',
+              transition: 'all 140ms ease',
+              whiteSpace: 'nowrap',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 14px rgba(138, 75, 56, 0.45)';
+              e.currentTarget.style.backgroundColor = '#9E5642';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 2px 10px rgba(138, 75, 56, 0.3)';
+              e.currentTarget.style.backgroundColor = '#8A4B38';
+            }}
+          >
+            <BookmarkPlus size={13} color="#FAF7F2" />
+            <span>Save to Room Styles</span>
+            {placedItems.length > 0 && (
+              <span
+                style={{
+                  fontSize: 9.5,
+                  fontFamily: 'var(--font-mono)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                  padding: '1px 5px',
+                  borderRadius: 4,
+                  fontWeight: 700,
+                }}
+              >
+                {placedItems.length}
+              </span>
+            )}
           </button>
 
           {/* Import Custom .glb Model */}
@@ -3196,26 +3277,57 @@ export const PortalRoomStudioPage: React.FC = () => {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 {placedItems.length > 0 && (
-                  <button
-                    onClick={handleClearAll}
-                    title="Clear all furniture pieces from room"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#C0392B',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                    }}
-                  >
-                    <Trash2 size={11} />
-                    <span>Clear</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        playWoodClick(0.95);
+                        if (!saveStyleName) {
+                          setSaveStyleName(`Custom Studio Layout (${placedItems.length} pcs)`);
+                        }
+                        if (!saveStyleTagline) {
+                          setSaveStyleTagline(`${placedItems.length} handcrafted pieces with bespoke orientation & finishes`);
+                        }
+                        setIsSaveStyleModalOpen(true);
+                      }}
+                      title="Save current room layout to Room Styles"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#8A4B38',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
+                      <BookmarkPlus size={11} />
+                      <span>Save Style</span>
+                    </button>
+                    <button
+                      onClick={handleClearAll}
+                      title="Clear all furniture pieces from room"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#C0392B',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                      }}
+                    >
+                      <Trash2 size={11} />
+                      <span>Clear</span>
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => setIsDockOpen(false)}
