@@ -1,702 +1,697 @@
-# Urban Furniture — Accounting System
+<div align="center">
 
-> **A production-grade, double-entry accounting platform built for a furniture business.** Modelled on the Odoo accounting module architecture — without using Odoo. Runs entirely offline inside Docker Compose.
+<img src="https://readme-typing-svg.demolab.com?font=Montserrat&weight=700&size=36&pause=1000&color=4A3A34&center=true&vCenter=true&width=600&lines=Urban+Furniture;Accounting+System" alt="Urban Furniture" />
 
----
+<br/>
 
-## Table of Contents
+<!-- Badges -->
+<img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql&logoColor=white"/>
+<img src="https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white"/>
+<img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black"/>
+<img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/>
+<img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white"/>
 
-1. [Project Overview](#1-project-overview)
-2. [Feature Set](#2-feature-set)
-3. [Tech Stack](#3-tech-stack)
-4. [System Architecture](#4-system-architecture)
-5. [Data Flow](#5-data-flow)
-6. [Double-Entry Posting Mechanics](#6-double-entry-posting-mechanics)
-7. [Authorisation Model](#7-authorisation-model)
-8. [Module Breakdown](#8-module-breakdown)
-9. [Database Schema](#9-database-schema-key-tables)
-10. [API Reference](#10-api-reference)
-11. [Design System](#11-design-system)
-12. [Getting Started](#12-getting-started)
-13. [Environment Variables](#13-environment-variables)
-14. [Accounting Correctness Rules](#14-accounting-correctness-rules)
-15. [Team & Module Ownership](#15-team--module-ownership)
+<br/><br/>
 
----
+<img src="https://img.shields.io/badge/Runs-100%25%20Offline-5F7052?style=flat-square"/>
+<img src="https://img.shields.io/badge/Money-DECIMAL%20end--to--end-C08A3E?style=flat-square"/>
+<img src="https://img.shields.io/badge/Double--Entry-PostgreSQL%20Enforced-4A3A34?style=flat-square"/>
+<img src="https://img.shields.io/badge/AI%20CFO-Local%20Ollama-77574A?style=flat-square"/>
 
-## 1. Project Overview
+<br/><br/>
 
-Urban Furniture is a full-stack accounting information system implementing:
+> **A production-grade, double-entry accounting platform built for a furniture business.**
+> Modelled on the Odoo accounting module architecture — without using Odoo.
+> Runs entirely offline inside Docker Compose.
 
-- **Double-entry bookkeeping** — every transaction creates balanced journal entries (∑ Debits = ∑ Credits), enforced by a PostgreSQL deferred constraint trigger at the database level.
-- **Full purchase-to-payment cycle** — Purchase Orders → Vendor Bills → Payments, with automatic ledger posting.
-- **Full sales-to-receipt cycle** — Sales Orders → Customer Invoices → Receipts, with tax recognition and ledger posting.
-- **Three financial reports** — Balance Sheet (cumulative as-of date), Profit & Loss (date range), Budget Report (period-bound).
-- **Customer self-service portal** — contacts log in, view their invoices and bills, and make online payments via Razorpay.
-- **AI CFO Copilot** — a local Ollama-backed LLM that answers accounting questions about live ledger data.
-- **Room Studio** — an interactive 3D room visualiser for the furniture catalogue, built entirely in the browser.
-
-**Key constraint:** the system runs 100% offline. No CDNs, no external APIs (except Razorpay for payment gateway and Ollama running locally), no hosted fonts. Everything runs with the network cable pulled out.
+<br/>
 
 ---
 
-## 2. Feature Set
+</div>
 
-### Master Data
+## 📋 Table of Contents
+
+| # | Section |
+|---|---|
+| 1 | [🏢 Project Overview](#1--project-overview) |
+| 2 | [✅ Feature Set](#2--feature-set) |
+| 3 | [🛠 Tech Stack](#3--tech-stack) |
+| 4 | [🏗 System Architecture](#4--system-architecture) |
+| 5 | [🔄 Data Flow](#5--data-flow) |
+| 6 | [⚖️ Double-Entry Mechanics](#6-️-double-entry-posting-mechanics) |
+| 7 | [🔐 Authorisation Model](#7--authorisation-model) |
+| 8 | [📦 Module Breakdown](#8--module-breakdown) |
+| 9 | [🗄 Database Schema](#9--database-schema) |
+| 10 | [🌐 API Reference](#10--api-reference) |
+| 11 | [🎨 Design System](#11--design-system) |
+| 12 | [🚀 Getting Started](#12--getting-started) |
+| 13 | [⚙️ Environment Variables](#13-️-environment-variables) |
+| 14 | [📐 Accounting Correctness Rules](#14--accounting-correctness-rules) |
+| 15 | [👥 Team & Ownership](#15--team--module-ownership) |
+
+---
+
+## 1 🏢 Project Overview
+
+<table>
+<tr>
+<td width="50%">
+
+### What it is
+
+Urban Furniture is a **full-stack, double-entry accounting information system** implementing the complete Odoo accounting module architecture — built from scratch.
+
+**Core guarantees:**
+- ∑ Debits = ∑ Credits, enforced by PostgreSQL constraint trigger at `COMMIT`
+- No float arithmetic anywhere in the money pipeline
+- Portal IDOR: structurally impossible, not defensively patched
+- 100% air-gapped — no outbound network at demo time
+
+</td>
+<td width="50%">
+
+### What it covers
+
+| Cycle | Details |
+|---|---|
+| 🛒 **Purchase** | PO → Bill → Payment |
+| 💰 **Sales** | SO → Invoice → Receipt |
+| 📊 **Reports** | BS · P&L · Budget |
+| 🌐 **Portal** | Customer self-service + Razorpay |
+| 🤖 **AI Copilot** | Local Ollama CFO assistant |
+| 🪑 **Room Studio** | 3D furniture visualiser |
+
+</td>
+</tr>
+</table>
+
+---
+
+## 2 ✅ Feature Set
+
+### 🗂 Master Data
 
 | Entity | Key Fields |
 |---|---|
-| **Contact** | Name, Type (Customer / Vendor / Both), Email, Mobile, Address, City, State, Pincode, Profile Image, GSTIN |
-| **Product** | Name, Type (Goods / Service / Combo), Sales Price, Cost, Category, Images (multi-angle 360° viewer) |
+| **Contact** | Name, Type (Customer / Vendor / Both), Email, Mobile, Address, GSTIN, Profile Image |
+| **Product** | Name, Type (Goods / Service / **Combo**), Sales Price, Cost, Category, 360° Images |
 | **Chart of Accounts** | Name, Type (Asset / Liability / Bank / Cash / Capital / Income / Expenses / Other Expenses) |
 | **Journal** | Name, Type, Default Debit Account, Default Credit Account |
-| **Journal Entry** | Journal, Date, Reference, Lines (Account + Partner + Debit + Credit), Status (Draft / Posted) |
-| **Analytic Account** | Name, Type (Income / Expense) — used for budget tracking |
-| **Budget** | Name, Period (Start–End), Responsible Person, Lines (Analytic Account + Committed Amount) |
+| **Journal Entry** | Journal, Date, Reference, Lines (Account + Partner + Debit + Credit), Status |
+| **Analytic Account** | Name, Type (Income / Expense) — drives budget tracking |
+| **Budget** | Name, Period, Responsible Person, Lines (Analytic + Committed Amount) |
 
-### Transactions
+### 💳 Transactions & Journal Entry Triggers
 
-| Document | Trigger for Journal Entry |
+```
+┌──────────────────────┬──────────────────────────────────────────────────┐
+│ Document             │ Creates Journal Entry?                           │
+├──────────────────────┼──────────────────────────────────────────────────┤
+│ Purchase Order       │ ❌  No — confirm creates zero entries            │
+│ Vendor Bill confirm  │ ✅  DR Purchase Expense + Tax  /  CR Creditors   │
+│ Sales Order          │ ❌  No — confirm creates zero entries            │
+│ Customer Invoice     │ ✅  DR Debtors  /  CR Sales Income + Tax         │
+│ Payment              │ ✅  DR/CR Cash|Bank  ↔  DR/CR Debtors|Creditors  │
+└──────────────────────┴──────────────────────────────────────────────────┘
+```
+
+### 📈 Reports
+
+| Report | Date Semantics | Output |
+|---|---|---|
+| **Balance Sheet** | Cumulative `≤ asOf` date | Assets = Liabilities + Equity |
+| **Profit & Loss** | `BETWEEN start AND end` | Income − Expenses = Net Profit |
+| **Budget Report** | Within budget period | Committed vs Achieved vs Remaining |
+| **Analytics Dashboard** | Rolling windows | Ageing, cash flow, top customers |
+| **GST Report** | Monthly period | GSTR-1 / GSTR-3B reconciliation |
+| **Audit Feed** | Chronological | Every mutation, actor, timestamp, diff |
+| **Ledger Drill-down** | Per account | 4-level chain to source document |
+
+### 👥 Roles
+
+| Role | Can Do |
 |---|---|
-| **Purchase Order** | ❌ No entry on confirm |
-| **Vendor Bill** | ✅ Entry posted on Bill confirm |
-| **Sales Order** | ❌ No entry on confirm |
-| **Customer Invoice** | ✅ Entry posted on Invoice confirm |
-| **Payment** | ✅ Entry posted immediately |
-
-### Reports
-
-- **Balance Sheet** — real-time Assets, Liabilities, Equity (Capital + retained earnings). Takes a single as-of date.
-- **Profit & Loss** — Revenue minus Expenses, net profit. Takes a date range (BETWEEN start and end).
-- **Budget Report** — Committed vs Achieved amounts per analytic account, with drill-down to source documents.
-- **Analytics Dashboard** — Receivable ageing, payable ageing, cash flow, top customers/vendors.
-- **GST Report** — GSTR-1 / GSTR-3B style output tax and input tax reconciliation.
-- **Audit Feed** — chronological log of every mutation with actor, timestamp, and diff.
-- **Ledger Drill-down** — Report line → account ledger → journal entries → source document (4-level chain).
-
-### Roles
-
-| Role | Capabilities |
-|---|---|
-| **Admin** | Full access — create/modify/archive master data, post transactions, view all reports |
-| **Accountant** | Same as Admin except cannot manage users |
-| **Contact (Portal User)** | View own invoices/bills only. Make payments online. Cannot see other contacts' documents. |
-| **System** | Validates data, enforces balance, computes payment status from views |
-
-### Auth Rules (from mockup spec)
-
-- Login ID: unique, 6–12 characters
-- Password: >8 chars, one lowercase, one uppercase, one special character
-- Email: unique across the system
-- Login error text exactly: `Invalid Login Id or Password`
-- Signup creates **Accountants only** (not admins)
-- Forgot Password flow supported
+| 🔴 **Admin** | Full access — master data, transactions, reports, user management |
+| 🟡 **Accountant** | Same as Admin except user management |
+| 🟢 **Contact (Portal)** | Own invoices/bills only + online payments. 403 on any other ID. |
+| ⚙️ **System** | Validates data, enforces balance, computes status from views |
 
 ---
 
-## 3. Tech Stack
+## 3 🛠 Tech Stack
 
-| Layer | Choice | Rationale |
+<div align="center">
+
+| Layer | Choice | Why |
 |---|---|---|
-| **Frontend** | React 18 + Vite + Tailwind CSS | Fast HMR, team proficiency |
-| **Backend** | Node 20 + Express + TypeScript | TypeScript is non-negotiable for money code |
-| **Database** | PostgreSQL 16 | Reviewers specifically care about PostgreSQL |
-| **ORM** | Prisma (migrations) + raw `pg` (transactions) | Prisma for schema management; raw `pg` for deferred-trigger transactions |
-| **Auth** | Self-built JWT in httpOnly cookies + Argon2id | No BaaS. SHA-256 or plaintext = disqualification |
-| **Validation** | Zod — schemas shared client + server | Single source of truth via `shared/schemas/` |
-| **Money** | `DECIMAL(14,2)` in PostgreSQL + `decimal.js` in JS | Floats produce ₹0.01 drift and kill the correctness demo |
-| **Forms** | React Hook Form + Zod resolver | |
-| **Server state** | React Query (TanStack Query) | Cache invalidation after mutations |
-| **Charts** | Recharts | Budget pie, dashboard trends |
-| **PDF** | Puppeteer HTML→PDF, server-side | Deterministic output; never a browser print dialog |
-| **Real-time** | Socket.IO | Live report updates; ledger flash on post |
-| **Search** | PostgreSQL `tsvector` full-text search | No Elasticsearch needed at this scale |
-| **AI Copilot** | Ollama (local) + `qwen2.5:7b` model | Fully offline LLM, no external API |
-| **Payments** | Razorpay (payment gateway) | Online payments from the customer portal |
-| **Containers** | Docker Compose: `api`, `web`, `db`, `ollama` | Containerisation is evaluated |
+| ![React](https://img.shields.io/badge/-React_18-61DAFB?logo=react&logoColor=black&style=flat-square) | Vite + Tailwind CSS | Fast HMR, team proficiency |
+| ![Node](https://img.shields.io/badge/-Node_20-339933?logo=node.js&logoColor=white&style=flat-square) | Express + **TypeScript** | TS is non-negotiable for money code |
+| ![Postgres](https://img.shields.io/badge/-PostgreSQL_16-336791?logo=postgresql&logoColor=white&style=flat-square) | with DEFERRABLE triggers | Reviewers specifically care about PG |
+| ![Prisma](https://img.shields.io/badge/-Prisma-2D3748?logo=prisma&logoColor=white&style=flat-square) | + raw `pg` for transactions | Deferred triggers need raw PoolClient |
+| ![JWT](https://img.shields.io/badge/-JWT+Argon2id-000000?logo=jsonwebtokens&logoColor=white&style=flat-square) | httpOnly cookies | No BaaS. SHA-256 = disqualification |
+| ![Zod](https://img.shields.io/badge/-Zod-3E67B1?style=flat-square) | Shared client + server | Single source of truth |
+| ![decimal.js](https://img.shields.io/badge/-decimal.js-C08A3E?style=flat-square) | `DECIMAL(14,2)` in PG | Floats kill the correctness demo |
+| ![TanStack](https://img.shields.io/badge/-React_Query-FF4154?logo=reactquery&logoColor=white&style=flat-square) | TanStack Query | Cache invalidation after mutations |
+| ![Puppeteer](https://img.shields.io/badge/-Puppeteer-40B5A4?logo=puppeteer&logoColor=white&style=flat-square) | Server-side PDF | Deterministic, no browser dialog |
+| ![Socket.IO](https://img.shields.io/badge/-Socket.IO-010101?logo=socket.io&logoColor=white&style=flat-square) | Real-time updates | Live ledger flash at post |
+| ![Ollama](https://img.shields.io/badge/-Ollama_qwen2.5:7b-4A3A34?style=flat-square) | Local LLM | Fully air-gapped CFO Copilot |
+| ![Razorpay](https://img.shields.io/badge/-Razorpay-02042B?logo=razorpay&logoColor=white&style=flat-square) | Payment gateway | Portal online payments |
+| ![Docker](https://img.shields.io/badge/-Docker_Compose-2496ED?logo=docker&logoColor=white&style=flat-square) | 4 services | Containerisation is judged |
 
-### Pinned Versions
+</div>
 
+### ❌ Deliberately Not Used
+
+| Rejected | Reason |
+|---|---|
+| Odoo itself | Using their engine = we configured, not built |
+| Gemini / OpenAI / any LLM API | External API — violates offline constraint |
+| Redis | Cannot name the query it fixes at demo scale |
+| Auth0 / Clerk / Firebase | BaaS — instant disqualification |
+| Google Fonts CDN | External network call — `.woff2` self-hosted |
+| `float` for money | Non-negotiable |
+| Elasticsearch | PostgreSQL FTS is sufficient and more impressive |
+
+### 📌 Pinned Versions
 ```
 node 20.x · postgres 16 · react 18.3 · vite 5 · tailwind 3.4
 prisma 5.x · zod 3.23 · decimal.js 10.4 · socket.io 4.7 · puppeteer 22
 ```
 
-### Deliberately Not Used
+---
 
-| Rejected | Reason |
-|---|---|
-| Odoo itself | Using their engine means we configured, not built |
-| Any LLM API (Gemini, OpenAI) | External API, violates offline constraint |
-| Redis | Cannot name the query it fixes at demo scale |
-| Auth0 / Clerk / Firebase | BaaS — instant disqualification |
-| Google Fonts CDN | External network call — fonts are self-hosted as `.woff2` |
-| Floats for money | Non-negotiable correctness requirement |
-| Elasticsearch | PostgreSQL FTS is sufficient and more impressive here |
+## 4 🏗 System Architecture
+
+```
+┌──────────────────────────── Docker Compose ─────────────────────────────┐
+│                                                                          │
+│   web  (React 18 + Vite)                 api  (Express + TypeScript)    │
+│  ┌──────────────────────────┐           ┌────────────────────────────┐  │
+│  │  🖥  Admin App            │           │  routes/     thin layer    │  │
+│  │  /dashboard              │           │      ↓                     │  │
+│  │  /sales                  │──cookie──▶│  middleware/ auth·role·    │  │
+│  │  /purchase               │   JWT     │              scope         │  │
+│  │  /account                │           │      ↓                     │  │
+│  │  /report                 │           │  services/   all logic     │  │
+│  │                          │           │      ↓                     │  │
+│  │  🌐  Contact Portal       │           │  db/         Prisma + pg   │  │
+│  │  /portal/...             │           └──────────┬─────────────────┘  │
+│  └──────────┬───────────────┘                      │                    │
+│             │                            db  PostgreSQL 16              │
+│             │◀───── Socket.IO (real-time ledger flash on post) ─────────│
+│                                                                          │
+│   🤖  ollama  (qwen2.5:7b)  ◀──── CFO Copilot tool calls ──── api      │
+└──────────────────────────────────────────────────────────────────────────┘
+                      ✈  No outbound network. Ever.
+```
+
+### Backend Layers
+
+```
+ routes/          Parse → call service → shape { data, error }
+     ↓
+ middleware/       authenticate (JWT) → check role → apply scope
+     ↓
+ services/         ALL business logic lives here. Zero logic in routes.
+     ↓
+ db/               Prisma (migrations) + raw pg (transactions + triggers)
+```
+
+> **The Critical Invariant:** `postingService.ts` is the **only** file that writes to `journal_entries` and `journal_entry_lines`. Everything else calls `postDocument()`. Nobody else inserts ledger rows.
 
 ---
 
-## 4. System Architecture
-
-```
-┌──────────────────────────── Docker Compose ────────────────────────────┐
-│                                                                         │
-│  web (React + Vite)                      api (Express + TypeScript)     │
-│  ┌─────────────────────┐                ┌──────────────────────────┐   │
-│  │  Admin App          │                │  routes/      (thin)     │   │
-│  │  (/dashboard, /sales│ ──httpOnly──▶  │  middleware/  (auth/role) │   │
-│  │   /purchase, etc.)  │   cookie JWT   │  services/   (all logic) │   │
-│  │                     │                │  db/          (Prisma+pg) │   │
-│  │  Contact Portal     │                └──────────┬───────────────┘   │
-│  │  (/portal/...)      │                           │                   │
-│  └────────┬────────────┘                           ▼                   │
-│           │                              db (PostgreSQL 16)             │
-│           │◀──── Socket.IO (real-time ledger events) ──────────────────│
-│                                                                         │
-│  ollama (qwen2.5:7b) ◀── CFO Copilot queries ── api                   │
-└─────────────────────────────────────────────────────────────────────────┘
-                  No outbound network. Runs offline.
-```
-
-### Backend Layer Contract
-
-```
-routes/          Parse request → call service → shape { data, error } response
-    ↓
-middleware/      authenticate (JWT) → check role → apply scope
-    ↓
-services/        ALL business logic lives here. No logic in routes.
-    ↓
-db/              Prisma (migrations, simple queries) + raw pg (transactions)
-```
-
-**The critical invariant:** `postingService.ts` is the **only** module that writes to `journal_entries` and `journal_entry_lines`. Vendor bill and invoice services call `postDocument()`. Nobody else inserts ledger rows.
-
----
-
-## 5. Data Flow
+## 5 🔄 Data Flow
 
 ### Request Lifecycle
 
-Every API call goes through this exact sequence:
+```mermaid
+flowchart LR
+    B([Browser]) -->|httpOnly cookie| MW[middleware/auth]
+    MW -->|JWT verified| R[Role Check]
+    R -->|scopeFor| S[Scope Applied]
+    S -->|Zod| V[Validate Body]
+    V -->|pg transaction| SVC[Service]
+    SVC -->|every mutation| AL[(audit_log)]
+    SVC --> RS{Result}
+    RS -->|success| OK["{ data: T, error: null }"]
+    RS -->|failure| ERR["{ data: null, error: { code, message, severity } }"]
 
-```
-Browser
-  → Cookie parsed → JWT verified → user object loaded
-  → Role check    (can this role access this resource type at all?)
-  → Scope applied (which specific rows can this user see?)
-  → Zod validates request body
-  → Service runs inside a pg transaction
-  → audit_log written (every mutation)
-  → { data: T, error: null } or { data: null, error: { code, message, severity, fields? } }
-  → Response returned to browser
-```
-
-**API Contract — uniform envelope:**
-
-```ts
-// Success
-{ data: T, error: null }
-
-// Failure
-{ data: null, error: {
-    code: string,
-    message: string,
-    severity: 'blocking' | 'warning',  // drives which UI component renders
-    fields?: Record<string, string>     // per-field validation errors
-}}
+    style B fill:#F9F2E4,stroke:#4A3A34
+    style OK fill:#EDF1E8,stroke:#5F7052
+    style ERR fill:#F8EAE6,stroke:#9E4A38
+    style AL fill:#EBD7BE,stroke:#A8836C
 ```
 
-`severity: 'blocking'` → action button is disabled, red bar shown.
-`severity: 'warning'` → dashed yellow border shown, action button stays enabled.
-
-**Money across the wire is always a string:** `"5000.00"`. Parsed with `decimal.js` on both sides.
+**Severity drives the UI component:**
+- 🔴 `severity: 'blocking'` → `<BlockingWarning>` — action button disabled
+- 🟡 `severity: 'warning'` → `<NonBlockingWarning>` — dismissible, action stays enabled
 
 ---
 
-### Vendor Bill → Journal Entry Flow
+### 🧾 Vendor Bill → Journal Entry
 
-```
-User: Confirm Bill
-        │
-        ▼
-POST /api/bills/:id/confirm
-        │
-        ▼
-  ┌─── BEGIN TRANSACTION ───────────────────────────────────────────────┐
-  │                                                                      │
-  │  1. SELECT bill + lines FOR UPDATE (assert status = 'draft')        │
-  │                                                                      │
-  │  2. Budget check per line's analytic account                         │
-  │     → if committed amount exceeded: attach NON-BLOCKING warning      │
-  │       (do NOT stop the transaction)                                  │
-  │                                                                      │
-  │  3. Assign document number                                           │
-  │     SequenceService.nextDocNumber('BILL')  ← row-lock on sequences  │
-  │     → Bill/2026/0001 (gapless, race-safe)                           │
-  │                                                                      │
-  │  4. Create journal_entry row (status = 'draft', journal = Purchase)  │
-  │                                                                      │
-  │  5. Create journal_entry_lines:                                      │
-  │     DR  Purchase Expense  (per line, with analytic_account_id)      │
-  │     DR  Input Tax Credit  (if tax > 0)                              │
-  │     CR  Creditors         (partner = vendor, grand total)           │
-  │                                                                      │
-  │  6. Set journal_entry.status = 'posted'                             │
-  │     → PostgreSQL deferred trigger trg_lines_balanced fires           │
-  │       on COMMIT: asserts ∑ debits = ∑ credits                       │
-  │                                                                      │
-  │  7. vendor_bill.status = 'confirmed'                                 │
-  │     vendor_bill.journal_entry_id = entry.id                         │
-  │                                                                      │
-  │  8. stock_moves: +qty per goods line                                 │
-  │                                                                      │
-  │  9. audit_log: actor, action, timestamp, diff                       │
-  │                                                                      │
-  └─── COMMIT (trigger validates balance; rolls back if unbalanced) ───┘
-        │
-        ▼
-  Response: { data: { billId, entryId }, error: null }
-  (with optional NON-BLOCKING warning if budget was overrun)
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant API as 🌐 API
+    participant SVC as ⚙️ postingService
+    participant DB as 🐘 PostgreSQL
+
+    U->>API: POST /api/bills/:id/confirm
+    API->>DB: BEGIN TRANSACTION
+    DB-->>API: tx started
+
+    API->>DB: SELECT bill + lines FOR UPDATE
+    Note over API: Assert status = 'draft'
+
+    API->>API: Budget check per analytic line
+    Note over API: Over budget? → NON-BLOCKING warning<br/>(do not stop transaction)
+
+    API->>DB: SequenceService.nextDocNumber('BILL')
+    DB-->>API: Bill/2026/0001  ← row-locked, gapless
+
+    API->>SVC: postDocument('bill', billId, tx)
+    SVC->>DB: INSERT journal_entry (status='draft')
+    SVC->>DB: INSERT lines:<br/>DR Purchase Expense (per line + analytic)<br/>DR Input Tax Credit (if tax > 0)<br/>CR Creditors (vendor, grand total)
+    SVC->>DB: UPDATE journal_entry SET status='posted'
+
+    Note over DB: trg_lines_balanced fires on COMMIT<br/>∑ debits = ∑ credits — or ROLLBACK
+
+    API->>DB: UPDATE vendor_bill SET status='confirmed'
+    API->>DB: INSERT stock_moves (goods lines)
+    API->>DB: INSERT audit_log
+    API->>DB: COMMIT
+
+    DB-->>U: { data: { billId, entryId }, error: null }
 ```
 
-> **Idempotent:** If the bill already has `journal_entry_id`, `postDocument()` returns immediately. Double-clicking confirm never creates two entries.
+> **Idempotent:** If `journal_entry_id` already exists, `postDocument()` returns immediately. Double-clicking Confirm never creates two entries.
 
 ---
 
-### Customer Invoice → Journal Entry Flow
+### 🧾 Customer Invoice → Journal Entry
 
-Mirror image of the bill flow — same service, same guarantees.
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant API as 🌐 API
+    participant SVC as ⚙️ postingService
+    participant DB as 🐘 PostgreSQL
 
-```
-User: Confirm Invoice
-        │
-        ▼
-POST /api/invoices/:id/confirm
-        │
-        ▼
-  ┌─── BEGIN TRANSACTION ────────────────────────────────────────────────┐
-  │                                                                       │
-  │  1. SELECT invoice + lines FOR UPDATE (assert status = 'draft')      │
-  │                                                                       │
-  │  2. Assign document number                                            │
-  │     SequenceService.nextDocNumber('INV') → INV/2026/0001             │
-  │                                                                       │
-  │  3. Create journal_entry row (journal = Sales)                        │
-  │                                                                       │
-  │  4. Create journal_entry_lines:                                       │
-  │     DR  Debtors         (partner = customer, grand total)            │
-  │     CR  Sales Income    (per line, with analytic_account_id)         │
-  │     CR  Output Tax      (partner = customer, if tax > 0)             │
-  │                                                                       │
-  │     ⚠  Revenue is recognised HERE — not at payment.                  │
-  │        Payment entry NEVER touches Income accounts.                  │
-  │                                                                       │
-  │  5. Set journal_entry.status = 'posted'                              │
-  │     → trg_lines_balanced fires on COMMIT                             │
-  │                                                                       │
-  │  6. customer_invoice.status = 'confirmed'                             │
-  │  7. stock_moves: -qty per goods line                                  │
-  │  8. audit_log                                                         │
-  │                                                                       │
-  └─── COMMIT ────────────────────────────────────────────────────────────┘
+    U->>API: POST /api/invoices/:id/confirm
+    API->>DB: BEGIN TRANSACTION
+    API->>DB: SELECT invoice FOR UPDATE (assert draft)
+    API->>DB: nextDocNumber('INV') → INV/2026/0001
+
+    API->>SVC: postDocument('invoice', invoiceId, tx)
+    SVC->>DB: INSERT journal_entry (journal=Sales)
+    SVC->>DB: INSERT lines:<br/>DR Debtors (customer, grand total)<br/>CR Sales Income (per line + analytic)<br/>CR Output Tax (if tax > 0)
+
+    Note over SVC: ⚠️ Revenue recognised HERE<br/>Payment NEVER touches Income
+
+    SVC->>DB: SET status='posted'
+    Note over DB: trg_lines_balanced on COMMIT
+
+    API->>DB: UPDATE invoice SET status='confirmed'
+    API->>DB: stock_moves (-qty) + audit_log
+    API->>DB: COMMIT
+    DB-->>U: { data: { invoiceId, entryId }, error: null }
 ```
 
 ---
 
-### Payment Flow
+### 💸 Payment Flow
 
-```
-User: Register Payment (amount, method: Cash|Bank, allocations)
-        │
-        ▼
-POST /api/payments
-        │
-        ▼
-  ┌─── BEGIN TRANSACTION ────────────────────────────────────────────────┐
-  │                                                                       │
-  │  1. Validate allocations: SUM(allocations) = payment.amount          │
-  │                                                                       │
-  │  2. Per target document, assert:                                      │
-  │     allocation ≤ amount_due  (computed from v_invoice_status view)   │
-  │     ← status is NEVER stored; always computed on read                 │
-  │                                                                       │
-  │  3. Create payment record + payment_allocations rows                  │
-  │                                                                       │
-  │  4. Create journal_entry_lines:                                       │
-  │                                                                       │
-  │     Inbound (Customer pays us):                                       │
-  │       DR  Cash | Bank                                                 │
-  │       CR  Debtors (partner = customer)                               │
-  │       ← NEVER touches Income account                                  │
-  │                                                                       │
-  │     Outbound (We pay vendor):                                         │
-  │       DR  Creditors (partner = vendor)                               │
-  │       CR  Cash | Bank                                                 │
-  │       ← NEVER touches Expense account                                 │
-  │                                                                       │
-  │  5. audit_log                                                         │
-  │                                                                       │
-  └─── COMMIT ────────────────────────────────────────────────────────────┘
-        │
-        ▼
-  Payment status recomputed on every read from v_invoice_status:
-  Paid (due = 0) | Partial (0 < due < total) | Not Paid (due = total)
-```
+```mermaid
+flowchart TD
+    A([Register Payment]) --> B{Validate allocations}
+    B -->|SUM allocations ≠ amount| ERR1([🔴 BLOCKING Error])
+    B -->|allocations > amount_due| ERR2([🔴 BLOCKING Error])
+    B -->|valid| C[Create payment + payment_allocations]
 
-> **One payment can settle multiple invoices/bills.** Partial payment leaves a residual that the view recalculates automatically.
+    C --> D{Direction}
+
+    D -->|Inbound - Customer pays us| E["DR Cash\|Bank
+    CR Debtors ← partner: customer
+    ⛔ NEVER touches Income"]
+
+    D -->|Outbound - We pay vendor| F["DR Creditors ← partner: vendor
+    CR Cash\|Bank
+    ⛔ NEVER touches Expense"]
+
+    E --> G[(journal_entry posted)]
+    F --> G
+
+    G --> H[audit_log]
+    H --> I([COMMIT])
+
+    I --> J["v_invoice_status recomputed on read:
+    ✅ Paid  |  🟡 Partial  |  ⬜ Not Paid
+    ← NEVER stored on document row"]
+
+    style ERR1 fill:#F8EAE6,stroke:#9E4A38
+    style ERR2 fill:#F8EAE6,stroke:#9E4A38
+    style I fill:#EDF1E8,stroke:#5F7052
+    style J fill:#FBF1DF,stroke:#C08A3E
+```
 
 ---
 
-### Report Computation Flow
+### 📊 Report Computation Flow
 
-All three reports read **exclusively** from `journal_entry_lines` joined to posted `journal_entries`. They never read from document tables.
+```mermaid
+flowchart LR
+    Q([GET /api/reports/balance-sheet\nasOf=2026-09-06]) --> JEL[(journal_entry_lines)]
+    JEL --> JE[(journal_entries\nstatus='posted'\ndate ≤ asOf)]
+    JE --> AGG["GROUP BY account.type\nSUM debit - credit"]
 
+    AGG --> BS["🏦 Assets = Σ Asset + Bank + Cash
+    📋 Liabilities = Σ Liability + Creditors
+    💼 Capital = Σ Capital + Net Income"]
+
+    BS --> CHECK{Assets = Liab + Capital?}
+    CHECK -->|✅ Yes| PDF([Export PDF via Puppeteer])
+    CHECK -->|❌ No| ALERT([🔴 Integrity Alert])
+
+    style BS fill:#F9F2E4,stroke:#4A3A34
+    style CHECK fill:#EBD7BE,stroke:#A8836C
+    style PDF fill:#EDF1E8,stroke:#5F7052
+    style ALERT fill:#F8EAE6,stroke:#9E4A38
 ```
-GET /api/reports/balance-sheet?asOf=2026-09-06
-        │
-        ▼
-  SELECT account type, SUM(debit - credit)
-  FROM journal_entry_lines jl
-  JOIN journal_entries je ON je.id = jl.journal_entry_id
-  WHERE je.status = 'posted'
-    AND je.date <= $asOf          ← cumulative up to date
-  GROUP BY account type
-        │
-        ▼
-  Assets  = Σ (Asset + Bank + Cash accounts)
-  Liab    = Σ (Liability + Creditors)
-  Capital = Σ (Capital) + Net Income (Income - Expenses this period)
 
-  Assets = Liabilities + Capital. PostgreSQL trigger enforces it at rest.
-```
+| Report | Reads From | Date Filter |
+|---|---|---|
+| Profit & Loss | `journal_entry_lines` | `BETWEEN start AND end` |
+| Balance Sheet | `journal_entry_lines` | `<= asOf` (cumulative) |
+| Budget Report | `journal_entry_lines` | Within budget period, by `analytic_account_id` |
 
-| Report | Date Semantics |
-|---|---|
-| Profit & Loss | `BETWEEN start AND end` — period income/expense only |
-| Balance Sheet | `<= asOf` — cumulative from inception |
-| Budget Report | Within budget period — matched by analytic_account_id |
-
-**Drill-down chain:** Report line → Account Ledger → Journal Entries → Source Document (4 levels, filtered via `v_ledger_detail`)
+**Drill-down chain:** Report Line → Account Ledger → Journal Entries → Source Document *(4 levels via `v_ledger_detail`)*
 
 ---
 
-## 6. Double-Entry Posting Mechanics
-
-### Vendor Bill Confirm
+## 6 ⚖️ Double-Entry Posting Mechanics
 
 ```
-DR  Purchase Expense   [line subtotal excl. tax]  (analytic: budget line, partner: vendor)
-DR  Input Tax Credit   [tax total]                (partner: vendor, skipped if tax = 0)
-CR  Creditors          [grand total]              (partner: vendor)
+╔══════════════════════════════════════════════════════════════╗
+║                   VENDOR BILL CONFIRM                        ║
+╠═══════════════════════════════╦══════════════════════════════╣
+║  DR  Purchase Expense         ║  line subtotal excl. tax     ║
+║      (analytic: budget line)  ║  partner: vendor             ║
+╠═══════════════════════════════╬══════════════════════════════╣
+║  DR  Input Tax Credit         ║  tax total                   ║
+║      (skipped if tax = 0)     ║  partner: vendor             ║
+╠═══════════════════════════════╬══════════════════════════════╣
+║  CR  Creditors                ║  grand total                 ║
+║                               ║  partner: vendor             ║
+╚═══════════════════════════════╩══════════════════════════════╝
+
+╔══════════════════════════════════════════════════════════════╗
+║                CUSTOMER INVOICE CONFIRM                      ║
+╠═══════════════════════════════╦══════════════════════════════╣
+║  DR  Debtors                  ║  grand total                 ║
+║                               ║  partner: customer           ║
+╠═══════════════════════════════╬══════════════════════════════╣
+║  CR  Sales Income             ║  line subtotal excl. tax     ║
+║      (analytic: budget line)  ║  partner: customer           ║
+╠═══════════════════════════════╬══════════════════════════════╣
+║  CR  Output Tax Payable       ║  tax total                   ║
+║      (skipped if tax = 0)     ║  partner: customer           ║
+╚═══════════════════════════════╩══════════════════════════════╝
+
+╔══════════════════════════════════════════════════════════════╗
+║            PAYMENT — INBOUND (customer pays us)             ║
+╠═══════════════════════════════╦══════════════════════════════╣
+║  DR  Cash | Bank              ║  payment amount              ║
+╠═══════════════════════════════╬══════════════════════════════╣
+║  CR  Debtors                  ║  settlement only             ║
+║      ⛔ NEVER touches Income  ║  partner: customer           ║
+╚═══════════════════════════════╩══════════════════════════════╝
+
+╔══════════════════════════════════════════════════════════════╗
+║           PAYMENT — OUTBOUND (we pay vendor)                ║
+╠═══════════════════════════════╦══════════════════════════════╣
+║  DR  Creditors                ║  settlement only             ║
+║      ⛔ NEVER touches Expense ║  partner: vendor             ║
+╠═══════════════════════════════╬══════════════════════════════╣
+║  CR  Cash | Bank              ║  payment amount              ║
+╚═══════════════════════════════╩══════════════════════════════╝
 ```
 
-### Customer Invoice Confirm
-
-```
-DR  Debtors            [grand total]              (partner: customer)
-CR  Sales Income       [line subtotal excl. tax]  (analytic: budget line, partner: customer)
-CR  Output Tax Payable [tax total]                (partner: customer, skipped if tax = 0)
-```
-
-### Payment — Inbound (Customer pays us)
-
-```
-DR  Cash | Bank
-CR  Debtors            (partner: customer)
-← Revenue already recognised at invoice. This is purely a settlement entry.
-```
-
-### Payment — Outbound (We pay vendor)
-
-```
-DR  Creditors          (partner: vendor)
-CR  Cash | Bank
-← Expense already recognised at bill. This is purely a settlement entry.
-```
-
-### Balance Invariant
-
-A PostgreSQL `DEFERRABLE INITIALLY DEFERRED` trigger (`trg_lines_balanced`) fires on `COMMIT`. It asserts:
+### 🔒 Balance Invariant (PostgreSQL)
 
 ```sql
+-- trg_lines_balanced — DEFERRABLE INITIALLY DEFERRED
+-- Fires on COMMIT. If this fails, the entire transaction rolls back.
+-- The application cannot produce an unbalanced entry. Structurally impossible.
+
 SELECT SUM(debit) = SUM(credit)
 FROM journal_entry_lines
-WHERE journal_entry_id = $entry_id
+WHERE journal_entry_id = $entry_id;
 ```
-
-If this assertion fails, PostgreSQL rolls back the entire transaction. The application cannot produce an unbalanced entry — it is structurally impossible.
 
 ---
 
-## 7. Authorisation Model
+## 7 🔐 Authorisation Model
 
-Route guards fail when someone forgets to add one endpoint. That is exactly how portal IDOR vulnerabilities happen.
-
-Instead, a single scoping function is applied at the **data layer** on every query:
+> Route guards fail when someone forgets one endpoint. That is how IDOR happens.
 
 ```ts
-// scopeFor rewrites the WHERE clause, not the route
+// scopeFor() rewrites the SQL WHERE clause at the data layer.
+// URL tampering becomes structurally impossible.
+
 scopeFor(user, 'invoice')
-  admin | accountant  →  {}                           // no restriction
-  contact             →  { customerId: user.contactId }  // only their rows
+  admin | accountant  →  {}                              // unrestricted
+  contact             →  { customerId: user.contactId }  // own rows only
 ```
 
-This is modelled directly on Odoo's record rules. URL parameter tampering (`/portal/invoices/123` → `/portal/invoices/999`) becomes structurally impossible rather than defensively patched.
+```mermaid
+flowchart LR
+    URL["GET /portal/invoices/999"] --> MW[middleware]
+    MW --> SC["scopeFor(contact, 'invoice')"]
+    SC --> Q["SELECT * FROM customer_invoices
+    WHERE id = 999
+    AND customer_id = 42   ← scope injected"]
+    Q -->|row found| RESP([200 ✅])
+    Q -->|no row| ERR([403 🔴])
 
-**Reviewers will log in as a contact and change the invoice ID in the URL. The response must be 403, not someone else's invoice.**
+    style ERR fill:#F8EAE6,stroke:#9E4A38
+    style RESP fill:#EDF1E8,stroke:#5F7052
+```
+
+> **Reviewers will log in as a contact and edit the invoice ID in the URL. The response must be 403 — not someone else's invoice.**
 
 ---
 
-## 8. Module Breakdown
+## 8 📦 Module Breakdown
 
-### Sales Module
+### 🛒 Sales Module
 
-**Pages:** `SalesOrderFormPage`, `SalesOrderListPage`, `CustomerInvoiceFormPage`, `CustomerInvoiceListPage`, `ReceivablesPage`, `RegisterPaymentPage`
+<details>
+<summary><b>Click to expand Sales flow & details</b></summary>
 
-**Flow:**
+**Pages:** `SalesOrderFormPage` · `SalesOrderListPage` · `CustomerInvoiceFormPage` · `CustomerInvoiceListPage` · `ReceivablesPage` · `RegisterPaymentPage`
 
 ```
 Sales Order (draft)
-    → Confirm SO        [no journal entry]
-    → Create Invoice    [invoice generated from SO lines]
-    → Confirm Invoice   [DR Debtors / CR Sales Income + Tax]
-    → Register Payment  [DR Cash|Bank / CR Debtors]
+    │
+    ├─→ Confirm SO ─────────── ⛔ No journal entry
+    │
+    ├─→ Create Invoice ──────── Invoice generated from SO lines
+    │
+    ├─→ Confirm Invoice ─────── ✅ DR Debtors / CR Sales Income + Tax
+    │
+    └─→ Register Payment ────── ✅ DR Cash|Bank / CR Debtors
 ```
 
-**Key fields on Invoice:**
-- Customer, Invoice Date, Due Date, Lines (Product, Qty, Unit Price, Tax %)
-- Bill Reference (free text — customer's PO number)
-- Payment status: `Not Paid` / `Partial` / `Paid` — computed from view, never stored
-- Footer: Paid Via Cash, Paid Via Bank, Amount Due
+**Key Invoice Features:**
+- Payment status: `Not Paid` → `Partial` → `Paid` — computed from `v_invoice_status`, never stored
+- Footer totals: Paid Via Cash · Paid Via Bank · Amount Due
+- Smart button: PO origin (if applicable)
+- Numbering: `SO/2026/0001` · `INV/2026/0001`
 
-**Numbering:** Sales Order: `SO/2026/0001` · Invoice: `INV/2026/0001`
+</details>
 
 ---
 
-### Purchase Module
+### 🏭 Purchase Module
 
-**Pages:** `POFormPage`, `POListPage`, `VendorBillFormPage`, `VendorBillListPage`
+<details>
+<summary><b>Click to expand Purchase flow & details</b></summary>
 
-**Flow:**
+**Pages:** `POFormPage` · `POListPage` · `VendorBillFormPage` · `VendorBillListPage`
 
 ```
 Purchase Order (draft)
-    → Confirm PO        [no journal entry; optional NON-BLOCKING budget warning]
-    → Create Bill       [bill generated from PO lines]
-    → Confirm Bill      [DR Purchase Expense + Tax / CR Creditors]
-    → Register Payment  [DR Creditors / CR Cash|Bank]
+    │
+    ├─→ Confirm PO ─────────── ⛔ No journal entry
+    │                          🟡 NON-BLOCKING budget warning if overrun
+    ├─→ Create Bill ─────────── Bill generated from PO lines
+    │
+    ├─→ Confirm Bill ────────── ✅ DR Purchase Expense + Tax / CR Creditors
+    │
+    └─→ Register Payment ────── ✅ DR Creditors / CR Cash|Bank
 ```
 
-**Key fields on Bill:**
-- Vendor, Bill Date, Due Date, Bill Reference (vendor's invoice number — separate from system number)
-- Lines: Product, Chart of Account (defaults to Purchase Expense), Budget Analytics, Qty, Unit Price
-- Smart Buttons:
-  - **PO button** — visible only if bill originated from a PO
-  - **Budget button** — opens the analytic/budget report for this bill's analytic
+**Smart Buttons on Bill:**
 
-**Numbering:** Purchase Order: `P00001` · Vendor Bill: `Bill/2026/0001`
+```
+┌──────────┐   ┌──────────┐
+│    1     │   │ Budget   │
+│  P.Order │   │  Report  │
+└──────────┘   └──────────┘
+  ↑ Only visible    ↑ Opens analytic
+  if from a PO        report
+```
 
-**Budget warning on PO confirm:** If the committed amount for a budget line is exceeded, a `NON-BLOCKING` warning is shown. The user can dismiss it and confirm anyway.
+**Numbering:** `P00001` (PO) · `Bill/2026/0001` (Bill)
+
+</details>
 
 ---
 
-### Accounting Master Data
+### 📊 Budget Module
 
-**Pages:** `AccountListPage/Form`, `ContactListPage/Form`, `ProductListPage/Form`, `JournalListPage/Form`, `JournalEntryListPage/Form`, `AnalyticListPage/Form`
+<details>
+<summary><b>Click to expand Budget lifecycle</b></summary>
 
-#### Chart of Accounts
-
-Eight account types in two groups:
-
-| Group | Types |
-|---|---|
-| **Balance Sheet** | Asset, Liability, Bank, Capital, Cash |
-| **Profit & Loss** | Income, Expenses, Other Expenses |
-
-Group headings are display-only labels — not selectable. Account type drives placement in Balance Sheet vs P&L.
-
-**Pre-seeded accounts:** Bank, Purchase Expense, Debtors/Receivables, Creditors/Payables, Sales Income, Cash, Other Expense, Capital
-
-#### Journals
-
-Pre-seeded with defaults:
-- Sales Journal → Sales Income (default credit account)
-- Purchase Journal → Purchase Expense (default debit account)
-- Bank Journal → Bank account
-- Cash Journal → Cash account
-
-#### Journal Entries (Manual)
-
-- Partner is on the **line**, not the entry header
-- Status: Draft / Posted
-- `BLOCKING` warning when debit ≠ credit (action disabled)
-- A manual journal entry with no source document **moves the P&L directly**
-- Posted entries are **immutable** — corrections via reversal only
-
-#### Contacts
-
-- Type: Customer, Vendor, or Both
-- GSTIN field for GST compliance
-- Profile image upload
-- Vendor Statement page (AP ledger per vendor)
-
-#### Products
-
-- Type: Goods, Service, Combo
-- Multi-angle product images (360° viewer in portal)
-- Cost price + Sales price
-
----
-
-### Budget Module
-
-**Pages:** `BudgetFormPage`, `BudgetListPage`
-
-**Stages:**
-
-```
-New → Draft → Confirmed → (Revise) → Revised
-                        → Cancel   → Cancelled
+```mermaid
+stateDiagram-v2
+    [*] --> Draft : New
+    Draft --> Confirmed : Confirm
+    Confirmed --> Revised : Revise (creates new budget)
+    Confirmed --> Cancelled : Cancel
+    Revised --> [*]
+    Cancelled --> [*]
 ```
 
-- **Revise** button is visible only at `Confirmed` stage
-- Revising creates a **new** budget record; old moves to `Revised`
-- Both directions are linked: original ↔ revision (bidirectional FK)
-- Name convention: original name + `" Revised"`
+**Budget Line Metrics:**
 
-**Budget Lines:**
-
-| Field | Description |
+| Field | Formula |
 |---|---|
-| Analytic Account | The cost/revenue centre |
-| Committed Amount | The planned budget |
-| Achieved Amount | Computed: matching analytic lines in period |
+| Committed Amount | Planned budget (user-set) |
+| Achieved Amount | Σ matching analytic lines in period ← **clickable** |
 | Achieved % | `(Achieved / Committed) × 100` |
 | Amount to Achieve | `Committed − Achieved` |
 
-**Achieved Amount is clickable** — opens a filtered list of Invoices/Bills that have this analytic account in this budget period.
+**Revise** is visible only at `Confirmed`. Creates a new budget with name `"<original> Revised"`. Both directions linked: original ↔ revision.
 
-**Computation:**
-- Income analytic → sum of confirmed invoice lines with that analytic in the period
-- Expense analytic → sum of confirmed bill lines with that analytic in the period
+</details>
 
 ---
 
-### Reports
+### 🌐 Customer Portal
 
-**Pages:** `BalanceSheetPage`, `ProfitLossPage`, `BudgetReportPage`, `AnalyticsPage`, `GstReportPage`, `AuditFeedPage`
+<details>
+<summary><b>Click to expand Portal features</b></summary>
 
-#### Balance Sheet
-- Takes a single as-of date
-- `Assets = Liabilities + Capital + (Income − Expenses)`
-- Net profit flows into equity — the sheet must balance
-- PDF export via Puppeteer
+**Pages:** `PortalLogin` · `PortalDashboardPage` · `PortalInvoiceList` · `PortalInvoiceDetail` · `PortalBillList` · `PortalBillDetail` · `PortalPaymentList` · `PortalCataloguePage` · `PortalProductViewerPage` · `PortalRoomStudioPage`
 
-#### Profit & Loss
-- Takes a start date and end date (BETWEEN)
-- Income accounts minus Expense accounts = net profit
-- PDF export
+**Contact onboarding:** Invite email → set password → log in at `/portal`
 
-#### Budget Report
-- Committed vs Achieved vs Remaining per budget line
-- Achieved is clickable → drill-down to source documents
+| Feature | Details |
+|---|---|
+| 📄 Own Invoices | IDOR-protected by `scopeFor` at data layer |
+| 💳 Razorpay Payment | Create order → verify webhook → journal entry |
+| 🪑 Catalogue | Product images, specs, pricing |
+| 🔄 360° Viewer | Multi-angle image sequence |
+| 🏠 Room Studio | Drag-and-drop furniture canvas, real-time visualisation |
 
-#### Analytics Dashboard
-- Receivable ageing buckets (current, 1–30 days, 31–60, 60+ overdue)
-- Payable ageing buckets
-- Cash flow trend (rolling 6 months)
-- Top customers by revenue, top vendors by spend
-- Charts via Recharts
-
-#### GST Report
-- GSTR-1 style output tax summary
-- GSTR-3B style input tax credit summary
-- Reconciliation of output vs input tax
-
-#### Integrity / Verify Page
-- `GET /api/verify` — asserts ∑ debits = ∑ credits across all posted entries
-- Returns `difference: "0.00"` if the ledger is balanced
+</details>
 
 ---
 
-### Customer Portal
+### 🤖 AI / CFO Copilot
 
-**Pages:** `PortalLogin`, `PortalDashboardPage`, `PortalInvoiceList`, `PortalInvoiceDetail`, `PortalBillList`, `PortalBillDetail`, `PortalPaymentList`, `PortalCataloguePage`, `PortalProductViewerPage`, `PortalRoomStudioPage`
+<details>
+<summary><b>Click to expand AI features</b></summary>
 
-**Access:** Contacts receive an invite email → set their own password → log in at `/portal`
+**Service:** `cfoCopilotService.ts` — backed by local Ollama (`qwen2.5:7b`)
 
-**Capabilities:**
-- View their own invoices (IDOR-protected by `scopeFor`)
-- View their own bills (if they are also a vendor)
-- Make online payments via Razorpay integration
-- Browse the furniture catalogue (product images, specs)
-- 360° product viewer (multi-angle image sequence)
-- **Room Studio** — drag and drop furniture into a room canvas, visualise configurations
+```
+User: "What is our net income this month?"
+              │
+              ▼
+      CFO Copilot tool calls → live ledger queries
+              │
+              ▼
+      "₹4,23,500.00 net income for September 2026.
+       Top revenue: Walnut Dining Table (₹1,85,000).
+       Largest expense: Teak Purchases (₹92,000)."
+```
 
-**Security:** Changing the invoice ID in the URL returns 403. The scope is applied at the data layer, not the route layer.
+**Voice Bill Scanner:** `voiceBillService.ts` — parses natural language bill descriptions into structured line items via local NER pipeline. Zero data leaves the machine.
 
----
-
-### AI / CFO Copilot
-
-**Service:** `cfoCopilotService.ts` + `cfoCopilotRoutes.ts`
-
-- Backed by a local Ollama instance running `qwen2.5:7b`
-- The CFO Copilot has read access to the live ledger via a set of tool functions
-- Answers natural-language questions: *"What is our net income this month?"*, *"Which vendor do we owe the most?"*, *"Is our budget on track?"*
-- No data leaves the machine — fully air-gapped
-
-**Voice Bill Scanner:** `voiceBillService.ts` + `billScannerService.ts`
-- Parses voice/text descriptions of bills into structured line items using the local LLM
-- NER (Named Entity Recognition) pipeline in `ner/` for entity extraction
+</details>
 
 ---
 
-## 9. Database Schema (Key Tables)
+## 9 🗄 Database Schema
 
 ```sql
--- Core accounting tables
-journal_entries          (id, journal_id, date, reference, status, source_type, source_id, ...)
-journal_entry_lines      (id, entry_id, account_id, partner_id, analytic_id, debit, credit, ...)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CORE ACCOUNTING LEDGER  (owned exclusively by Vedesh)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
--- Documents
-purchase_orders          (id, vendor_id, number, status, ...)
-vendor_bills             (id, po_id, vendor_id, number, bill_reference, status, journal_entry_id, ...)
-sales_orders             (id, customer_id, number, status, ...)
-customer_invoices        (id, so_id, customer_id, number, status, journal_entry_id, ...)
-payments                 (id, contact_id, amount, method, journal_entry_id, ...)
-payment_allocations      (id, payment_id, invoice_id, bill_id, amount, ...)
+journal_entries
+  id · journal_id · date · reference · status · source_type · source_id
 
--- Master data
-accounts                 (id, name, type, ...)
-journals                 (id, name, type, default_debit_account_id, default_credit_account_id, ...)
-contacts                 (id, name, type, email, gstin, ...)
-products                 (id, name, type, sales_price, cost, ...)
-analytic_accounts        (id, name, type, ...)
-budgets                  (id, name, period_start, period_end, status, revised_from_id, ...)
-budget_lines             (id, budget_id, analytic_account_id, committed_amount, ...)
+journal_entry_lines
+  id · entry_id · account_id · partner_id · analytic_id
+  debit DECIMAL(14,2) · credit DECIMAL(14,2)        ← NEVER float
 
--- Supporting tables
-doc_sequences            (prefix, next_val)   -- row-locked for gapless numbers
-audit_log                (id, actor_id, action, resource_type, resource_id, diff, created_at)
-stock_moves              (id, product_id, qty, direction, source_type, source_id, ...)
-users                    (id, login_id, email, password_hash, role, contact_id, ...)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  TRANSACTION DOCUMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
--- Views (computed, never written)
-v_invoice_status         → Paid / Partial / Not Paid per document
-v_ledger_detail          → denormalised ledger for drill-down
+purchase_orders     (id · vendor_id · number · status)
+vendor_bills        (id · po_id · vendor_id · number · bill_reference
+                        · status · journal_entry_id)
+sales_orders        (id · customer_id · number · status)
+customer_invoices   (id · so_id · customer_id · number
+                        · status · journal_entry_id)
+payments            (id · contact_id · amount · method · journal_entry_id)
+payment_allocations (id · payment_id · invoice_id · bill_id · amount)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MASTER DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+accounts            (id · name · type [8 types])
+journals            (id · name · type · default_debit · default_credit)
+contacts            (id · name · type · email · gstin)
+products            (id · name · type · sales_price · cost)
+analytic_accounts   (id · name · type)
+budgets             (id · name · period_start · period_end · status
+                        · revised_from_id)
+budget_lines        (id · budget_id · analytic_account_id · committed_amount)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SUPPORTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+doc_sequences       (prefix · next_val)   ← FOR UPDATE row lock, gapless
+audit_log           (actor_id · action · resource_type · resource_id · diff)
+stock_moves         (product_id · qty · direction · source_type · source_id)
+users               (login_id · email · password_hash [argon2id] · role)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  COMPUTED VIEWS  (never written to directly)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+v_invoice_status    → Paid | Partial | Not Paid (from payment_allocations)
+v_ledger_detail     → denormalised ledger for 4-level drill-down
 ```
-
-**Money rule:** All monetary columns are `DECIMAL(14,2)`. No `FLOAT` or `NUMERIC` without precision, anywhere.
 
 ---
 
-## 10. API Reference
+## 10 🌐 API Reference
 
-### Auth
+<details>
+<summary><b>🔑 Auth routes</b></summary>
 
-```
+```http
 POST /api/auth/login
 POST /api/auth/signup
 POST /api/auth/logout
@@ -704,190 +699,203 @@ POST /api/auth/forgot-password
 POST /api/auth/reset-password
 GET  /api/auth/me
 ```
+</details>
 
-### Dashboard
+<details>
+<summary><b>📊 Dashboard routes</b></summary>
 
-```
+```http
 GET /api/dashboard/stats
-  → { sales: { all, confirmed, draft }, purchase: { all, confirmed, draft }, budget: { achieved, budget, committed } }
+→ { sales: { all, confirmed, draft },
+    purchase: { all, confirmed, draft },
+    budget: { achieved, budget, committed } }
 
 GET /api/dashboard/kpi
-  → { cash, bank, receivable, payable, netIncomeThisMonth }   (all strings: "5000.00")
+→ { cash, bank, receivable, payable, netIncomeThisMonth }
+  ↑ all monetary values are strings: "5000.00"
 ```
+</details>
 
-### Purchase
+<details>
+<summary><b>🏭 Purchase routes</b></summary>
 
+```http
+GET/POST       /api/purchase-orders
+GET/PATCH      /api/purchase-orders/:id
+POST           /api/purchase-orders/:id/confirm
+POST           /api/purchase-orders/:id/cancel
+POST           /api/purchase-orders/:id/create-bill
+
+GET/POST       /api/vendor-bills
+GET/PATCH      /api/vendor-bills/:id
+POST           /api/vendor-bills/:id/confirm   ← ✅ creates journal entry
+POST           /api/vendor-bills/:id/cancel
 ```
-GET    /api/purchase-orders
-POST   /api/purchase-orders
-GET    /api/purchase-orders/:id
-PATCH  /api/purchase-orders/:id
-POST   /api/purchase-orders/:id/confirm
-POST   /api/purchase-orders/:id/cancel
-POST   /api/purchase-orders/:id/create-bill
+</details>
 
-GET    /api/vendor-bills
-POST   /api/vendor-bills
-GET    /api/vendor-bills/:id
-PATCH  /api/vendor-bills/:id
-POST   /api/vendor-bills/:id/confirm    ← creates journal entry
-POST   /api/vendor-bills/:id/cancel
+<details>
+<summary><b>🛒 Sales routes</b></summary>
+
+```http
+GET/POST       /api/sales-orders
+GET/PATCH      /api/sales-orders/:id
+POST           /api/sales-orders/:id/confirm
+POST           /api/sales-orders/:id/create-invoice
+
+GET/POST       /api/invoices
+GET/PATCH      /api/invoices/:id
+POST           /api/invoices/:id/confirm        ← ✅ creates journal entry
+POST           /api/invoices/:id/cancel
+POST           /api/invoices/:id/pdf            → application/pdf blob
 ```
+</details>
 
-### Sales
+<details>
+<summary><b>💸 Payment routes</b></summary>
 
-```
-GET    /api/sales-orders
-POST   /api/sales-orders
-GET    /api/sales-orders/:id
-PATCH  /api/sales-orders/:id
-POST   /api/sales-orders/:id/confirm
-POST   /api/sales-orders/:id/create-invoice
-
-GET    /api/invoices
-POST   /api/invoices
-GET    /api/invoices/:id
-PATCH  /api/invoices/:id
-POST   /api/invoices/:id/confirm    ← creates journal entry
-POST   /api/invoices/:id/cancel
-POST   /api/invoices/:id/pdf       → application/pdf blob
-```
-
-### Payments
-
-```
+```http
 POST /api/payments
 GET  /api/payments
 GET  /api/payments/:id
 ```
+</details>
 
-### Master Data
+<details>
+<summary><b>📚 Master Data routes</b></summary>
 
+```http
+GET/POST/PATCH  /api/contacts/:id
+GET/POST/PATCH  /api/products/:id
+GET/POST/PATCH  /api/accounts/:id
+GET/POST/PATCH  /api/journals/:id
+GET/POST/PATCH  /api/journal-entries/:id
+POST            /api/journal-entries/:id/post
+GET/POST/PATCH  /api/analytic-accounts/:id
+GET/POST/PATCH  /api/budgets/:id
+POST            /api/budgets/:id/confirm | revise | cancel
 ```
-GET/POST/PATCH   /api/contacts/:id
-GET/POST/PATCH   /api/products/:id
-GET/POST/PATCH   /api/accounts/:id
-GET/POST/PATCH   /api/journals/:id
-GET/POST/PATCH   /api/journal-entries/:id
-POST             /api/journal-entries/:id/post
-GET/POST/PATCH   /api/analytic-accounts/:id
-GET/POST/PATCH   /api/budgets/:id
-POST             /api/budgets/:id/confirm
-POST             /api/budgets/:id/revise
-POST             /api/budgets/:id/cancel
-```
+</details>
 
-### Reports
+<details>
+<summary><b>📈 Report routes</b></summary>
 
-```
+```http
 GET  /api/reports/balance-sheet?asOf=YYYY-MM-DD
 GET  /api/reports/profit-loss?start=YYYY-MM-DD&end=YYYY-MM-DD
 GET  /api/reports/budget?budgetId=X
 POST /api/reports/balance-sheet/pdf
 POST /api/reports/profit-loss/pdf
 POST /api/reports/budget/pdf
-
 GET  /api/reports/gst?period=YYYY-MM
 GET  /api/reports/aging/receivables
 GET  /api/reports/aging/payables
 GET  /api/analytics/*
 ```
+</details>
 
-### Portal (Contact-scoped)
+<details>
+<summary><b>🌐 Portal routes (contact-scoped)</b></summary>
 
-```
+```http
 POST /api/portal/login
 GET  /api/portal/me
-GET  /api/portal/invoices           ← scoped to contact's own invoices
+GET  /api/portal/invoices           ← scoped to contact's own rows
 GET  /api/portal/invoices/:id       ← 403 if not theirs
 GET  /api/portal/bills
 GET  /api/portal/bills/:id
 GET  /api/portal/payments
 POST /api/portal/payments/razorpay/create-order
 POST /api/portal/payments/razorpay/verify
-GET  /api/portal/products           ← public catalogue
+GET  /api/portal/products
 ```
+</details>
 
-### System
+<details>
+<summary><b>⚙️ System routes</b></summary>
 
+```http
+GET /api/verify     → { difference: "0.00" }  ← must be 0.00 for a passing demo
+GET /api/integrity  → detailed ledger integrity checks
+GET /api/audit      → full audit feed
 ```
-GET /api/verify    → { difference: "0.00" } if ledger balances
-GET /api/integrity → detailed integrity check results
-GET /api/audit     → audit feed
-```
+</details>
 
 ---
 
-## 11. Design System
+## 11 🎨 Design System
 
-**Direction:** Warm, tactile, showroom-grade. Furniture is a material business — the interface reads warm and crafted rather than cold and corporate.
+> **Direction:** Warm · Tactile · Showroom-grade.
+> Furniture is a material business — wood, leather, linen.
+> The interface reads warm and crafted, not cold and corporate.
 
-### Typography (self-hosted `.woff2`)
+### 🔤 Typography (self-hosted `.woff2`)
 
-| Role | Font | Used For |
+| Role | Font | Usage |
 |---|---|---|
-| Display | **Montserrat** 600/700 | Page titles, KPI numbers, section headers |
-| Body | **DM Sans** 400/500 | All body text |
-| Figures | **IBM Plex Mono** 400/500 | Ledger columns, debit/credit, all amounts in tables |
+| **Display** | Montserrat 600/700 | Page titles, KPI numbers, headers |
+| **Body** | DM Sans 400/500 | All body text |
+| **Figures** | IBM Plex Mono 400/500 | **All monetary amounts in tables** |
 
-Money is always mono, always right-aligned, always `font-variant-numeric: tabular-nums`.
+> Money is always mono · always right-aligned · always `font-variant-numeric: tabular-nums`
+> Misaligned columns of figures read as amateur to an accountant.
 
-### Colour Palette
+### 🎨 Colour Palette
 
-```css
-/* Neutrals — walnut scale */
---brown-900: #4A3A34   /* primary text, headers */
---brown-700: #77574A   /* secondary text, active nav */
---brown-500: #A8836C   /* borders on dark, muted icons */
---brown-300: #D0AE92   /* dividers, disabled */
---brown-100: #EBD7BE   /* hover fills, table stripes */
---cream:     #F9F2E4   /* app background */
---surface:   #FFFFFF   /* cards, forms, tables */
+```
+Walnut Scale
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ████  --brown-900: #4A3A34   Primary text, headers
+  ████  --brown-700: #77574A   Secondary text, active nav
+  ████  --brown-500: #A8836C   Borders on dark, muted icons
+  ████  --brown-300: #D0AE92   Dividers, disabled
+  ████  --brown-100: #EBD7BE   Hover fills, table stripes
+  ████  --cream:     #F9F2E4   App background
+  ████  --surface:   #FFFFFF   Cards, forms, tables
 
-/* Semantic */
---posted:    #5F7052   /* posted, confirmed, paid, success */
---posted-bg: #EDF1E8
---warning:   #C08A3E   /* NON-blocking: budget overrun */
---warning-bg:#FBF1DF
---danger:    #9E4A38   /* BLOCKING: unbalanced entry, overdue */
---danger-bg: #F8EAE6
---draft:     #A8836C   /* draft, unpaid, neutral */
+Semantic
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ████  --posted:    #5F7052   Posted / Confirmed / Paid
+  ████  --warning:   #C08A3E   NON-BLOCKING — budget overrun
+  ████  --danger:    #9E4A38   BLOCKING — unbalanced entry
+  ████  --draft:     #A8836C   Draft / Unpaid / Neutral
 ```
 
-### Status Badges
+### 🏷 Status Badges
 
-| Status | Text Colour | Fill |
+| Status | Display | Badge Colour |
 |---|---|---|
-| Draft / Not Paid | `--brown-700` | `--brown-100` |
-| Posted / Confirmed / Paid | `--posted` | `--posted-bg` |
-| Partial | `--warning` | `--warning-bg` |
-| Cancelled / Overdue | `--danger` | `--danger-bg` |
-| Revised | `--brown-500` | `--surface` + border |
+| Draft / Not Paid | `DRAFT` | `--brown-700` on `--brown-100` |
+| Posted / Confirmed / Paid | `CONFIRMED` | `--posted` on `--posted-bg` |
+| Partial | `PARTIAL` | `--warning` on `--warning-bg` |
+| Cancelled / Overdue | `CANCELLED` | `--danger` on `--danger-bg` |
+| Revised | `REVISED` | `--brown-500` on `--surface` + border |
 
-### Two Warning Components
+### ⚠️ Two Warning Components
 
-**`<BlockingWarning>`** — solid `--danger` left bar (4px), `--danger-bg` fill, action button **disabled** while shown.
-> Debit and credit amounts do not match. Entry cannot be posted.
+```
+┌─────────────────────────────────────────────────────────┐
+│  🔴 BlockingWarning  (4px solid danger left bar)        │
+│                                                         │
+│  Debit and credit amounts do not match.                 │
+│  Entry cannot be posted.           [Action Disabled]    │
+└─────────────────────────────────────────────────────────┘
 
-**`<NonBlockingWarning>`** — dashed `--warning` border, `--warning-bg` fill, **dismissible**, action stays enabled.
-> ⚠️ Exceeds Approved Budget — The entered amount is higher than the remaining budget for this line.
+┌ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┐
+  🟡 NonBlockingWarning  (dashed warning border)
+│                                                         │
+  ⚠️ Exceeds Approved Budget. Consider adjusting
+│  the value or revising the budget.    [✕ Dismiss]       │
+│                                    [Action Enabled] ✓   │
+└ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
+```
 
-### Navigation
+### 🔢 Indian Number Formatting
 
-Top nav, four items: **Sales · Purchase · Account · Report**. Active item: `--brown-700` with a 2px bottom underline.
-
-Sub-menus:
-- **Sales:** Sales Orders, Customer Invoices, Receivables
-- **Purchase:** Purchase Orders, Vendor Bills, Payments
-- **Account:** Contacts, Products, Analytic Accounts, Budgets, Chart of Accounts, Journals, Journal Entries
-- **Report:** Balance Sheet, Profit & Loss, Budget Report, Analytics, GST Report
-
-### Indian Number Formatting
-
-`Intl.NumberFormat('en-IN')` silently falls back to Western grouping inside Docker (Node ships `small-icu`). Hand-rolled formatter used instead:
+`Intl.NumberFormat('en-IN')` silently falls back to Western grouping inside Docker (`small-icu`). Hand-rolled formatter:
 
 ```ts
 import Decimal from 'decimal.js';
+
 export function formatINR(value: string): string {
   const d = new Decimal(value);
   const neg = d.isNegative();
@@ -899,73 +907,78 @@ export function formatINR(value: string): string {
     : last3;
   return `${neg ? '-' : ''}₹${grouped}.${dec}`;
 }
+
+// ₹12,34,567.89  ← Indian grouping, not ₹1,234,567.89
 ```
 
 ---
 
-## 12. Getting Started
+## 12 🚀 Getting Started
 
 ### Prerequisites
 
-- Docker & Docker Compose v2
-- (Optional for local dev) Node 20, PostgreSQL 16
+- **Docker Desktop** with Compose v2 — recommended
+- (Local dev only) Node 20, PostgreSQL 16
 
-### Docker Compose (Recommended)
+### 🐳 Docker Compose (Recommended)
 
 ```bash
+# Clone
 git clone https://github.com/vedeshskhatri/Urban-Furniture-Accounting-System.git
 cd Urban-Furniture-Accounting-System
 
-# Start all services (db, api, web, ollama)
+# Start all 4 services: db, api, web, ollama
 docker compose up --build
 
-# In a separate terminal — seed the database
+# Seed the database (first time only)
 docker compose exec api npm run db:migrate
 docker compose exec api npm run db:seed
 ```
 
-Services available at:
-- **Frontend (Admin):** http://localhost:5173
-- **API:** http://localhost:5002
-- **PostgreSQL:** localhost:5432
-- **Ollama:** http://localhost:11434
+| Service | URL |
+|---|---|
+| 🖥 **Admin Frontend** | http://localhost:5173 |
+| 🌐 **API** | http://localhost:5002 |
+| 🐘 **PostgreSQL** | localhost:5432 |
+| 🤖 **Ollama** | http://localhost:11434 |
 
-### Local Development (without Docker)
+### 💻 Local Development (without Docker)
 
 ```bash
-# 1. Start PostgreSQL 16 locally
-
-# 2. API
+# Terminal 1 — API
 cd api
-cp .env.example .env          # edit DATABASE_URL, JWT_SECRET
+cp .env.example .env     # fill DATABASE_URL and JWT_SECRET
 npm install
 npm run db:migrate
 npm run db:seed
-npm run dev                   # starts on :5000
+npm run dev              # → :5000
 
-# 3. Client (new terminal)
+# Terminal 2 — Client
 cd client
 npm install
-npm run dev                   # starts on :5173
+npm run dev              # → :5173
 ```
 
-### Database Seed
+### 🌱 What the Seed Provides
 
-The seed populates:
-- Chart of Accounts (8 types: Bank, Cash, Debtors, Creditors, Sales Income, Purchase Expense, Capital, Other Expense)
-- Pre-configured Journals (Sales, Purchase, Bank, Cash)
-- Opening capital journal entry (answers "where did the money come from?")
-- Sample contacts, products, and transactions for demo
+| Seeded Data | Details |
+|---|---|
+| Chart of Accounts | 8 accounts: Bank, Cash, Debtors, Creditors, Sales Income, Purchase Expense, Capital, Other Expense |
+| Journals | Sales, Purchase, Bank, Cash — all with defaults |
+| Opening Capital Entry | Answers "where did the money come from?" |
+| Sample Contacts | Customers and vendors for demo |
+| Sample Products | Furniture items with images |
+| Sample Transactions | POs, Bills, SOs, Invoices for demo walkthrough |
 
 ---
 
-## 13. Environment Variables
+## 13 ⚙️ Environment Variables
 
-### API (`api/.env`)
+### `api/.env`
 
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/urban
-JWT_SECRET=<random 32 bytes hex>
+JWT_SECRET=<random 32-byte hex string>
 NODE_ENV=development
 COOKIE_SECURE=false
 CORS_ORIGIN=http://localhost:5173
@@ -973,74 +986,136 @@ PORT=5000
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 RAZORPAY_KEY_ID=rzp_test_...
 RAZORPAY_KEY_SECRET=...
-RESEND_API_KEY=<optional, for invite emails>
+RESEND_API_KEY=<optional — invite emails>
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=qwen2.5:7b
 ```
 
-### Client (`client/.env`)
+### `client/.env`
 
 ```env
-VITE_API_URL=                   # empty = same origin (proxied by Vite)
+VITE_API_URL=                      # empty = same origin (Vite proxy)
 VITE_RAZORPAY_KEY_ID=rzp_test_...
 ```
 
-> **Note:** `credentials: true` must be set on both the CORS config (API side) and the fetch client (frontend side). Missing either breaks auth across the Docker network boundary.
+> **⚠️ Critical:** `credentials: true` must be set on **both** the API CORS config and the frontend fetch client. Missing either side breaks auth across the Docker network boundary.
 
 ---
 
-## 14. Accounting Correctness Rules
+## 14 📐 Accounting Correctness Rules
 
-These rules are the grading criteria. Violating any one of them fails the demo.
+> These are the grading criteria. Any violation fails the demo.
 
-| Rule | Detail |
-|---|---|
-| **No entry on PO/SO confirm** | Journal entries are created only when Bills/Invoices are confirmed, or Payments are registered |
-| **Revenue at invoice, not payment** | `CR Sales Income` happens at invoice confirm. Payment entries only move Cash/Bank vs Debtors |
-| **Payment never touches Income/Expense** | Payment: DR Cash / CR Debtors. Never CR Sales Income |
-| **Balance Sheet must balance** | Assets = Liabilities + Capital + Net Profit. Enforced by PostgreSQL trigger |
-| **Payment status from view** | `v_invoice_status` computes Paid/Partial/Not Paid on read. Never stored on the document |
-| **Posted entries are immutable** | Correction = reversal only. No editing a posted entry |
-| **Money is DECIMAL everywhere** | `DECIMAL(14,2)` in PG, `decimal.js` in JS, `"5000.00"` string across the wire |
-| **Double-confirm is idempotent** | `postDocument()` checks for existing `journal_entry_id` before creating |
-| **Archive, never delete** | Delete of a referenced record is blocked. Archive flag used instead |
-| **Portal IDOR protection** | `scopeFor()` at data layer — URL tampering returns 403 |
-| **Tax posts to its own account** | Output Tax to Tax Payable, not Sales Income |
-| **Two warning severities** | Debit ≠ Credit is BLOCKING (action disabled). Budget overrun is NON-BLOCKING (warn, allow) |
-| **Gapless document numbers** | Sequences use row-level locks (`FOR UPDATE`) — no gaps under concurrent confirms |
-| **No partial failure orphans** | Bill confirm steps 3–8 are one atomic transaction; partial failure leaves no orphan entry |
-
----
-
-## 15. Team & Module Ownership
-
-| Owner | Writes To |
-|---|---|
-| **Vedesh** (Backend Spine) | `users`, `journal_entries`, `journal_entry_lines`, `payments`, `payment_allocations`, `doc_sequences`, all report queries, `postingService.ts` |
-| **Aman** (Purchase + Master) | `contacts`, `products`, `accounts`, `journals`, `analytic_accounts`, `purchase_orders`, `vendor_bills` |
-| **Aryan** (Sales + Portal) | `sales_orders`, `customer_invoices`, portal routes |
-| **Swapnil** (Frontend) | No database tables — frontend only |
-
-**Critical rule:** Aman and Aryan **call** `PostingService.postDocument()`. They never insert into ledger tables directly. `postingService.ts` is owned exclusively by Vedesh.
+| # | Rule | Detail |
+|---|---|---|
+| 1 | **No entry on PO/SO confirm** | Only Bill/Invoice confirm and Payment register entries |
+| 2 | **Revenue at invoice, not payment** | `CR Sales Income` at confirm. Payment = settlement only |
+| 3 | **Payment never touches Income/Expense** | `DR Cash / CR Debtors` — never `CR Sales Income` |
+| 4 | **Balance Sheet must balance** | Assets = Liabilities + Capital + Net Profit |
+| 5 | **Payment status from view** | `v_invoice_status` computes on read. Never stored on the row |
+| 6 | **Posted entries immutable** | Correction = reversal. No editing posted entries |
+| 7 | **Money is DECIMAL everywhere** | `DECIMAL(14,2)` in PG · `decimal.js` in JS · `"5000.00"` on wire |
+| 8 | **Double-confirm is idempotent** | `postDocument()` checks `journal_entry_id` — no duplicates |
+| 9 | **Archive, never delete** | Delete of referenced record blocked. Archive flag used instead |
+| 10 | **Portal IDOR protection** | `scopeFor()` at data layer — URL tampering returns 403 |
+| 11 | **Tax posts to its own account** | Output Tax → Tax Payable account, not Sales Income |
+| 12 | **Two warning severities** | Debit ≠ Credit is BLOCKING. Budget overrun is NON-BLOCKING |
+| 13 | **Gapless document numbers** | Row-level `FOR UPDATE` on `doc_sequences` — race-safe |
+| 14 | **No partial failure orphans** | Bill confirm steps 3–8 are one atomic transaction |
 
 ---
 
-## Appendix: Key Architectural Decisions
+## 15 👥 Team & Module Ownership
 
-1. **Raw `pg` over Prisma for posting transactions** — PostgreSQL's `DEFERRABLE INITIALLY DEFERRED` trigger requires a raw `pg` `PoolClient` transaction. Prisma's `$transaction()` does not guarantee trigger timing.
+```mermaid
+graph TD
+    PS[("🔒 postingService.ts<br/>Vedesh ONLY<br/>journal_entries<br/>journal_entry_lines")]
 
-2. **Scope at data layer, not route layer** — `scopeFor()` rewrites the SQL WHERE clause. URL tampering is structurally impossible, not defensively patched.
+    Vedesh["👨‍💻 Vedesh<br/>Backend Spine"] -->|owns| PS
+    Vedesh --> SEQ["doc_sequences<br/>payments<br/>payment_allocations<br/>report queries"]
 
-3. **Deferred balance trigger** — `trg_lines_balanced` fires on `COMMIT`, not on each `INSERT`. This allows the service to insert all lines before the balance is checked.
+    Aman["👨‍💻 Aman<br/>Purchase + Master"] -->|calls postDocument| PS
+    Aman --> AMN["contacts · products · accounts<br/>journals · analytic_accounts<br/>purchase_orders · vendor_bills"]
 
-4. **Payment status from views** — Status is never written to the document row. `v_invoice_status` recomputes it from `payment_allocations` on every read. This eliminates stale status bugs entirely.
+    Aryan["👨‍💻 Aryan<br/>Sales + Portal"] -->|calls postDocument| PS
+    Aryan --> ARY["sales_orders<br/>customer_invoices<br/>portal routes"]
 
-5. **Indian number formatting** — Docker's Node ships `small-icu` (English only). `Intl.NumberFormat('en-IN')` silently falls back to Western grouping. Hand-rolled formatter is the only safe approach.
+    Swapnil["👨‍💻 Swapnil<br/>Frontend"] -->|no tables| FE["🖥 React Components<br/>Pages · Design System<br/>Portal UI · Room Studio"]
 
-6. **Combo product type** — Defined in the spec. Decision: deferred from core accounting scope. Combo products behave as bundles in the catalogue but post as individual line items on invoices.
-
-7. **Five PDF account types vs eight in mockup** — The mockup's eight types (with Bank and Cash as distinct types) is the correct real-world chart of accounts. We follow the mockup, not the PDF spec.
+    style PS fill:#F8EAE6,stroke:#9E4A38,stroke-width:3px
+    style Vedesh fill:#EBD7BE,stroke:#4A3A34
+    style Aman fill:#EBD7BE,stroke:#4A3A34
+    style Aryan fill:#EBD7BE,stroke:#4A3A34
+    style Swapnil fill:#EBD7BE,stroke:#4A3A34
+```
 
 ---
 
-*Built for Urban Furniture by Vedesh · Aman · Aryan · Swapnil*
+## 📎 Appendix: Key Architectural Decisions
+
+<details>
+<summary><b>1. Raw <code>pg</code> over Prisma for posting transactions</b></summary>
+
+PostgreSQL's `DEFERRABLE INITIALLY DEFERRED` trigger requires a raw `pg PoolClient` transaction. Prisma's `$transaction()` does not guarantee correct trigger timing — the balance check would fire too early.
+
+</details>
+
+<details>
+<summary><b>2. Scope at data layer, not route layer</b></summary>
+
+Route guards create a false sense of security — one missed endpoint and IDOR is live. `scopeFor()` rewrites the SQL `WHERE` clause on every query. URL tampering is structurally impossible, not defensively patched.
+
+</details>
+
+<details>
+<summary><b>3. Deferred balance trigger</b></summary>
+
+`trg_lines_balanced` fires on `COMMIT`, not on each `INSERT`. This allows the service to insert all lines in a loop before the balance invariant is checked. If any line is missing, PostgreSQL rolls back the whole transaction.
+
+</details>
+
+<details>
+<summary><b>4. Payment status from views (never stored)</b></summary>
+
+`v_invoice_status` recomputes `Paid | Partial | Not Paid` from `payment_allocations` on every read. Storing status would require update logic on every payment mutation — a classic source of stale-data bugs.
+
+</details>
+
+<details>
+<summary><b>5. Indian number formatting — hand-rolled</b></summary>
+
+Docker's Node.js ships `small-icu` (English locale only). `Intl.NumberFormat('en-IN')` silently falls back to Western grouping (`1,234,567`) instead of Indian grouping (`12,34,567`). The hand-rolled formatter is the only reliable approach inside containers.
+
+</details>
+
+<details>
+<summary><b>6. Combo product type — deferred</b></summary>
+
+The spec defines Combo products. Decision: deferred from core accounting scope. Combo products behave as bundles in the catalogue and portal but post as individual line items on invoices (no special bundle accounting logic).
+
+</details>
+
+<details>
+<summary><b>7. Eight account types (mockup) vs five (PDF spec)</b></summary>
+
+The PDF spec lists five account types. The mockup lists eight, with Bank and Cash as distinct types. We follow the mockup — distinct Bank and Cash types match real-world charts of accounts and enable correct journal defaulting.
+
+</details>
+
+---
+
+<div align="center">
+
+---
+
+**Built for Urban Furniture**
+
+Vedesh &nbsp;·&nbsp; Aman &nbsp;·&nbsp; Aryan &nbsp;·&nbsp; Swapnil
+
+<br/>
+
+<img src="https://img.shields.io/badge/PostgreSQL-enforced%20balance-336791?style=flat-square&logo=postgresql&logoColor=white"/>
+<img src="https://img.shields.io/badge/100%25-Offline-5F7052?style=flat-square"/>
+<img src="https://img.shields.io/badge/decimal.js-no%20floats-C08A3E?style=flat-square"/>
+
+</div>
