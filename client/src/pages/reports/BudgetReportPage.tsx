@@ -397,7 +397,7 @@ export default function BudgetReportPage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN')}`, '']}
+                  formatter={(val: any) => [`₹${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, '']}
                   contentStyle={{ background: 'var(--surface)', border: '1px solid var(--brown-300)', borderRadius: 'var(--radius-sm)', fontSize: 11 }}
                 />
               </PieChart>
@@ -414,6 +414,9 @@ export default function BudgetReportPage() {
             >
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, fontWeight: 700, color: 'var(--brown-900)' }}>
                 {achievedPct.toFixed(0)}%
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--brown-600)', textTransform: 'uppercase', fontWeight: 600 }}>
+                Spent
               </div>
             </div>
           </div>

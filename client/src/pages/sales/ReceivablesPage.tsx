@@ -324,9 +324,34 @@ export const ReceivablesPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-brown-700" />
-                  <span className="text-xs font-bold text-brown-900">Outstanding Aging Buckets</span>
+                  <span className="text-xs font-bold text-brown-900">
+                    Outstanding Aging Buckets ({agingType === 'receivable' ? 'Receivables' : 'Payables'})
+                  </span>
                 </div>
-                <span className="text-[11px] font-mono text-brown-600">Receivable Distribution</span>
+                <div className="flex items-center bg-surface border border-brown-300 rounded-[5px] p-0.5 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchAgingType('receivable')}
+                    className={`px-2 py-0.5 rounded-[3px] font-medium transition-colors cursor-pointer ${
+                      agingType === 'receivable'
+                        ? 'bg-brown-900 text-cream font-semibold shadow-xs'
+                        : 'text-brown-700 hover:text-brown-900'
+                    }`}
+                  >
+                    Receivable
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchAgingType('payable')}
+                    className={`px-2 py-0.5 rounded-[3px] font-medium transition-colors cursor-pointer ${
+                      agingType === 'payable'
+                        ? 'bg-brown-900 text-cream font-semibold shadow-xs'
+                        : 'text-brown-700 hover:text-brown-900'
+                    }`}
+                  >
+                    Payable
+                  </button>
+                </div>
               </div>
               <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
