@@ -77,16 +77,23 @@ export class PurchaseOrderService {
       linesByPo[l.po_id].push({
         id: l.id,
         poId: l.po_id,
+        po_id: l.po_id,
         lineNo: l.line_no,
+        sr_no: l.line_no,
         productId: l.product_id,
+        product_id: l.product_id,
         productName: l.product_name,
+        product_name: l.product_name,
         productSku: l.product_sku,
         analyticAccountId: l.analytic_account_id,
+        analytic_account_id: l.analytic_account_id,
         analyticAccountName: l.analytic_account_name,
+        analytic_account_name: l.analytic_account_name,
         qty: String(l.qty),
         unitPrice: String(l.unit_price),
+        unit_price: String(l.unit_price),
         total: String(l.total),
-      });
+      } as any);
     }
 
     return pos.map(p => {
@@ -137,16 +144,23 @@ export class PurchaseOrderService {
     const lines: POLineDTO[] = linesRes.rows.map(l => ({
       id: l.id,
       poId: l.po_id,
+      po_id: l.po_id,
       lineNo: l.line_no,
+      sr_no: l.line_no,
       productId: l.product_id,
+      product_id: l.product_id,
       productName: l.product_name,
+      product_name: l.product_name,
       productSku: l.product_sku,
       analyticAccountId: l.analytic_account_id,
+      analytic_account_id: l.analytic_account_id,
       analyticAccountName: l.analytic_account_name,
+      analytic_account_name: l.analytic_account_name,
       qty: String(l.qty),
       unitPrice: String(l.unit_price),
+      unit_price: String(l.unit_price),
       total: String(l.total),
-    }));
+    }) as any);
 
     const poDate = po.order_date instanceof Date ? po.order_date.toISOString().split('T')[0] : String(po.order_date);
     return {
