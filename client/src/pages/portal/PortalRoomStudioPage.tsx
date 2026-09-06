@@ -859,6 +859,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   const draggedInstanceIdRef = useRef<string | null>(null);
   const dragOffsetRef = useRef<THREE.Vector3>(new THREE.Vector3());
   const mouseMoveCountRef = useRef<number>(0);
+  const hasRestoredLayoutRef = useRef<boolean>(false);
 
   // Camera animation ref
   const cameraAnimRef = useRef<{
@@ -1589,6 +1590,22 @@ export const PortalRoomStudioPage: React.FC = () => {
       if (cached) {
         const group = new THREE.Group();
         const inner = SkeletonUtils.clone(cached.scene);
+        if (customFinish && FINISH_PRESETS[customFinish]) {
+          const cfg = FINISH_PRESETS[customFinish];
+          inner.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh && (child as THREE.Mesh).material) {
+              const mesh = child as THREE.Mesh;
+              const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+              for (const m of mats) {
+                if ((m as THREE.MeshStandardMaterial).isMeshStandardMaterial && (m as THREE.MeshStandardMaterial).metalness < 0.75) {
+                  (m as THREE.MeshStandardMaterial).color.setHex(cfg.threeColor);
+                  (m as THREE.MeshStandardMaterial).roughness = cfg.roughness;
+                  (m as THREE.MeshStandardMaterial).needsUpdate = true;
+                }
+              }
+            }
+          });
+        }
         group.add(inner);
         const finalScale = customExactScale || cached.baseScale * factor;
         group.scale.set(finalScale, finalScale, finalScale);
@@ -1661,6 +1678,23 @@ export const PortalRoomStudioPage: React.FC = () => {
           });
 
           const finalScale = customExactScale || scale * factor;
+
+          if (customFinish && FINISH_PRESETS[customFinish]) {
+            const cfg = FINISH_PRESETS[customFinish];
+            inner.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh && (child as THREE.Mesh).material) {
+                const mesh = child as THREE.Mesh;
+                const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                for (const m of mats) {
+                  if ((m as THREE.MeshStandardMaterial).isMeshStandardMaterial && (m as THREE.MeshStandardMaterial).metalness < 0.75) {
+                    (m as THREE.MeshStandardMaterial).color.setHex(cfg.threeColor);
+                    (m as THREE.MeshStandardMaterial).roughness = cfg.roughness;
+                    (m as THREE.MeshStandardMaterial).needsUpdate = true;
+                  }
+                }
+              }
+            });
+          }
 
           group.add(inner);
           group.scale.set(finalScale, finalScale, finalScale);
@@ -1769,19 +1803,7 @@ export const PortalRoomStudioPage: React.FC = () => {
     }
   };
 
-  // 8. Preload single item if directed from catalogue/product viewer (?model=...)
-  useEffect(() => {
-    if (catalogModels.length === 0) return;
 
-    if (preloadedModelUrl) {
-      const match = catalogModels.find((m) => m.url === preloadedModelUrl || m.filename === preloadedModelUrl);
-      if (match) {
-        handleAddFurniture(match, [0, 0, -1.0]);
-        return;
-      }
-    }
-    // Starts blank by default as requested by user!
-  }, [catalogModels, preloadedModelUrl]);
 
   // 9. Item Manipulation (Rotate, Move, Remove)
   const handleRotateSelected = useCallback((deltaAngle: number) => {
@@ -1900,6 +1922,9 @@ export const PortalRoomStudioPage: React.FC = () => {
     placedMeshesRef.current.clear();
     setPlacedItems([]);
     setSelectedInstanceId(null);
+    try {
+      localStorage.removeItem('urban_studio_active_room');
+    } catch {}
     if (selectionRingRef.current) {
       (selectionRingRef.current.material as THREE.MeshBasicMaterial).opacity = 0;
     }
@@ -2150,17 +2175,113 @@ export const PortalRoomStudioPage: React.FC = () => {
     }
   };
 
-  // Automatically apply preloaded style from URL (?style=... or ?preset=...)
+  // ── Auto-Persist Active Room Layout, Pieces, Positions & Orientations ──
   useEffect(() => {
-    if (catalogModels.length === 0) return;
+    // Only save after initial restoration has completed to avoid overwriting with empty state
+    if (!hasRestoredLayoutRef.current) return;
+
+    try {
+      if (placedItems.length === 0) {
+        localStorage.removeItem('urban_studio_active_room');
+        return;
+      }
+
+      const stateToSave = {
+        items: placedItems.map((item) => ({
+          instanceId: item.instanceId,
+          modelId: item.modelId,
+          name: item.name,
+          category: item.category,
+          position: item.position,
+          rotationY: item.rotationY,
+          url: item.url,
+          scale: item.scale,
+          scaleFactor: item.scaleFactor,
+          finish: item.finish,
+        })),
+        ambience,
+        cameraView,
+        ceilingLightOn,
+        standingLampOn,
+        showGrid,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem('urban_studio_active_room', JSON.stringify(stateToSave));
+    } catch (err) {
+      console.warn('Failed to persist active 3D studio layout to localStorage:', err);
+    }
+  }, [placedItems, ambience, cameraView, ceilingLightOn, standingLampOn, showGrid]);
+
+  // ── Unified Studio Layout Restoration Engine ──
+  useEffect(() => {
+    if (!sceneRef.current || catalogModels.length === 0 || hasRestoredLayoutRef.current) return;
+
+    hasRestoredLayoutRef.current = true;
+
+    // A) Check if directed with a specific ?style= or ?preset= query parameter
     const preloadedStyleId = searchParams.get('style') || searchParams.get('preset');
     if (preloadedStyleId) {
       const match = allRoomStyles.find((s) => s.id === preloadedStyleId);
       if (match) {
         handleApplyRoomStyle(match);
+        return;
       }
     }
-  }, [catalogModels, searchParams]);
+
+    // B) Restore active working room from localStorage (preserves pieces, orientations & finishes across page navigation)
+    let restoredCount = 0;
+    try {
+      const savedRaw = localStorage.getItem('urban_studio_active_room');
+      if (savedRaw) {
+        const saved = JSON.parse(savedRaw);
+        if (saved && Array.isArray(saved.items) && saved.items.length > 0) {
+          if (saved.ambience) setAmbience(saved.ambience);
+          if (typeof saved.ceilingLightOn === 'boolean') setCeilingLightOn(saved.ceilingLightOn);
+          if (typeof saved.standingLampOn === 'boolean') setStandingLampOn(saved.standingLampOn);
+          if (typeof saved.showGrid === 'boolean') setShowGrid(saved.showGrid);
+          if (saved.cameraView) handleSetCameraView(saved.cameraView);
+
+          saved.items.forEach((item: any) => {
+            const cleanUrl = item.url ? item.url.replace(/^\/models\//i, '/Models/') : '';
+            let model = catalogModels.find((m) => m.id === item.modelId);
+            if (!model && cleanUrl) {
+              model = catalogModels.find((m) => m.url.replace(/^\/models\//i, '/Models/') === cleanUrl);
+            }
+            if (!model && item.name) {
+              const q = item.name.toLowerCase();
+              model = catalogModels.find(
+                (m) => m.name.toLowerCase().includes(q) || m.filename.toLowerCase().includes(q)
+              );
+            }
+
+            if (model) {
+              handleAddFurniture(
+                model,
+                item.position,
+                item.rotationY,
+                item.scaleFactor,
+                item.scale,
+                item.finish
+              );
+              restoredCount++;
+            }
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to restore active room layout from localStorage:', err);
+    }
+
+    // C) If user came with ?model= (e.g. from Catalogue "Customize in 3D Studio")
+    if (preloadedModelUrl) {
+      const match = catalogModels.find((m) => m.url === preloadedModelUrl || m.filename === preloadedModelUrl);
+      if (match) {
+        // If existing room was restored, position beside the current ensemble instead of replacing it
+        const targetPos: [number, number, number] = restoredCount > 0 ? [0.4, 0, -0.6] : [0, 0, -1.0];
+        handleAddFurniture(match, targetPos);
+      }
+    }
+  }, [catalogModels, preloadedModelUrl, searchParams, allRoomStyles, handleApplyRoomStyle, handleAddFurniture]);
 
   const selectedItem = placedItems.find((item) => item.instanceId === selectedInstanceId);
   const categories = ['All', 'Seating', 'Beds', 'Tables', 'Storage'];
