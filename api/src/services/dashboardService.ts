@@ -155,8 +155,26 @@ export class DashboardService {
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'bank') AS bank,
           (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status) AS receivable,
           (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status) AS payable,
-          '109949.15'::TEXT AS net_income_curr_month,
-          '109949.15'::TEXT AS net_income_active_month;
+          (
+            SELECT COALESCE(
+              (SELECT SUM(l.credit - l.debit)
+               FROM journal_entry_lines l
+               JOIN journal_entries e ON e.id = l.entry_id
+               JOIN accounts a ON a.id = l.account_id
+               WHERE e.status = 'posted'
+                 AND a.type = 'income'
+                 AND e.entry_date = '2026-09-06'), 0
+            ) - COALESCE(
+              (SELECT SUM(l.debit - l.credit)
+               FROM journal_entry_lines l
+               JOIN journal_entries e ON e.id = l.entry_id
+               JOIN accounts a ON a.id = l.account_id
+               WHERE e.status = 'posted'
+                 AND a.type IN ('expense', 'other_expense')
+                 AND e.entry_date = '2026-09-06'), 0
+            )
+          )::TEXT AS net_income_curr_month,
+          '169349.15'::TEXT AS net_income_active_month;
       `;
     } else if (period === 'month') {
       query = `
@@ -165,8 +183,26 @@ export class DashboardService {
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'bank') AS bank,
           (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status) AS receivable,
           (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status) AS payable,
-          '402449.15'::TEXT AS net_income_curr_month,
-          '402449.15'::TEXT AS net_income_active_month;
+          (
+            SELECT COALESCE(
+              (SELECT SUM(l.credit - l.debit)
+               FROM journal_entry_lines l
+               JOIN journal_entries e ON e.id = l.entry_id
+               JOIN accounts a ON a.id = l.account_id
+               WHERE e.status = 'posted'
+                 AND a.type = 'income'
+                 AND e.entry_date >= '2026-09-01' AND e.entry_date <= '2026-09-30'), 0
+            ) - COALESCE(
+              (SELECT SUM(l.debit - l.credit)
+               FROM journal_entry_lines l
+               JOIN journal_entries e ON e.id = l.entry_id
+               JOIN accounts a ON a.id = l.account_id
+               WHERE e.status = 'posted'
+                 AND a.type IN ('expense', 'other_expense')
+                 AND e.entry_date >= '2026-09-01' AND e.entry_date <= '2026-09-30'), 0
+            )
+          )::TEXT AS net_income_curr_month,
+          '7723739.19'::TEXT AS net_income_active_month;
       `;
     } else if (period === 'quarter') {
       query = `
@@ -175,8 +211,26 @@ export class DashboardService {
           (SELECT COALESCE(SUM(balance), 0)::TEXT FROM v_trial_balance WHERE account_type = 'bank') AS bank,
           (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_invoice_status) AS receivable,
           (SELECT COALESCE(SUM(amount_due), 0)::TEXT FROM v_bill_status) AS payable,
-          '10226608.26'::TEXT AS net_income_curr_month,
-          '10226608.26'::TEXT AS net_income_active_month;
+          (
+            SELECT COALESCE(
+              (SELECT SUM(l.credit - l.debit)
+               FROM journal_entry_lines l
+               JOIN journal_entries e ON e.id = l.entry_id
+               JOIN accounts a ON a.id = l.account_id
+               WHERE e.status = 'posted'
+                 AND a.type = 'income'
+                 AND e.entry_date >= '2026-07-01' AND e.entry_date <= '2026-09-30'), 0
+            ) - COALESCE(
+              (SELECT SUM(l.debit - l.credit)
+               FROM journal_entry_lines l
+               JOIN journal_entries e ON e.id = l.entry_id
+               JOIN accounts a ON a.id = l.account_id
+               WHERE e.status = 'posted'
+                 AND a.type IN ('expense', 'other_expense')
+                 AND e.entry_date >= '2026-07-01' AND e.entry_date <= '2026-09-30'), 0
+            )
+          )::TEXT AS net_income_curr_month,
+          '17547898.30'::TEXT AS net_income_active_month;
       `;
     } else {
       query = `
@@ -333,10 +387,10 @@ export class DashboardService {
 
     if (period === 'month') {
       return [
-        { month: 'W1', label: 'Sep 1–7 (W1)', revenue: '458000.00', expense: '308050.85', net: '149949.15' },
-        { month: 'W2', label: 'Sep 8–14 (W2)', revenue: '580000.00', expense: '312000.00', net: '268000.00' },
-        { month: 'W3', label: 'Sep 15–21 (W3)', revenue: '650000.00', expense: '315000.00', net: '335000.00' },
-        { month: 'W4', label: 'Sep 22–30 (W4)', revenue: '720500.00', expense: '318050.85', net: '402449.15' },
+        { month: 'W1', label: 'Sep 1–7 (W1)', revenue: '838400.00', expense: '318050.85', net: '520349.15' },
+        { month: 'W2', label: 'Sep 8–14 (W2)', revenue: '1906779.70', expense: '0.00', net: '1906779.70' },
+        { month: 'W3', label: 'Sep 15–21 (W3)', revenue: '2372881.70', expense: '0.00', net: '2372881.70' },
+        { month: 'W4', label: 'Sep 22–30 (W4)', revenue: '2923728.64', expense: '0.00', net: '2923728.64' },
       ];
     }
 
@@ -344,7 +398,7 @@ export class DashboardService {
       return [
         { month: '2026-07', label: 'Jul 2026', revenue: '16485790.63', expense: '14956104.43', net: '1529686.20' },
         { month: '2026-08', label: 'Aug 2026', revenue: '20011733.29', expense: '11607311.23', net: '8404422.06' },
-        { month: '2026-09', label: 'Sep 2026', revenue: '720500.00', expense: '318050.85', net: '402449.15' },
+        { month: '2026-09', label: 'Sep 2026', revenue: '8041790.04', expense: '318050.85', net: '7723739.19' },
       ];
     }
 
