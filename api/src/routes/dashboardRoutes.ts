@@ -11,9 +11,10 @@ dashboardRouter.use(optionalAuth);
  * GET /api/dashboard/stats
  * Counts for Sales, Purchase, Budget cards
  */
-dashboardRouter.get('/stats', async (_req: Request, res: Response) => {
+dashboardRouter.get('/stats', async (req: Request, res: Response) => {
   try {
-    const stats = await DashboardService.getStats();
+    const period = req.query.period ? String(req.query.period) : undefined;
+    const stats = await DashboardService.getStats(period);
     return sendSuccess(res, stats);
   } catch (err: any) {
     console.error('Error in /api/dashboard/stats:', err);
@@ -28,7 +29,8 @@ dashboardRouter.get('/stats', async (_req: Request, res: Response) => {
  */
 dashboardRouter.get('/kpi', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const kpi = await DashboardService.getKPI(req.user);
+    const period = req.query.period ? String(req.query.period) : undefined;
+    const kpi = await DashboardService.getKPI(req.user, period);
     return sendSuccess(res, kpi);
   } catch (err: any) {
     console.error('Error in /api/dashboard/kpi:', err);
@@ -55,9 +57,10 @@ dashboardRouter.get('/activity', async (req: Request, res: Response) => {
  * GET /api/dashboard/trends
  * Revenue vs Expenses monthly trend
  */
-dashboardRouter.get('/trends', async (_req: Request, res: Response) => {
+dashboardRouter.get('/trends', async (req: Request, res: Response) => {
   try {
-    const trends = await DashboardService.getTrends();
+    const period = req.query.period ? String(req.query.period) : undefined;
+    const trends = await DashboardService.getTrends(period);
     return sendSuccess(res, trends);
   } catch (err: any) {
     console.error('Error in /api/dashboard/trends:', err);

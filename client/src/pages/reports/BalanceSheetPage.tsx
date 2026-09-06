@@ -51,9 +51,7 @@ function formatDisplayINR(num: number): string {
 
 export default function BalanceSheetPage() {
   const navigate = useNavigate();
-  const [asOfDate, setAsOfDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [asOfDate, setAsOfDate] = useState<string>('2026-09-06');
   const [selectedDrillAccount, setSelectedDrillAccount] = useState<{
     id: number;
     name: string;
@@ -177,13 +175,10 @@ export default function BalanceSheetPage() {
             }}
           >
             {[
-              { id: 'today', label: 'Today', date: new Date().toISOString().split('T')[0] },
-              {
-                id: 'month-end',
-                label: 'Month End',
-                date: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
-              },
-              { id: 'fy26', label: 'FY 2026 Close', date: '2026-03-31' },
+              { id: 'today', label: 'Today', date: '2026-09-06' },
+              { id: 'month-end', label: 'This Month', date: '2026-09-30' },
+              { id: 'q1', label: 'Q1 Close', date: '2026-06-30' },
+              { id: 'fy26', label: 'FY 2026–27 Close', date: '2026-11-30' },
             ].map((preset) => {
               const isActive = asOfDate === preset.date;
               return (

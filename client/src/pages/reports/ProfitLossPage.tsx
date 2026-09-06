@@ -50,10 +50,8 @@ function formatDisplayINR(num: number): string {
 
 export default function ProfitLossPage() {
   const navigate = useNavigate();
-  const [fromDate, setFromDate] = useState<string>('2026-01-01');
-  const [toDate, setToDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  const [fromDate, setFromDate] = useState<string>('2026-09-01');
+  const [toDate, setToDate] = useState<string>('2026-09-30');
   const [selectedDrillAccount, setSelectedDrillAccount] = useState<{
     id: number;
     name: string;
@@ -204,20 +202,26 @@ export default function ProfitLossPage() {
           >
             {[
               {
+                id: 'today',
+                label: 'Today',
+                from: '2026-09-06',
+                to: '2026-09-06',
+              },
+              {
                 id: 'month',
                 label: 'This Month',
-                from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-                to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0],
+                from: '2026-09-01',
+                to: '2026-09-30',
               },
               {
                 id: 'quarter',
                 label: 'This Quarter',
-                from: new Date(new Date().getFullYear(), Math.floor(new Date().getMonth() / 3) * 3, 1).toISOString().split('T')[0],
-                to: new Date(new Date().getFullYear(), (Math.floor(new Date().getMonth() / 3) + 1) * 3, 0).toISOString().split('T')[0],
+                from: '2026-07-01',
+                to: '2026-09-30',
               },
               {
                 id: 'fy26',
-                label: 'FY 2026',
+                label: 'FY 2026–27',
                 from: '2026-04-01',
                 to: '2027-03-31',
               },
