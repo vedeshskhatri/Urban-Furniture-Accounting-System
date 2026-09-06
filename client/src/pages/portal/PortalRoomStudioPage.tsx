@@ -31,8 +31,6 @@ import {
   Sparkles,
   Compass,
   FileCheck2,
-  Volume2,
-  VolumeX,
   CheckCircle,
   Camera,
   BookmarkPlus,
@@ -43,8 +41,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
-import { playWoodClick, playChimeSuccess, toggleAmbientSoundscape } from '../../lib/soundEffects';
-import { useAmbientMusic } from '../../lib/ambientMusic';
+import { playWoodClick, playChimeSuccess } from '../../lib/soundEffects';
 import { resolveProductImage, resolveProductModel } from '../../lib/productMedia';
 
 interface ShowroomModel {
@@ -929,7 +926,7 @@ export const PortalRoomStudioPage: React.FC = () => {
   const [quoteSubmitting, setQuoteSubmitting] = useState<boolean>(false);
   const [quoteSuccess, setQuoteSuccess] = useState<any | null>(null);
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const { isPlaying: ambientSoundActive, toggle: toggleAmbientMusic } = useAmbientMusic();
+
 
   // 1. Fetch available models from API & Catalogue products (supplements static fallback)
   useEffect(() => {
@@ -1500,10 +1497,6 @@ export const PortalRoomStudioPage: React.FC = () => {
     setPlacedItems((prev) => prev.map((p) => (p.instanceId === selectedInstanceId ? { ...p, finish } : p)));
   };
 
-  const handleToggleAudio = () => {
-    toggleAmbientMusic();
-    playWoodClick(1.0);
-  };
 
   const handleRequestRoomQuote = async () => {
     if (placedItems.length === 0) return;
@@ -2818,29 +2811,6 @@ export const PortalRoomStudioPage: React.FC = () => {
             {quoteSubmitting ? 'Drafting...' : `Request Quote (${placedItems.length})`}
           </button>
 
-          {/* Ambient Japandi Audio Toggle */}
-          <button
-            data-ambient-toggle="true"
-            onClick={handleToggleAudio}
-            title={ambientSoundActive ? 'Mute chill lo-fi background music' : 'Play chill lo-fi background music'}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              backgroundColor: 'rgba(253, 250, 246, 0.94)',
-              backdropFilter: 'blur(16px)',
-              border: '1px solid rgba(208, 174, 146, 0.45)',
-              boxShadow: '0 4px 16px rgba(44, 34, 30, 0.08)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: ambientSoundActive ? 'var(--posted)' : 'var(--brown-700)',
-              transition: 'all 120ms ease',
-            }}
-          >
-            {ambientSoundActive ? <Volume2 size={14} /> : <VolumeX size={14} />}
-          </button>
         </div>
       </div>
 
