@@ -41,6 +41,7 @@ export const PortalAmbientAudioBadge: React.FC = () => {
       >
         {/* Play/Pause Toggle Button */}
         <button
+          data-ambient-toggle="true"
           onClick={toggle}
           title={isPlaying ? `Pause chill music (${currentTrack.title})` : 'Play chill background music'}
           style={{
@@ -198,6 +199,7 @@ export const PortalAmbientAudioBadge: React.FC = () => {
 
             {/* Play/Pause icon button */}
             <button
+              data-ambient-toggle="true"
               onClick={toggle}
               style={{
                 width: 28,

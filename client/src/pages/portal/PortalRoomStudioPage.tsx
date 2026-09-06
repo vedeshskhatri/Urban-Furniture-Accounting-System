@@ -2313,6 +2313,7 @@ export const PortalRoomStudioPage: React.FC = () => {
 
           {/* Ambient Japandi Audio Toggle */}
           <button
+            data-ambient-toggle="true"
             onClick={handleToggleAudio}
             title={ambientSoundActive ? 'Mute chill lo-fi background music' : 'Play chill lo-fi background music'}
             style={{
