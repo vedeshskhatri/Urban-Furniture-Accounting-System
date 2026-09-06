@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Decimal from 'decimal.js';
 import { BlockingWarning } from './components/Warnings';
@@ -78,24 +78,30 @@ export const RegisterPaymentPage: React.FC = () => {
       .then(res => {
         if (res.data?.data) {
           const invs: OpenInvoiceItem[] = res.data.data;
-          setOpenInvoices(invs);
+          // Sort by due date ASC so oldest / overdue invoices appear at top and settle first
+          const sortedInvs = [...invs].sort((a, b) => {
+            const dateA = a.dueDate ? new Date(a.dueDate).getTime() : 0;
+            const dateB = b.dueDate ? new Date(b.dueDate).getTime() : 0;
+            return dateA - dateB;
+          });
+          setOpenInvoices(sortedInvs);
 
           // If initialInvoiceId matches, auto-allocate full amount_due of that invoice
           if (initialInvoiceId) {
-            const target = invs.find(i => i.id === initialInvoiceId);
+            const target = sortedInvs.find(i => i.id === initialInvoiceId);
             if (target) {
-              setAmount(target.amountDue);
-              setAllocations({ [target.id]: target.amountDue });
+              setAmount(new Decimal(target.amountDue).toFixed(2));
+              setAllocations({ [target.id]: new Decimal(target.amountDue).toFixed(2) });
               return;
             }
           }
 
           // Otherwise calculate sum of open dues
-          const totalDue = invs.reduce((acc, i) => acc.plus(i.amountDue), new Decimal(0));
+          const totalDue = sortedInvs.reduce((acc, i) => acc.plus(new Decimal(i.amountDue)), new Decimal(0));
           setAmount(totalDue.toFixed(2));
           // Auto-allocate all open invoices to match totalDue by default
           const initAlloc: Record<number, string> = {};
-          for (const inv of invs) {
+          for (const inv of sortedInvs) {
             initAlloc[inv.id] = new Decimal(inv.amountDue).toFixed(2);
           }
           setAllocations(initAlloc);
@@ -110,6 +116,17 @@ export const RegisterPaymentPage: React.FC = () => {
       ...prev,
       [invId]: val,
     }));
+  };
+
+  const handleSettleAll = () => {
+    const totalDue = openInvoices.reduce((acc, i) => acc.plus(new Decimal(i.amountDue)), new Decimal(0));
+    setAmount(totalDue.toFixed(2));
+    const initAlloc: Record<number, string> = {};
+    for (const inv of openInvoices) {
+      initAlloc[inv.id] = new Decimal(inv.amountDue).toFixed(2);
+    }
+    setAllocations(initAlloc);
+    setError(null);
   };
 
   const handleAutoDistribute = (customAmount?: string) => {
@@ -151,10 +168,16 @@ export const RegisterPaymentPage: React.FC = () => {
     }
   };
 
-  const allocatedSum = Object.values(allocations).reduce(
-    (acc, v) => acc.plus(Number(v) || 0),
-    new Decimal(0)
-  );
+  const allocatedSum = useMemo(() => {
+    return Object.values(allocations).reduce((acc, v) => {
+      try {
+        const d = new Decimal(v || '0');
+        return d.isNaN() ? acc : acc.plus(d);
+      } catch {
+        return acc;
+      }
+    }, new Decimal('0.00'));
+  }, [allocations]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,25 +185,43 @@ export const RegisterPaymentPage: React.FC = () => {
       setError('Please select a customer.');
       return;
     }
-    const payAmt = new Decimal(amount || '0');
+    let payAmt: Decimal;
+    try {
+      payAmt = new Decimal(amount || '0');
+    } catch {
+      setError('Invalid payment amount format.');
+      return;
+    }
     if (payAmt.lessThanOrEqualTo(0)) {
       setError('Payment amount must be greater than zero.');
       return;
     }
 
-    if (!allocatedSum.equals(payAmt)) {
-      setError(
-        `Total allocated sum (₹${allocatedSum.toFixed(2)}) must exactly match payment amount (₹${payAmt.toFixed(2)}).`
-      );
-      return;
-    }
-
     const cleanAllocations = Object.entries(allocations)
-      .filter(([_, val]) => Number(val) > 0)
+      .filter(([_, val]) => {
+        try {
+          return new Decimal(val || '0').gt(0);
+        } catch {
+          return false;
+        }
+      })
       .map(([invoiceId, allocAmt]) => ({
         invoiceId: Number(invoiceId),
         amount: new Decimal(allocAmt).toFixed(2),
       }));
+
+    if (cleanAllocations.length === 0) {
+      setError('Please allocate payment to at least one invoice.');
+      return;
+    }
+
+    const cleanSum = cleanAllocations.reduce((acc, a) => acc.plus(new Decimal(a.amount)), new Decimal(0));
+    if (!cleanSum.equals(payAmt)) {
+      setError(
+        `Total allocated sum (₹${cleanSum.toFixed(2)}) must exactly match payment amount (₹${payAmt.toFixed(2)}). Click "Match Amount to Allocated" or "Auto-Distribute" to balance.`
+      );
+      return;
+    }
 
     // Standard Bank / Cash customer receipt registration
     setSubmitting(true);
@@ -426,13 +467,23 @@ export const RegisterPaymentPage: React.FC = () => {
               </p>
             </div>
             {openInvoices.length > 0 && (
-              <button
-                type="button"
-                onClick={() => handleAutoDistribute()}
-                className="text-xs font-semibold text-brown-700 bg-brown-100 hover:bg-brown-200 px-3 py-1.5 rounded-[6px] transition-colors"
-              >
-                Auto-Distribute Oldest First
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSettleAll}
+                  className="text-xs font-bold text-cream bg-brown-900 hover:bg-brown-800 px-3 py-1.5 rounded-[6px] transition-colors shadow-xs cursor-pointer"
+                  title="Automatically allocate the exact due amount for all open invoices"
+                >
+                  Settle All Open Invoices
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoDistribute()}
+                  className="text-xs font-semibold text-brown-700 bg-brown-100 hover:bg-brown-200 px-3 py-1.5 rounded-[6px] transition-colors cursor-pointer"
+                >
+                  Auto-Distribute Oldest First
+                </button>
+              </div>
             )}
           </div>
 

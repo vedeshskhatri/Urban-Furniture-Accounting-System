@@ -535,6 +535,7 @@ export class StatementService {
         invoiceDate: row.invoice_date ? new Date(row.invoice_date).toISOString().split('T')[0] : '',
         dueDate: row.due_date ? new Date(row.due_date).toISOString().split('T')[0] : '',
         daysOverdue,
+        daysPastDue: daysOverdue,
         total: new Decimal(row.total).toFixed(2),
         amountPaid: new Decimal(row.amount_paid).toFixed(2),
         amountDue: dueAmt.toFixed(2),

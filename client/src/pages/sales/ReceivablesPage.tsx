@@ -116,6 +116,9 @@ export const ReceivablesPage: React.FC = () => {
   // Statement modal state
   const [statementCustomerId, setStatementCustomerId] = useState<number | null>(null);
 
+  // Overdue list collapse state
+  const [showOverdueList, setShowOverdueList] = useState<boolean>(false);
+
   const loadData = (type: 'receivable' | 'payable' = agingType) => {
     setLoading(true);
     setError(null);
@@ -287,28 +290,100 @@ export const ReceivablesPage: React.FC = () => {
 
       {/* Overdue Alert Banner if any overdue invoices exist */}
       {overdueData && overdueData.overdueCount > 0 && (
-        <div className="bg-danger-bg border-l-4 border-danger p-3.5 rounded-r-[8px] flex items-start justify-between shadow-xs">
-          <div className="flex items-start space-x-2.5">
-            <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-sm font-bold text-danger">
-                Overdue Invoice Alert: {overdueData.overdueCount} Invoices Exceeding Due Dates
-              </h3>
-              <p className="text-xs text-brown-800 mt-0.5">
-                Total overdue receivables:{' '}
-                <strong className="font-mono text-danger">
-                  ₹{Number(overdueData.overdueAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                </strong>
-                . Immediate payment follow-up recommended.
-              </p>
+        <div className="bg-danger-bg border-l-4 border-danger p-4 rounded-r-[8px] flex flex-col gap-3 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start space-x-2.5">
+              <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-bold text-danger">
+                  Overdue Invoice Alert: {overdueData.overdueCount} Invoices Exceeding Due Dates
+                </h3>
+                <p className="text-xs text-brown-800 mt-0.5">
+                  Total overdue receivables:{' '}
+                  <strong className="font-mono text-danger">
+                    ₹{Number(overdueData.overdueAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </strong>
+                  . Immediate payment follow-up recommended.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowOverdueList(prev => !prev)}
+                className="px-3 py-1.5 text-xs font-bold bg-danger text-white hover:bg-red-800 rounded-[6px] transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>{showOverdueList ? 'Hide Overdue Invoices' : `Settle Overdue Invoices (${overdueData.overdueCount}) ↓`}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('aging')}
+                className="text-xs font-semibold text-danger underline hover:text-red-950 px-2 py-1 cursor-pointer"
+              >
+                View Aging Details →
+              </button>
             </div>
           </div>
-          <button
-            onClick={() => setActiveTab('aging')}
-            className="text-xs font-semibold text-danger underline hover:text-red-950 px-2 py-1"
-          >
-            View Aging Details →
-          </button>
+
+          {/* Collapsible Overdue Invoices Table for Instant Settlement */}
+          {showOverdueList && (
+            <div className="mt-1 bg-surface border border-red-300/80 rounded-[8px] overflow-hidden shadow-xs">
+              <div className="p-2.5 bg-red-100/60 border-b border-red-200 flex items-center justify-between text-xs font-semibold text-red-950">
+                <span>Critical Invoices Past Due Date</span>
+                <span className="font-mono font-bold text-danger">
+                  Total: ₹{Number(overdueData.overdueAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="max-h-72 overflow-y-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-brown-100 text-brown-900 sticky top-0 font-semibold border-b border-brown-200">
+                    <tr>
+                      <th className="p-2.5">Invoice #</th>
+                      <th className="p-2.5">Customer</th>
+                      <th className="p-2.5">Due Date</th>
+                      <th className="p-2.5 text-danger font-bold">Past Due</th>
+                      <th className="p-2.5 text-right font-mono-num">Overdue Amount</th>
+                      <th className="p-2.5 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brown-100">
+                    {overdueData.invoices.map(inv => (
+                      <tr key={inv.invoiceId} className="hover:bg-red-50/50 transition-colors">
+                        <td className="p-2.5 font-mono font-semibold text-brown-900">
+                          {inv.invoiceNumber}
+                        </td>
+                        <td className="p-2.5 text-brown-800 font-medium">
+                          {inv.customerName}
+                        </td>
+                        <td className="p-2.5 font-mono text-brown-600">
+                          {inv.dueDate}
+                        </td>
+                        <td className="p-2.5 font-mono font-bold text-danger">
+                          {(inv as any).daysPastDue || (inv as any).daysOverdue || 1} days overdue
+                        </td>
+                        <td className="p-2.5 text-right font-mono font-bold text-danger">
+                          ₹{Number(inv.amountDue).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-2.5 text-center">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(
+                                `/sales/payments?invoiceId=${inv.invoiceId}&customerId=${inv.customerId}&from=receivables`
+                              )
+                            }
+                            className="px-2.5 py-1 text-xs font-bold bg-brown-900 text-cream hover:bg-brown-800 rounded shadow-xs cursor-pointer"
+                          >
+                            Settle Due
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -656,118 +731,150 @@ export const ReceivablesPage: React.FC = () => {
         </div>
       ) : (
         /* Aging Buckets Table */
-        <div className="bg-surface border border-brown-300 rounded-[10px] overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-brown-200 bg-brown-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-xs font-semibold text-brown-700">
-                Aging Schedule as of <span className="font-mono text-brown-900">{agingData?.asOfDate}</span>
-              </span>
-              <div className="flex items-center bg-surface border border-brown-300 rounded-[6px] p-0.5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => handleSwitchAgingType('receivable')}
-                  className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors cursor-pointer ${
-                    agingType === 'receivable'
-                      ? 'bg-brown-900 text-cream font-semibold shadow-xs'
-                      : 'text-brown-700 hover:text-brown-900'
-                  }`}
-                >
-                  Receivables (Debtors)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSwitchAgingType('payable')}
-                  className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors cursor-pointer ${
-                    agingType === 'payable'
-                      ? 'bg-brown-900 text-cream font-semibold shadow-xs'
-                      : 'text-brown-700 hover:text-brown-900'
-                  }`}
-                >
-                  Payables (Creditors)
-                </button>
-              </div>
-            </div>
-            <span className="text-[11px] text-brown-500">
-              Bucketed by due date (0-30, 31-60, 61-90, 90+ days intervals)
+        <div className="flex flex-col gap-3">
+          {/* Top Return Navigation Bar */}
+          <div className="flex items-center justify-between pb-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab('summary')}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold bg-brown-900 hover:bg-brown-800 text-cream rounded-[6px] transition-colors shadow-xs cursor-pointer"
+              title="Return to customer list to settle open bills"
+            >
+              <span>← Back to Bills to be Settled (Customer Summary)</span>
+            </button>
+            <span className="text-xs text-brown-600 font-medium">
+              Maturity breakdown across aging buckets
             </span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-brown-100 text-brown-900 font-semibold border-b border-brown-300">
-                  <th className="p-3">{agingType === 'receivable' ? 'Customer' : 'Vendor'}</th>
-                  <th className="p-3 text-right font-mono-num">Current (Not Due)</th>
-                  <th className="p-3 text-right font-mono-num">1–30 Days</th>
-                  <th className="p-3 text-right font-mono-num">31–60 Days</th>
-                  <th className="p-3 text-right font-mono-num">61–90 Days</th>
-                  <th className="p-3 text-right font-mono-num">90+ Days</th>
-                  <th className="p-3 text-right font-mono-num bg-brown-200/50 font-bold">Total Due</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-brown-100">
-                {!agingData || agingData.customers.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-brown-500">
-                      No {agingType === 'receivable' ? 'customer' : 'vendor'} aging balances.
-                    </td>
+
+          <div className="bg-surface border border-brown-300 rounded-[10px] overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-brown-200 bg-brown-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-xs font-semibold text-brown-700">
+                  Aging Schedule as of <span className="font-mono text-brown-900">{agingData?.asOfDate}</span>
+                </span>
+                <div className="flex items-center bg-surface border border-brown-300 rounded-[6px] p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchAgingType('receivable')}
+                    className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors cursor-pointer ${
+                      agingType === 'receivable'
+                        ? 'bg-brown-900 text-cream font-semibold shadow-xs'
+                        : 'text-brown-700 hover:text-brown-900'
+                    }`}
+                  >
+                    Receivables (Debtors)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchAgingType('payable')}
+                    className={`px-2.5 py-1 rounded-[4px] font-medium transition-colors cursor-pointer ${
+                      agingType === 'payable'
+                        ? 'bg-brown-900 text-cream font-semibold shadow-xs'
+                        : 'text-brown-700 hover:text-brown-900'
+                    }`}
+                  >
+                    Payables (Creditors)
+                  </button>
+                </div>
+              </div>
+              <span className="text-[11px] text-brown-500">
+                Bucketed by due date (0-30, 31-60, 61-90, 90+ days intervals)
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-brown-100 text-brown-900 font-semibold border-b border-brown-300">
+                    <th className="p-3">{agingType === 'receivable' ? 'Customer' : 'Vendor'}</th>
+                    <th className="p-3 text-right font-mono-num">Current (Not Due)</th>
+                    <th className="p-3 text-right font-mono-num">1–30 Days</th>
+                    <th className="p-3 text-right font-mono-num">31–60 Days</th>
+                    <th className="p-3 text-right font-mono-num">61–90 Days</th>
+                    <th className="p-3 text-right font-mono-num">90+ Days</th>
+                    <th className="p-3 text-right font-mono-num bg-brown-200/50 font-bold">Total Due</th>
+                    <th className="p-3 text-center">Action</th>
                   </tr>
-                ) : (
-                  agingData.customers.map(c => (
-                    <tr key={c.customerId} className="hover:bg-brown-50/60 transition-colors">
-                      <td className="p-3 font-semibold text-brown-900">
-                        {c.customerName}
-                        {c.customerEmail && (
-                          <span className="block text-[10px] text-brown-400 font-mono">{c.customerEmail}</span>
-                        )}
-                      </td>
-                      <td className="p-3 text-right font-mono text-brown-700">
-                        {Number(c.current) > 0 ? `₹${Number(c.current).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                      </td>
-                      <td className="p-3 text-right font-mono text-amber-800">
-                        {Number(c.days1_30) > 0 ? `₹${Number(c.days1_30).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                      </td>
-                      <td className="p-3 text-right font-mono text-amber-900">
-                        {Number(c.days31_60) > 0 ? `₹${Number(c.days31_60).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                      </td>
-                      <td className="p-3 text-right font-mono text-danger">
-                        {Number(c.days61_90) > 0 ? `₹${Number(c.days61_90).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                      </td>
-                      <td className="p-3 text-right font-mono font-bold text-red-900">
-                        {Number(c.days90Plus) > 0 ? `₹${Number(c.days90Plus).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
-                      </td>
-                      <td className="p-3 text-right font-mono font-bold text-brown-900 bg-brown-50/40">
-                        ₹{Number(c.totalOutstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                </thead>
+                <tbody className="divide-y divide-brown-100">
+                  {!agingData || agingData.customers.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-brown-500">
+                        No {agingType === 'receivable' ? 'customer' : 'vendor'} aging balances.
                       </td>
                     </tr>
-                  ))
+                  ) : (
+                    agingData.customers.map(c => (
+                      <tr key={c.customerId} className="hover:bg-brown-50/60 transition-colors">
+                        <td className="p-3 font-semibold text-brown-900">
+                          {c.customerName}
+                          {c.customerEmail && (
+                            <span className="block text-[10px] text-brown-400 font-mono">{c.customerEmail}</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-right font-mono text-brown-700">
+                          {Number(c.current) > 0 ? `₹${Number(c.current).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono text-amber-800">
+                          {Number(c.days1_30) > 0 ? `₹${Number(c.days1_30).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono text-amber-900">
+                          {Number(c.days31_60) > 0 ? `₹${Number(c.days31_60).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono text-danger">
+                          {Number(c.days61_90) > 0 ? `₹${Number(c.days61_90).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-red-900">
+                          {Number(c.days90Plus) > 0 ? `₹${Number(c.days90Plus).toLocaleString('en-IN', { minimumFractionDigits: 2 })}` : '—'}
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-brown-900 bg-brown-50/40">
+                          ₹{Number(c.totalOutstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-3 text-center">
+                          {Number(c.totalOutstanding) > 0 && agingType === 'receivable' ? (
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/sales/payments?customerId=${c.customerId}&from=receivables`)}
+                              className="px-2.5 py-1 text-xs font-bold bg-brown-900 text-cream hover:bg-brown-800 rounded shadow-xs cursor-pointer"
+                            >
+                              Settle Due
+                            </button>
+                          ) : (
+                            <span className="text-brown-400 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+                {agingData && (
+                  <tfoot>
+                    <tr className="bg-brown-100 font-bold border-t-2 border-brown-300 text-brown-900">
+                      <td className="p-3 uppercase">Total Portfolio Aging</td>
+                      <td className="p-3 text-right font-mono">
+                        ₹{Number(agingData.totals.current).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-right font-mono text-amber-800">
+                        ₹{Number(agingData.totals.days1_30).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-right font-mono text-amber-900">
+                        ₹{Number(agingData.totals.days31_60).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-right font-mono text-danger">
+                        ₹{Number(agingData.totals.days61_90).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-right font-mono text-red-950 font-bold">
+                        ₹{Number(agingData.totals.days90Plus).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 text-right font-mono font-bold text-brown-950 bg-brown-200/50">
+                        ₹{Number(agingData.totals.totalOutstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="p-3 bg-brown-200/50"></td>
+                    </tr>
+                  </tfoot>
                 )}
-              </tbody>
-              {agingData && (
-                <tfoot>
-                  <tr className="bg-brown-100 font-bold border-t-2 border-brown-300 text-brown-900">
-                    <td className="p-3 uppercase">Total Portfolio Aging</td>
-                    <td className="p-3 text-right font-mono">
-                      ₹{Number(agingData.totals.current).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-3 text-right font-mono text-amber-800">
-                      ₹{Number(agingData.totals.days1_30).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-3 text-right font-mono text-amber-900">
-                      ₹{Number(agingData.totals.days31_60).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-3 text-right font-mono text-danger">
-                      ₹{Number(agingData.totals.days61_90).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-3 text-right font-mono text-red-950 font-bold">
-                      ₹{Number(agingData.totals.days90Plus).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-3 text-right font-mono font-bold text-brown-950 bg-brown-200/50">
-                      ₹{Number(agingData.totals.totalOutstanding).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                </tfoot>
-              )}
-            </table>
+              </table>
+            </div>
           </div>
         </div>
       )}
