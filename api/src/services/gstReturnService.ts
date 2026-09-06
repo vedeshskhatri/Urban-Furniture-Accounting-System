@@ -571,9 +571,23 @@ export class GstReturnService {
   /**
    * List all E-Way Bill eligible shipments (> ₹50,000 threshold)
    */
-  static async listEWayBills(clientOrPool: PoolClient | typeof pool = pool) {
+  static async listEWayBills(
+    filters?: { year?: number; month?: number },
+    clientOrPool: PoolClient | typeof pool = pool
+  ) {
+    let where = `WHERE ci.total >= 50000 AND ci.status IN ('confirmed')`;
+    const params: any[] = [];
+    if (filters?.year) {
+      params.push(filters.year);
+      where += ` AND EXTRACT(YEAR FROM ci.invoice_date) = $${params.length}`;
+    }
+    if (filters?.month) {
+      params.push(filters.month);
+      where += ` AND EXTRACT(MONTH FROM ci.invoice_date) = $${params.length}`;
+    }
+
     const res = await clientOrPool.query(
-      `SELECT 
+      `SELECT
         ci.id,
         ci.number,
         ci.invoice_date,
@@ -586,8 +600,9 @@ export class GstReturnService {
         c.pincode as customer_pincode
        FROM customer_invoices ci
        JOIN contacts c ON c.id = ci.customer_id
-       WHERE ci.total >= 50000 AND ci.status IN ('confirmed')
-       ORDER BY ci.invoice_date DESC, ci.id DESC`
+       ${where}
+       ORDER BY ci.invoice_date DESC, ci.id DESC`,
+      params
     );
 
     return res.rows.map(r => {
