@@ -58,6 +58,7 @@ const MEGA_MENU_COLUMNS: ColumnData[] = [
       { label: 'System Integrity Report (10/10)', to: '/integrity', tab: 'Report', view: 'integrity' },
       { label: 'Live Correctness Monitor (Ticker)', to: '/monitor', tab: 'Report', view: 'monitor' },
       { label: 'Audit Log & Chatter Feed', to: '/audit', tab: 'Report', view: 'audit' },
+      { label: 'CFO Copilot (Offline AI Advisor)', to: '#cfo-copilot', tab: 'Report', view: 'cfo-copilot' },
     ],
   },
   {
@@ -142,6 +143,11 @@ export const MegaMenu: React.FC<MegaMenuProps> = ({
   if (!isOpen) return null;
 
   const handleItemClick = (item: { to: string; tab?: string; view?: string }) => {
+    if (item.to === '#cfo-copilot') {
+      window.dispatchEvent(new CustomEvent('open-cfo-copilot'));
+      onClose();
+      return;
+    }
     if (onNavigateCustom && item.tab && item.view) {
       onNavigateCustom(item.tab, item.view);
     } else if (navigate) {

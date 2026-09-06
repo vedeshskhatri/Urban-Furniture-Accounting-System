@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Calendar,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -361,6 +362,38 @@ export default function Dashboard() {
               );
             })}
           </div>
+          {/* CFO AI Advisory Launcher */}
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-cfo-copilot'))}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '7px 14px',
+              fontSize: 12.5,
+              fontFamily: 'var(--font-body)',
+              fontWeight: 650,
+              background: 'linear-gradient(135deg, #4A3A34 0%, #26211C 100%)',
+              color: '#FAF8F5',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(74, 58, 52, 0.15)',
+              transition: 'all 150ms ease-out',
+            }}
+            title="Launch Local CFO AI Copilot Advisory Briefing"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.92';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1';
+            }}
+          >
+            <Sparkles size={13} color="#EBD7BE" />
+            <span>CFO AI Advisory</span>
+          </button>
+
           <button
             type="button"
             onClick={handleRefreshAll}

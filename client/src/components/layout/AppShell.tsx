@@ -5,19 +5,35 @@ import {
   LayoutDashboard,
   LogOut,
   User,
+  Sparkles,
 } from 'lucide-react';
 import { MegaMenu } from './MegaMenu';
 import RecordTimelineDrawer from '../audit/RecordTimelineDrawer';
 import api from '../../lib/axios';
 import { BrandLogo } from '../ui/BrandLogo';
 import { GlobalCommandPalette } from '../common/GlobalCommandPalette';
+import { CfoCopilotModal } from '../cfo/CfoCopilotModal';
 
 export default function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMegaMenuOpen, setIsMegaMenuOpen] = useState(false);
   const [selectedNavModule, setSelectedNavModule] = useState<string | null>(null);
+  const [isCfoOpen, setIsCfoOpen] = useState(false);
+  const [cfoInitialPrompt, setCfoInitialPrompt] = useState<string | undefined>(undefined);
   const headerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    const handleOpenCfo = (e: Event) => {
+      const customEvent = e as CustomEvent<{ prompt?: string }>;
+      if (customEvent.detail?.prompt) {
+        setCfoInitialPrompt(customEvent.detail.prompt);
+      }
+      setIsCfoOpen(true);
+    };
+    window.addEventListener('open-cfo-copilot', handleOpenCfo);
+    return () => window.removeEventListener('open-cfo-copilot', handleOpenCfo);
+  }, []);
 
   // Close mega menu on route change
   useEffect(() => {
@@ -203,6 +219,57 @@ export default function AppShell() {
 
           {/* Right Header Controls: Clean, Uncluttered User Session */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, zIndex: 2 }}>
+            {/* CFO Copilot AI Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setCfoInitialPrompt(undefined);
+                setIsCfoOpen(true);
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                background: 'linear-gradient(135deg, rgba(235, 215, 190, 0.45) 0%, rgba(208, 174, 146, 0.25) 100%)',
+                border: '1px solid rgba(208, 174, 146, 0.55)',
+                borderRadius: 8,
+                color: 'var(--brown-900)',
+                fontFamily: 'var(--font-body)',
+                fontSize: 12.5,
+                fontWeight: 650,
+                cursor: 'pointer',
+                transition: 'all 140ms ease',
+                boxShadow: '0 1px 3px rgba(74, 58, 52, 0.05)',
+              }}
+              title="Open Local CFO Copilot (AI Financial Advisor & Anomaly Analyzer)"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(235, 215, 190, 0.7) 0%, rgba(208, 174, 146, 0.45) 100%)';
+                e.currentTarget.style.borderColor = 'var(--brown-600)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(235, 215, 190, 0.45) 0%, rgba(208, 174, 146, 0.25) 100%)';
+                e.currentTarget.style.borderColor = 'rgba(208, 174, 146, 0.55)';
+              }}
+            >
+              <Sparkles size={13} color="#8A6740" />
+              <span className="hidden sm:inline">CFO Copilot</span>
+              <span
+                style={{
+                  fontSize: 9,
+                  textTransform: 'uppercase',
+                  padding: '1px 4px',
+                  borderRadius: 4,
+                  background: 'rgba(95, 112, 82, 0.15)',
+                  color: '#4B5E3E',
+                  fontWeight: 700,
+                  letterSpacing: '0.04em',
+                }}
+              >
+                AI
+              </span>
+            </button>
+
             {currentUser && (
               <div
                 style={{
@@ -304,6 +371,11 @@ export default function AppShell() {
       <div className="no-print">
         <RecordTimelineDrawer />
         <GlobalCommandPalette />
+        <CfoCopilotModal
+          isOpen={isCfoOpen}
+          onClose={() => setIsCfoOpen(false)}
+          initialPrompt={cfoInitialPrompt}
+        />
       </div>
     </div>
   );
