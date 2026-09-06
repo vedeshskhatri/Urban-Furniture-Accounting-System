@@ -874,7 +874,7 @@ export const PortalDashboardPage: React.FC = () => {
                 <img
                   src={p.image_url || resolveProductImage(p)}
                   alt={p.name}
-                  onError={(e) => { e.currentTarget.src = resolveProductImage(p); }}
+                  onError={(e) => { e.currentTarget.src = resolveProductImage({ ...p, image_url: null }); }}
                   style={{
                     width: '100%',
                     height: '100%',

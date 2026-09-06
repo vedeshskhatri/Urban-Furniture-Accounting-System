@@ -60,12 +60,14 @@ export const PortalLayout: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
+            gap: 16,
             height: 56,
             position: 'relative',
+            overflowX: 'auto',
           }}
         >
           {/* Left: Brand Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', height: '100%', zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', height: '100%', zIndex: 2, flexShrink: 0 }}>
             <Link
               to="/portal"
               style={{
@@ -150,6 +152,7 @@ export const PortalLayout: React.FC = () => {
                 color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
                 backgroundColor: isActive ? 'rgba(235, 215, 190, 0.35)' : 'transparent',
                 textDecoration: 'none',
+                whiteSpace: 'nowrap',
                 transition: 'background 120ms ease, color 120ms ease',
               })}
             >
@@ -172,6 +175,7 @@ export const PortalLayout: React.FC = () => {
                 color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
                 backgroundColor: isActive ? 'rgba(235, 215, 190, 0.35)' : 'transparent',
                 textDecoration: 'none',
+                whiteSpace: 'nowrap',
                 transition: 'background 120ms ease, color 120ms ease',
               })}
             >
@@ -194,6 +198,7 @@ export const PortalLayout: React.FC = () => {
                 color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
                 backgroundColor: isActive ? 'rgba(235, 215, 190, 0.35)' : 'transparent',
                 textDecoration: 'none',
+                whiteSpace: 'nowrap',
                 transition: 'background 120ms ease, color 120ms ease',
               })}
             >
@@ -217,6 +222,7 @@ export const PortalLayout: React.FC = () => {
                   color: isActive ? 'var(--brown-900)' : 'var(--brown-700)',
                   backgroundColor: isActive ? 'rgba(235, 215, 190, 0.35)' : 'transparent',
                   textDecoration: 'none',
+                  whiteSpace: 'nowrap',
                   transition: 'background 120ms ease, color 120ms ease',
                 })}
               >
@@ -227,7 +233,7 @@ export const PortalLayout: React.FC = () => {
           </nav>
 
           {/* Right: Actions & User Session */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, zIndex: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, zIndex: 2, marginLeft: 'auto' }}>
             {/* Quick Spotlight Search Trigger */}
             <button
               onClick={() => {

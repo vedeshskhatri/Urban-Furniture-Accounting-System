@@ -712,7 +712,7 @@ export const PortalCataloguePage: React.FC = () => {
                     src={product.image_url || resolveProductImage(product)}
                     alt={product.name}
                     loading="lazy"
-                    onError={(e) => { e.currentTarget.src = resolveProductImage(product); }}
+                    onError={(e) => { e.currentTarget.src = resolveProductImage({ ...product, image_url: null }); }}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1162,7 +1162,7 @@ export const PortalCataloguePage: React.FC = () => {
               <img
                 src={quickViewProduct.image_url || resolveProductImage(quickViewProduct)}
                 alt={quickViewProduct.name}
-                onError={(e) => { e.currentTarget.src = resolveProductImage(quickViewProduct); }}
+                onError={(e) => { e.currentTarget.src = resolveProductImage({ ...quickViewProduct, image_url: null }); }}
                 style={{
                   width: '100%',
                   height: '100%',
