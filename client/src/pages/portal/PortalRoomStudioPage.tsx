@@ -39,6 +39,7 @@ import {
   Save,
   Check,
   FolderHeart,
+  Upload,
 } from 'lucide-react';
 import api from '../../lib/axios';
 import { formatINR } from '../../lib/money';
@@ -879,6 +880,9 @@ export const PortalRoomStudioPage: React.FC = () => {
     startTarget: new THREE.Vector3(),
     endTarget: new THREE.Vector3(),
   });
+
+  // Import .glb file input ref
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   // Data states - initialized with instant static catalog models for zero network lag
   const [catalogModels, setCatalogModels] = useState<ShowroomModel[]>(STATIC_CATALOG_MODELS);
@@ -1931,6 +1935,44 @@ export const PortalRoomStudioPage: React.FC = () => {
     playWoodClick(1.2);
   }, []);
 
+  // Import custom .glb model from local filesystem
+  const handleImportGLB = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.glb')) {
+      alert('Please select a valid .glb file.');
+      return;
+    }
+
+    // Reset input so same file can be re-imported later
+    e.target.value = '';
+
+    playWoodClick(0.95);
+    setLoadingModel(true);
+
+    const blobUrl = URL.createObjectURL(file);
+    const displayName = file.name.replace(/\.glb$/i, '').replace(/[-_]/g, ' ');
+
+    const importedModel: ShowroomModel = {
+      id: `imported_${Date.now()}_${file.name}`,
+      name: displayName,
+      filename: file.name,
+      category: 'Imported',
+      defaultScale: 1,
+      defaultY: 0,
+      sizeBytes: file.size,
+      sizeKB: (file.size / 1024).toFixed(1),
+      url: blobUrl,
+    };
+
+    // Add to catalog so it appears in the side panel
+    setCatalogModels((prev) => [...prev, importedModel]);
+
+    // Immediately place in centre of scene
+    const centerPos: [number, number, number] = [0, 0, 0];
+    handleAddFurniture(importedModel, centerPos, 0, 1, undefined, undefined);
+  }, [handleAddFurniture]);
+
   // Export High-Resolution Blueprint Snapshot
   const handleExportSnapshot = useCallback(() => {
     if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
@@ -2284,9 +2326,10 @@ export const PortalRoomStudioPage: React.FC = () => {
   }, [catalogModels, preloadedModelUrl, searchParams, allRoomStyles, handleApplyRoomStyle, handleAddFurniture]);
 
   const selectedItem = placedItems.find((item) => item.instanceId === selectedInstanceId);
-  const categories = ['All', 'Seating', 'Beds', 'Tables', 'Storage'];
+  const hasImported = catalogModels.some((m) => m.category === 'Imported');
+  const categories = ['All', 'Seating', 'Beds', 'Tables', 'Storage', ...(hasImported ? ['Imported'] : [])];
   const filteredModels = catalogModels.filter((m) => {
-    if (m.category === 'Lighting') return false;
+    if (m.category === 'Lighting' && selectedCategory !== 'Imported') return false;
     const matchesCat = selectedCategory === 'All' || m.category === selectedCategory;
     const matchesSearch = !searchQuery.trim() || m.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesSearch;
@@ -2543,6 +2586,39 @@ export const PortalRoomStudioPage: React.FC = () => {
             >
               {allRoomStyles.length}
             </span>
+          </button>
+
+          {/* Import Custom .glb Model */}
+          <button
+            onClick={() => { playWoodClick(0.9); importFileInputRef.current?.click(); }}
+            title="Import a custom .glb 3D furniture model from your computer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              backgroundColor: 'rgba(253, 250, 246, 0.94)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              padding: '6px 11px',
+              borderRadius: 8,
+              border: '1px solid rgba(208, 174, 146, 0.45)',
+              boxShadow: '0 2px 8px rgba(44, 34, 30, 0.05)',
+              fontSize: 11.5,
+              fontWeight: 600,
+              fontFamily: 'var(--font-display)',
+              color: '#1F1714',
+              cursor: 'pointer',
+              transition: 'all 120ms ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(208, 174, 146, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(253, 250, 246, 0.94)';
+            }}
+          >
+            <Upload size={13} color="#5C4A3E" />
+            <span>Import</span>
           </button>
 
           {/* Export Architectural Blueprint */}
@@ -4149,6 +4225,15 @@ export const PortalRoomStudioPage: React.FC = () => {
           <span>{saveSuccessToast}</span>
         </div>
       )}
+
+      {/* Hidden GLB file input for Import feature */}
+      <input
+        ref={importFileInputRef}
+        type="file"
+        accept=".glb"
+        style={{ display: 'none' }}
+        onChange={handleImportGLB}
+      />
     </div>
   );
 };
