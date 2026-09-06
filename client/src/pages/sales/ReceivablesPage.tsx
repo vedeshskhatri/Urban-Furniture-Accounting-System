@@ -118,6 +118,7 @@ export const ReceivablesPage: React.FC = () => {
 
   // Overdue list collapse state
   const [showOverdueList, setShowOverdueList] = useState<boolean>(false);
+  const [dismissAlert, setDismissAlert] = useState<boolean>(false);
 
   const loadData = (type: 'receivable' | 'payable' = agingType) => {
     setLoading(true);
@@ -288,22 +289,22 @@ export const ReceivablesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Overdue Alert Banner if any overdue invoices exist */}
-      {overdueData && overdueData.overdueCount > 0 && (
-        <div className="bg-danger-bg border-l-4 border-danger p-4 rounded-r-[8px] flex flex-col gap-3 shadow-xs">
+      {/* Overdue Notification Banner if any overdue invoices exist */}
+      {overdueData && overdueData.overdueCount > 0 && !dismissAlert && (
+        <div className="bg-amber-50/90 border border-amber-300/80 p-4 rounded-[8px] flex flex-col gap-3 shadow-xs transition-all">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-start space-x-2.5">
-              <AlertCircle className="w-5 h-5 text-danger shrink-0 mt-0.5" />
+              <Clock className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm font-bold text-danger">
-                  Overdue Invoice Alert: {overdueData.overdueCount} Invoices Exceeding Due Dates
+                <h3 className="text-sm font-bold text-amber-950">
+                  Payment Notice: {overdueData.overdueCount} Invoices Exceeding Due Dates
                 </h3>
                 <p className="text-xs text-brown-800 mt-0.5">
                   Total overdue receivables:{' '}
-                  <strong className="font-mono text-danger">
+                  <strong className="font-mono text-amber-900">
                     ₹{Number(overdueData.overdueAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                   </strong>
-                  . Immediate payment follow-up recommended.
+                  . Payment follow-up recommended.
                 </p>
               </div>
             </div>
@@ -311,16 +312,24 @@ export const ReceivablesPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowOverdueList(prev => !prev)}
-                className="px-3 py-1.5 text-xs font-bold bg-danger text-white hover:bg-red-800 rounded-[6px] transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 text-xs font-bold bg-amber-800 text-white hover:bg-amber-900 rounded-[6px] transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
               >
-                <span>{showOverdueList ? 'Hide Overdue Invoices' : `Settle Overdue Invoices (${overdueData.overdueCount}) ↓`}</span>
+                <span>{showOverdueList ? 'Hide Invoices' : `Review Overdue Invoices (${overdueData.overdueCount}) ↓`}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('aging')}
-                className="text-xs font-semibold text-danger underline hover:text-red-950 px-2 py-1 cursor-pointer"
+                className="text-xs font-semibold text-amber-900 underline hover:text-brown-950 px-2 py-1 cursor-pointer"
               >
                 View Aging Details →
+              </button>
+              <button
+                type="button"
+                onClick={() => setDismissAlert(true)}
+                className="p-1.5 rounded-[4px] text-brown-500 hover:text-brown-950 hover:bg-amber-200/60 transition-colors cursor-pointer text-xs ml-1"
+                title="Dismiss Notice"
+              >
+                ✕
               </button>
             </div>
           </div>
