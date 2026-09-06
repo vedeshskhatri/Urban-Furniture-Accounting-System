@@ -2,7 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Volume2, VolumeX, Play, Pause, SkipForward, Music } from 'lucide-react';
 import { useAmbientMusic } from '../../lib/ambientMusic';
 
-export const PortalAmbientAudioBadge: React.FC = () => {
+interface PortalAmbientAudioBadgeProps {
+  direction?: 'up' | 'down';
+}
+
+export const PortalAmbientAudioBadge: React.FC<PortalAmbientAudioBadgeProps> = ({ direction = 'up' }) => {
   const { isPlaying, volume, currentTrack, toggle, setVolume, nextTrack } = useAmbientMusic();
   const [showControls, setShowControls] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -24,7 +28,7 @@ export const PortalAmbientAudioBadge: React.FC = () => {
 
   return (
     <div ref={containerRef} style={{ position: 'relative' }}>
-      {/* ── Main Audio Pill in Header ── */}
+      {/* ── Main Audio Pill ── */}
       <div
         data-ambient-toggle="true"
         onClick={toggle}
@@ -40,12 +44,16 @@ export const PortalAmbientAudioBadge: React.FC = () => {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: 7,
-          padding: '4px 10px',
-          borderRadius: 8,
-          backgroundColor: isPlaying ? 'rgba(247, 240, 230, 0.95)' : 'rgba(255, 255, 255, 0.7)',
-          border: isPlaying ? '1px solid rgba(184, 150, 126, 0.6)' : '1px solid rgba(214, 198, 180, 0.45)',
-          boxShadow: isPlaying ? '0 2px 8px rgba(140, 115, 98, 0.12)' : 'none',
+          gap: 8,
+          padding: '6px 14px',
+          borderRadius: 999,
+          backgroundColor: isPlaying ? 'rgba(253, 248, 240, 0.96)' : 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: isPlaying ? '1px solid rgba(184, 150, 126, 0.65)' : '1px solid rgba(214, 198, 180, 0.55)',
+          boxShadow: isPlaying
+            ? '0 4px 16px rgba(140, 115, 98, 0.2), 0 2px 6px rgba(140, 115, 98, 0.1)'
+            : '0 4px 16px rgba(74, 58, 52, 0.12), 0 1px 3px rgba(74, 58, 52, 0.08)',
           transition: 'all 180ms ease',
           userSelect: 'none',
           cursor: 'pointer',
@@ -156,8 +164,9 @@ export const PortalAmbientAudioBadge: React.FC = () => {
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
+            ...(direction === 'up'
+              ? { bottom: 'calc(100% + 10px)', right: 0 }
+              : { top: 'calc(100% + 8px)', right: 0 }),
             width: 240,
             backgroundColor: 'rgba(253, 250, 246, 0.98)',
             backdropFilter: 'blur(24px)',

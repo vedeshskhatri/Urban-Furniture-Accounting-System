@@ -13,7 +13,6 @@ import {
   ShieldCheck,
   Compass,
   Search,
-  User,
 } from 'lucide-react';
 import { GlobalCommandPalette } from '../../components/common/GlobalCommandPalette';
 import { PortalAmbientAudioBadge } from '../../components/portal/PortalAmbientAudioBadge';
@@ -236,8 +235,6 @@ export const PortalLayout: React.FC = () => {
 
           {/* Right: Actions & User Session */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, zIndex: 2 }}>
-            {/* Steady Lounge Ambient Music Audio Controller */}
-            <PortalAmbientAudioBadge />
             {/* Quick Spotlight Search Trigger */}
             <button
               onClick={() => {
@@ -303,63 +300,83 @@ export const PortalLayout: React.FC = () => {
             )}
 
             {user ? (
-              <>
-                {/* Client Profile Cardlet */}
-                <div
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '3px 6px 3px 10px',
+                  background: 'rgba(235, 215, 190, 0.22)',
+                  border: '1px solid rgba(208, 174, 146, 0.3)',
+                  borderRadius: 8,
+                }}
+              >
+                <span
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '4px 10px',
-                    background: 'rgba(235, 215, 190, 0.25)',
-                    borderRadius: 8,
                     fontSize: 12,
-                    color: 'var(--brown-900)',
                     fontWeight: 600,
+                    color: 'var(--brown-900)',
+                    fontFamily: 'var(--font-display)',
                   }}
                 >
-                  <User size={13} color="var(--brown-700)" />
-                  <span>{user.full_name}</span>
-                  <span
-                    style={{
-                      fontSize: 10,
-                      textTransform: 'uppercase',
-                      padding: '1px 6px',
-                      borderRadius: 999,
-                      backgroundColor: 'var(--brown-900)',
-                      color: 'var(--cream)',
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                    }}
-                  >
-                    CLIENT
-                  </span>
-                </div>
+                  {user.full_name || user.login_id}
+                </span>
 
-                {/* Sign Out Button matching Admin ERP */}
+                <span
+                  style={{
+                    fontSize: 9.5,
+                    textTransform: 'uppercase',
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    backgroundColor: 'rgba(74, 58, 52, 0.12)',
+                    color: 'var(--brown-800)',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    fontFamily: 'var(--font-mono)',
+                  }}
+                >
+                  CLIENT
+                </span>
+
+                <div
+                  style={{
+                    width: 1,
+                    height: 14,
+                    backgroundColor: 'rgba(208, 174, 146, 0.4)',
+                    margin: '0 2px',
+                  }}
+                />
+
                 <button
                   type="button"
                   onClick={handleLogout}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 5,
-                    padding: '5px 11px',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: 'var(--brown-800)',
+                    justifyContent: 'center',
+                    width: 24,
+                    height: 24,
+                    padding: 0,
+                    color: 'var(--brown-600)',
                     background: 'transparent',
-                    border: '1px solid var(--brown-400)',
-                    borderRadius: 8,
+                    border: 'none',
+                    borderRadius: 4,
                     cursor: 'pointer',
                     transition: 'all 120ms ease',
                   }}
                   title="Sign Out"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(158, 74, 56, 0.12)';
+                    e.currentTarget.style.color = 'var(--danger)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--brown-600)';
+                  }}
                 >
                   <LogOut size={13} />
-                  <span>Sign Out</span>
                 </button>
-              </>
+              </div>
             ) : (
               <Link
                 to="/login?portal=customer"
@@ -432,6 +449,19 @@ export const PortalLayout: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* ── Fixed Floating Ambient Sound Capsule on Side ── */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 90,
+        }}
+      >
+        <PortalAmbientAudioBadge direction="up" />
+      </div>
+
       <GlobalCommandPalette />
     </div>
   );
