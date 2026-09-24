@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "npm run build --prefix client",
     "dev": "docker compose up",
     "dev:detached": "docker compose up -d",
     "docker:up": "docker compose up",

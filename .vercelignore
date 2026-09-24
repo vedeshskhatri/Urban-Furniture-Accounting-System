@@ -1,0 +1,10 @@
+api/
+server/
+ner/
+db/
+scripts/
+docs/
+docker-compose.yml
+gen_seed.py
+seed_data.sql
+Modelfile.cfo
